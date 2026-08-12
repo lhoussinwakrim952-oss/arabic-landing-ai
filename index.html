@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Arabic Landing AI — مولّد صفحات الهبوط</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #0B0F19; }
+  body { font-family: 'Cairo', sans-serif; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: #2A3346; border-radius: 8px; }
+  .fade-in { animation: fadeIn .4s ease both; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px);} to { opacity: 1; transform: translateY(0);} }
+  .shimmer { background: linear-gradient(90deg, rgba(255,255,255,.04) 25%, rgba(255,255,255,.10) 37%, rgba(255,255,255,.04) 63%); background-size: 400% 100%; animation: shimmer 1.6s ease infinite; }
+  @keyframes shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  input, select, textarea { font-family: 'Cairo', sans-serif; }
+  input::placeholder, textarea::placeholder { color: #5B6478; }
+  #api-warning { display:none; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef } = React;
+
+/* ============================== DATA ============================== */
+
+const COUNTRIES = [
+  { code: "SA", name: "السعودية", dialect: "السعودية", currency: "ريال سعودي" },
+  { code: "AE", name: "الإمارات", dialect: "الإماراتية", currency: "درهم إماراتي" },
+  { code: "KW", name: "الكويت", dialect: "الكويتية", currency: "دينار كويتي" },
+  { code: "QA", name: "قطر", dialect: "القطرية", currency: "ريال قطري" },
+  { code: "BH", name: "البحرين", dialect: "البحرينية", currency: "دينار بحريني" },
+  { code: "OM", name: "عُمان", dialect: "العُمانية", currency: "ريال عُماني" },
+  { code: "IQ", name: "العراق", dialect: "العراقية", currency: "دينار عراقي" },
+  { code: "JO", name: "الأردن", dialect: "الأردنية", currency: "دينار أردني" },
+  { code: "PS", name: "فلسطين", dialect: "الفلسطينية", currency: "شيكل" },
+  { code: "LB", name: "لبنان", dialect: "اللبنانية", currency: "ليرة لبنانية" },
+  { code: "SY", name: "سوريا", dialect: "السورية", currency: "ليرة سورية" },
+  { code: "EG", name: "مصر", dialect: "المصرية", currency: "جنيه مصري" },
+  { code: "SD", name: "السودان", dialect: "السودانية", currency: "جنيه سوداني" },
+  { code: "LY", name: "ليبيا", dialect: "الليبية", currency: "دينار ليبي" },
+  { code: "TN", name: "تونس", dialect: "التونسية", currency: "دينار تونسي" },
+  { code: "DZ", name: "الجزائر", dialect: "الجزائرية", currency: "دينار جزائري" },
+  { code: "MA", name: "المغرب", dialect: "المغربية", currency: "درهم مغربي" },
+  { code: "MR", name: "موريتانيا", dialect: "الموريتانية", currency: "أوقية موريتانية" },
+  { code: "YE", name: "اليمن", dialect: "اليمنية", currency: "ريال يمني" },
+  { code: "DJ", name: "جيبوتي", dialect: "المحلية", currency: "فرنك جيبوتي" },
+  { code: "SO", name: "الصومال", dialect: "الصومالية", currency: "شلن صومالي" },
+  { code: "KM", name: "جزر القمر", dialect: "القمرية", currency: "فرنك قمري" },
+];
+
+const DESIGN_SYSTEMS = {
+  Tech: { bg: "#0B0F19", surface: "#131A2A", card: "#161E33", primary: "#3B82F6", accent: "#22D3EE", text: "#F1F5F9", muted: "#8B96AC", radius: "10px", mood: "dark" },
+  Beauty: { bg: "#FDF6F2", surface: "#FFFFFF", card: "#FFF9F6", primary: "#B8860B", accent: "#E7A6A0", text: "#3A2A26", muted: "#8C7871", radius: "22px", mood: "light" },
+  Health: { bg: "#F0FBF6", surface: "#FFFFFF", card: "#F6FDFA", primary: "#0E9D77", accent: "#6FD3B4", text: "#0F3A2E", muted: "#5C8578", radius: "16px", mood: "light" },
+  Home: { bg: "#FBF4EA", surface: "#FFFFFF", card: "#FFFCF7", primary: "#B5602B", accent: "#7C8C5E", text: "#3A2C20", muted: "#8B7A69", radius: "14px", mood: "light" },
+  Fashion: { bg: "#0A0A0A", surface: "#161616", card: "#1D1D1D", primary: "#FFFFFF", accent: "#D4AF37", text: "#F4F4F4", muted: "#9C9C9C", radius: "2px", mood: "dark" },
+  Kids: { bg: "#FFFAEA", surface: "#FFFFFF", card: "#FFF4D6", primary: "#FF6B6B", accent: "#3FBFB3", text: "#332F3D", muted: "#7A7688", radius: "26px", mood: "light" },
+  Car: { bg: "#111214", surface: "#1A1C1F", card: "#212327", primary: "#E63946", accent: "#F2A93B", text: "#F2F2F2", muted: "#9A9CA3", radius: "6px", mood: "dark" },
+  Gadgets: { bg: "#0E0A20", surface: "#181031", card: "#1F1640", primary: "#8B5CF6", accent: "#00E5C7", text: "#F3F0FF", muted: "#A79DCB", radius: "16px", mood: "dark" },
+  Tools: { bg: "#F3F3F1", surface: "#FFFFFF", card: "#FAFAF9", primary: "#374151", accent: "#F59E0B", text: "#1F2933", muted: "#6B7280", radius: "8px", mood: "light" },
+  Lifestyle: { bg: "#FAF6EF", surface: "#FFFFFF", card: "#FFFDF9", primary: "#A8763E", accent: "#6B8E7F", text: "#372F27", muted: "#8B8178", radius: "18px", mood: "light" },
+};
+
+const EMOJI = {
+  check: "✅", star: "⭐", truck: "🚚", shield: "🛡️", clock: "⏰", heart: "❤️", zap: "⚡",
+  gift: "🎁", phone: "📞", battery: "🔋", drop: "💧", award: "🏆", package: "📦",
+  refresh: "🔄", sparkle: "✨",
+};
+function Ico({ children, size, color, style }) {
+  return <span style={Object.assign({ fontSize: size || 16, lineHeight: 1, display: "inline-flex", color: color || "inherit" }, style || {})}>{children}</span>;
+}
+function ContentIcon({ name, size, color, style }) {
+  return <Ico size={size} color={color} style={style}>{EMOJI[name] || "✨"}</Ico>;
+}
+
+const GEN_STEPS = [
+  "جاري تحليل صور المنتج…", "جاري تحديد الفئة والجمهور المستهدف…", "جاري اختيار نظام التصميم المناسب…",
+  "جاري كتابة المحتوى التسويقي باللهجة المحلية…", "جاري بناء أقسام الصفحة…", "اللمسات الأخيرة…",
+];
+
+/* ============================== HELPERS ============================== */
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+function dataUrlParts(dataUrl) {
+  const m = /^data:(.+?);base64,(.+)$/.exec(dataUrl || "");
+  return m ? { mediaType: m[1], base64: m[2] } : null;
+}
+function formatPrice(value, country) {
+  const n = Number(value);
+  if (Number.isNaN(n)) return value + " " + country.currency;
+  return n.toLocaleString("en-US") + " " + country.currency;
+}
+function stripToJSON(text) {
+  let t = (text || "").trim();
+  t = t.replace(/^```json/i, "").replace(/^```/, "").replace(/```$/, "").trim();
+  const s = t.indexOf("{"), e = t.lastIndexOf("}");
+  if (s !== -1 && e !== -1) t = t.slice(s, e + 1);
+  return JSON.parse(t);
+}
+async function callClaude(content) {
+  // يتصل بالـ Backend الخاص بنا (api/generate.js) بدل الاتصال المباشر بـ Anthropic.
+  // مفتاح الـ API مخبّأ فالسيرفر (Environment Variable) وما ظاهرش هنا فالفرونت-إند.
+  const response = await fetch("/api/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content }),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || "تعذّر الاتصال بمحرك الذكاء الاصطناعي.");
+  if (!data.text) throw new Error("لم يصل رد نصي من المحرك");
+  return stripToJSON(data.text);
+}
+
+const SCHEMA_INSTRUCTIONS = `
+أنت محرك توليد صفحات هبوط (Landing Pages) للتجارة الإلكترونية في العالم العربي.
+أعد ردك بصيغة JSON صِرفة فقط، بدون أي نص قبله أو بعده، وبدون Markdown fences.
+
+الشكل المطلوب بالضبط:
+{
+  "designSystem": "one of: Tech|Beauty|Health|Home|Fashion|Kids|Car|Gadgets|Tools|Lifestyle",
+  "sections": ["array subset/order from: features,benefits,howToUse,specs,testimonials,faq,urgency"],
+  "hero": { "eyebrow": "...", "headline": "...", "subheadline": "...", "priceOld": "...", "discountPercent": "...", "ctaText": "...", "badges": ["..."] },
+  "features": { "title": "...", "items": [ { "icon": "check|star|truck|shield|clock|heart|zap|gift|phone|battery|drop|award|package|refresh|sparkle", "title": "...", "desc": "..." } ] },
+  "benefits": { "title": "...", "items": [ { "icon": "...", "title": "...", "desc": "..." } ] },
+  "howToUse": { "title": "...", "steps": ["...", "..."] },
+  "specs": { "title": "...", "items": [ { "label": "...", "value": "..." } ] },
+  "testimonials": { "title": "...", "note": "هذه آراء تجريبية Placeholder للمعاينة", "items": [ { "name": "...", "text": "...", "rating": 5 } ] },
+  "faq": { "title": "...", "items": [ { "q": "...", "a": "..." } ] },
+  "urgency": { "countdownLabel": "...", "stockLabel": "..." },
+  "orderForm": { "title": "...", "buttonText": "..." },
+  "finalCta": { "headline": "...", "buttonText": "..." },
+  "seo": { "title": "...", "description": "..." }
+}
+
+قواعد مهمة:
+- اختر فقط الأقسام المناسبة فعلاً لطبيعة هذا المنتج تحديدا، لا تُدرج قسماً لا داعي له.
+- اكتب محتوى محدداً بخصائص المنتج الظاهرة في الصور، لا تستخدم عبارات عامة مثل "منتج رائع وعالي الجودة".
+- التزم بلهجة الدولة المطلوبة في كل نصوص الأزرار والعناوين المخاطبة للعميل، بشكل طبيعي غير متكلف.
+- لا تخترع مراجعات عملاء على أنها حقيقية؛ استخدمها كمحتوى Placeholder واضح عبر حقل note.
+- لا تُدرج ادعاءات طبية أو علاجية غير مثبتة إن كان المنتج تجميلياً أو صحياً.
+- priceOld و discountPercent اجعلهما فارغين "" إن لم يكن هناك خصم واضح من السياق.
+`.trim();
+
+function buildGeneratePrompt(form, country) {
+  return SCHEMA_INSTRUCTIONS + "\n\nبيانات المنتج:\n- اسم المنتج: " + form.name +
+    "\n- السعر الحالي: " + form.price + " " + country.currency +
+    "\n- الدولة المستهدفة: " + country.name +
+    "\n- اللهجة المطلوبة: " + (form.dialect === "auto" ? country.dialect + " (تلقائي حسب الدولة)" : form.dialect) +
+    "\n- وصف من المستخدم (قد يكون فارغاً، إن كان فارغاً استنتج الوصف من الصور): " + (form.description || "(لا يوجد، استنتج من الصور)") +
+    "\n\nحلّل الصور المرفقة جيداً (النوع، الشكل، اللون، الاستخدام، الجمهور المحتمل) وابنِ عليها كامل المحتوى.";
+}
+function buildEditPrompt(currentData, instruction, country) {
+  return "أنت تُعدّل صفحة هبوط موجودة بناءً على طلب المستخدم. البيانات الحالية للصفحة بصيغة JSON:\n\n" +
+    JSON.stringify(currentData) + "\n\nطلب التعديل من المستخدم: \"" + instruction + "\"\n\nالدولة: " + country.name +
+    "، العملة: " + country.currency + ".\n\nعدّل فقط ما يطلبه المستخدم، وأعد كامل كائن JSON بنفس الشكل والحقول بالضبط " +
+    "(بما فيها designSystem وsections وhero وseo) بعد تطبيق التعديل، بدون أي نص خارج JSON وبدون Markdown fences.";
+}
+
+/* ============================== APP ============================== */
+
+function App() {
+  const [step, setStep] = useState("form");
+  const [form, setForm] = useState({ name: "", price: "", description: "", countryCode: "SA", dialect: "auto" });
+  const [images, setImages] = useState([]);
+  const [error, setError] = useState("");
+  const [genStepIdx, setGenStepIdx] = useState(0);
+
+  const [history, setHistory] = useState([]);
+  const [historyIdx, setHistoryIdx] = useState(-1);
+  const data = historyIdx >= 0 ? history[historyIdx] : null;
+
+  const [previewMode, setPreviewMode] = useState("mobile");
+  const [editCmd, setEditCmd] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [copyStatus, setCopyStatus] = useState("");
+
+  const country = COUNTRIES.find((c) => c.code === form.countryCode) || COUNTRIES[0];
+  const tokens = data ? (DESIGN_SYSTEMS[data.designSystem] || DESIGN_SYSTEMS.Lifestyle) : DESIGN_SYSTEMS.Tech;
+
+  const genTimer = useRef(null);
+  useEffect(() => {
+    if (step === "loading") {
+      setGenStepIdx(0);
+      genTimer.current = setInterval(() => setGenStepIdx((i) => (i < GEN_STEPS.length - 1 ? i + 1 : i)), 1400);
+    } else if (genTimer.current) clearInterval(genTimer.current);
+    return () => genTimer.current && clearInterval(genTimer.current);
+  }, [step]);
+
+  async function handleImageUpload(e) {
+    const files = Array.from(e.target.files || []).slice(0, 4 - images.length);
+    const next = [];
+    for (const f of files) {
+      try {
+        const dataUrl = await fileToDataUrl(f);
+        const parts = dataUrlParts(dataUrl);
+        if (parts) next.push({ dataUrl, mediaType: parts.mediaType, base64: parts.base64 });
+      } catch (e2) {}
+    }
+    setImages((prev) => [...prev, ...next].slice(0, 4));
+    e.target.value = "";
+  }
+  function removeImage(i) { setImages((prev) => prev.filter((_, idx) => idx !== i)); }
+
+  async function handleGenerate() {
+    setError("");
+    if (!form.name.trim()) return setError("أدخل اسم المنتج أولاً.");
+    if (!form.price) return setError("أدخل سعر المنتج أولاً.");
+    if (images.length === 0) return setError("ارفع صورة واحدة على الأقل للمنتج.");
+    setStep("loading");
+    try {
+      const content = [
+        { type: "text", text: buildGeneratePrompt(form, country) },
+        ...images.map((img) => ({ type: "image", source: { type: "base64", media_type: img.mediaType, data: img.base64 } })),
+      ];
+      const result = await callClaude(content);
+      setHistory([result]); setHistoryIdx(0); setStep("preview");
+    } catch (err) {
+      setError(err.message || "حدث خطأ أثناء التوليد، حاول مرة أخرى.");
+      setStep("form");
+    }
+  }
+
+  async function handleApplyEdit() {
+    if (!editCmd.trim() || !data) return;
+    setEditing(true); setError("");
+    try {
+      const content = [{ type: "text", text: buildEditPrompt(data, editCmd.trim(), country) }];
+      const result = await callClaude(content);
+      const truncated = history.slice(0, historyIdx + 1);
+      const nextHistory = [...truncated, result];
+      setHistory(nextHistory); setHistoryIdx(nextHistory.length - 1); setEditCmd("");
+    } catch (err) {
+      setError(err.message || "تعذّر تنفيذ التعديل.");
+    } finally { setEditing(false); }
+  }
+
+  function undo() { if (historyIdx > 0) setHistoryIdx(historyIdx - 1); }
+  function redo() { if (historyIdx < history.length - 1) setHistoryIdx(historyIdx + 1); }
+
+  const htmlString = data ? buildStandaloneHTML(data, tokens, images, form, country) : "";
+
+  async function copyHTML() {
+    try { await navigator.clipboard.writeText(htmlString); setCopyStatus("تم نسخ الكود ✓"); }
+    catch { setCopyStatus("تعذّر النسخ التلقائي، استخدم زر التحميل"); }
+    setTimeout(() => setCopyStatus(""), 2500);
+  }
+  function downloadHTML() {
+    const blob = new Blob([htmlString], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = (form.name || "landing-page").trim().replace(/\s+/g, "-") + ".html";
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  }
+
+  return (
+    <div dir="rtl" style={{ fontFamily: "'Cairo', sans-serif", minHeight: "100vh", background: "#0B0F19" }}>
+      {step === "form" && <FormScreen form={form} setForm={setForm} images={images} onUpload={handleImageUpload} onRemoveImage={removeImage} error={error} onGenerate={handleGenerate} />}
+      {step === "loading" && <LoadingScreen stepIdx={genStepIdx} />}
+      {step === "preview" && data && (
+        <PreviewScreen data={data} tokens={tokens} images={images} form={form} country={country}
+          previewMode={previewMode} setPreviewMode={setPreviewMode}
+          editCmd={editCmd} setEditCmd={setEditCmd} onApplyEdit={handleApplyEdit} editing={editing}
+          canUndo={historyIdx > 0} canRedo={historyIdx < history.length - 1} onUndo={undo} onRedo={redo}
+          onCopy={copyHTML} onDownload={downloadHTML} copyStatus={copyStatus} error={error}
+          onBack={() => setStep("form")} />
+      )}
+    </div>
+  );
+}
+
+/* ============================== SCREENS ============================== */
+
+function FormScreen({ form, setForm, images, onUpload, onRemoveImage, error, onGenerate }) {
+  return (
+    <div style={{ maxWidth: 640, margin: "0 auto", padding: "48px 20px 80px" }} className="fade-in">
+      <div style={{ textAlign: "center", marginBottom: 40 }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 14px", borderRadius: 999, background: "#161E33", color: "#22D3EE", fontSize: 13, fontWeight: 600, marginBottom: 18 }}>
+          <Ico size={14}>✨</Ico> Arabic Landing AI
+        </div>
+        <h1 style={{ color: "#F1F5F9", fontSize: 30, fontWeight: 800, lineHeight: 1.4, margin: 0 }}>أنشئ صفحة هبوط احترافية لمنتجك بالذكاء الاصطناعي</h1>
+        <p style={{ color: "#8B96AC", fontSize: 15, marginTop: 10 }}>منتج + سعر + صور + دولة = صفحة هبوط جاهزة خلال أقل من دقيقة</p>
+      </div>
+      <div style={{ background: "#131A2A", border: "1px solid #202A42", borderRadius: 18, padding: 22, display: "grid", gap: 16 }}>
+        <Field label="اسم المنتج"><input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="مثال: سماعة بلوتوث لاسلكية" style={inputStyle} /></Field>
+        <Field label="سعر المنتج"><input type="number" value={form.price} onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))} placeholder="مثال: 149" style={inputStyle} /></Field>
+        <Field label="صور المنتج (حتى 4 صور)">
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+            {images.map((img, i) => (
+              <div key={i} style={{ position: "relative", width: 76, height: 76, borderRadius: 12, overflow: "hidden", border: "1px solid #202A42" }}>
+                <img src={img.dataUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                <button onClick={() => onRemoveImage(i)} style={{ position: "absolute", top: 3, left: 3, background: "rgba(0,0,0,.6)", border: "none", borderRadius: 6, color: "#fff", padding: 2, cursor: "pointer", display: "flex" }}><Ico size={12}>✕</Ico></button>
+              </div>
+            ))}
+            {images.length < 4 && (
+              <label style={{ width: 76, height: 76, borderRadius: 12, border: "1.5px dashed #2A3654", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#5B6478", gap: 4 }}>
+                <Ico size={18}>🖼️</Ico><span style={{ fontSize: 10 }}>رفع</span>
+                <input type="file" accept="image/*" multiple onChange={onUpload} style={{ display: "none" }} />
+              </label>
+            )}
+          </div>
+        </Field>
+        <Field label="وصف المنتج (اختياري)"><textarea value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder="اتركه فارغاً وسيقوم الذكاء الاصطناعي بكتابة وصف من الصور" rows={3} style={Object.assign({}, inputStyle, { resize: "vertical" })} /></Field>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <Field label="الدولة المستهدفة"><select value={form.countryCode} onChange={(e) => setForm((f) => ({ ...f, countryCode: e.target.value }))} style={inputStyle}>{COUNTRIES.map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}</select></Field>
+          <Field label="اللهجة"><select value={form.dialect} onChange={(e) => setForm((f) => ({ ...f, dialect: e.target.value }))} style={inputStyle}><option value="auto">تلقائي حسب الدولة</option>{COUNTRIES.map((c) => <option key={c.code} value={c.dialect}>{c.dialect}</option>)}</select></Field>
+        </div>
+        {error && <div style={{ color: "#F87171", fontSize: 13, background: "#2A1519", padding: "8px 12px", borderRadius: 8 }}>{error}</div>}
+        <button onClick={onGenerate} style={{ marginTop: 6, background: "linear-gradient(90deg,#3B82F6,#22D3EE)", border: "none", borderRadius: 12, color: "#04101C", fontWeight: 800, fontSize: 16, padding: "15px 20px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+          أنشئ صفحة الهبوط <span style={{ fontSize: 18 }}>🚀</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+function Field({ label, children }) { return <label style={{ display: "grid", gap: 6 }}><span style={{ color: "#B7C0D4", fontSize: 13, fontWeight: 600 }}>{label}</span>{children}</label>; }
+const inputStyle = { background: "#0E1526", border: "1px solid #202A42", borderRadius: 10, color: "#F1F5F9", padding: "11px 13px", fontSize: 14.5, outline: "none", width: "100%" };
+
+function LoadingScreen({ stepIdx }) {
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 22, padding: 20 }} className="fade-in">
+      <div style={{ width: 64, height: 64, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: "#131A2A", border: "1px solid #202A42" }}>
+        <Ico size={28} color="#22D3EE" style={{ animation: "spin 1s linear infinite" }}>⟳</Ico>
+      </div>
+      <div style={{ color: "#F1F5F9", fontWeight: 700, fontSize: 16 }}>{GEN_STEPS[stepIdx]}</div>
+      <div style={{ width: 220, height: 6, borderRadius: 4, overflow: "hidden", background: "#131A2A" }}>
+        <div className="shimmer" style={{ width: ((stepIdx + 1) / GEN_STEPS.length) * 100 + "%", height: "100%", background: "linear-gradient(90deg,#3B82F6,#22D3EE)", transition: "width .5s ease" }} />
+      </div>
+    </div>
+  );
+}
+
+function PreviewScreen(props) {
+  const { data, tokens, images, form, country, previewMode, setPreviewMode, editCmd, setEditCmd, onApplyEdit, editing, canUndo, canRedo, onUndo, onRedo, onCopy, onDownload, copyStatus, error, onBack } = props;
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+      <div style={{ position: "sticky", top: 0, zIndex: 20, background: "#0E1526", borderBottom: "1px solid #1D2740", padding: "10px 16px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <button onClick={onBack} style={toolBtn}>← مشروع جديد</button>
+        <div style={{ flex: 1 }} />
+        <button onClick={onUndo} disabled={!canUndo} style={Object.assign({}, toolBtn, { opacity: canUndo ? 1 : 0.4 })}><Ico size={14}>↶</Ico></button>
+        <button onClick={onRedo} disabled={!canRedo} style={Object.assign({}, toolBtn, { opacity: canRedo ? 1 : 0.4 })}><Ico size={14}>↷</Ico></button>
+        <div style={{ display: "flex", background: "#131A2A", borderRadius: 8, padding: 3, gap: 2 }}>
+          <button onClick={() => setPreviewMode("mobile")} style={Object.assign({}, segBtn, { background: previewMode === "mobile" ? "#22D3EE" : "transparent", color: previewMode === "mobile" ? "#04101C" : "#B7C0D4" })}><Ico size={14}>📱</Ico></button>
+          <button onClick={() => setPreviewMode("desktop")} style={Object.assign({}, segBtn, { background: previewMode === "desktop" ? "#22D3EE" : "transparent", color: previewMode === "desktop" ? "#04101C" : "#B7C0D4" })}><Ico size={14}>🖥️</Ico></button>
+        </div>
+        <button onClick={onCopy} style={toolBtn}><Ico size={14}>📋</Ico> نسخ HTML</button>
+        <button onClick={onDownload} style={Object.assign({}, toolBtn, { background: "#22D3EE", color: "#04101C", borderColor: "#22D3EE" })}><Ico size={14}>⬇️</Ico> تحميل HTML</button>
+      </div>
+      {copyStatus && <div style={{ textAlign: "center", color: "#6EE7B7", fontSize: 12, padding: "6px 0", background: "#0E1526" }}>{copyStatus}</div>}
+      <div style={{ background: "#0E1526", borderBottom: "1px solid #1D2740", padding: "10px 16px", display: "flex", gap: 8 }}>
+        <div style={{ flex: 1, position: "relative" }}>
+          <span style={{ position: "absolute", top: "50%", right: 12, transform: "translateY(-50%)" }}><Ico size={15} color="#5B6478">🪄</Ico></span>
+          <input value={editCmd} onChange={(e) => setEditCmd(e.target.value)} onKeyDown={(e) => e.key === "Enter" && onApplyEdit()} placeholder='مثال: "غيّر العنوان ليكون أكثر إقناعاً" أو "احذف آراء العملاء"' style={Object.assign({}, inputStyle, { paddingRight: 34 })} disabled={editing} />
+        </div>
+        <button onClick={onApplyEdit} disabled={editing || !editCmd.trim()} style={Object.assign({}, toolBtn, { background: "#3B82F6", color: "#fff", borderColor: "#3B82F6", opacity: editing || !editCmd.trim() ? 0.5 : 1 })}>
+          <Ico size={14} style={editing ? { animation: "spin 1s linear infinite" } : {}}>{editing ? "⟳" : "➤"}</Ico>
+        </button>
+      </div>
+      {error && <div style={{ color: "#F87171", fontSize: 12, textAlign: "center", padding: "6px 0", background: "#0E1526" }}>{error}</div>}
+      <div style={{ flex: 1, background: "#05070C", padding: "28px 16px", display: "flex", justifyContent: "center" }}>
+        <div style={{ width: previewMode === "mobile" ? 390 : "100%", maxWidth: previewMode === "mobile" ? 390 : 1100, borderRadius: previewMode === "mobile" ? 30 : 16, overflow: "hidden", border: previewMode === "mobile" ? "8px solid #1B1F2B" : "1px solid #1D2740", boxShadow: "0 30px 60px rgba(0,0,0,.5)", height: "fit-content" }}>
+          <LandingPage data={data} tokens={tokens} images={images} form={form} country={country} />
+        </div>
+      </div>
+    </div>
+  );
+}
+const toolBtn = { display: "flex", alignItems: "center", gap: 6, background: "#131A2A", border: "1px solid #202A42", color: "#E2E8F5", fontSize: 12.5, fontWeight: 600, padding: "8px 12px", borderRadius: 8, cursor: "pointer" };
+const segBtn = { border: "none", borderRadius: 6, padding: "6px 9px", cursor: "pointer", display: "flex" };
+
+/* ============================== LANDING PAGE RENDER ============================== */
+
+function LandingPage({ data, tokens, images, form, country }) {
+  const sections = data.sections || [];
+  const heroImg = images[0] && images[0].dataUrl;
+  const [secondsLeft, setSecondsLeft] = useState(3600 * 2 + 1500);
+  useEffect(() => { const t = setInterval(() => setSecondsLeft((s) => (s > 0 ? s - 1 : 0)), 1000); return () => clearInterval(t); }, []);
+  const hh = String(Math.floor(secondsLeft / 3600)).padStart(2, "0");
+  const mm = String(Math.floor((secondsLeft % 3600) / 60)).padStart(2, "0");
+  const ss = String(secondsLeft % 60).padStart(2, "0");
+
+  return (
+    <div dir="rtl" style={{ background: tokens.bg, color: tokens.text, fontFamily: "'Cairo', sans-serif", position: "relative" }}>
+      <section style={{ padding: "28px 20px 24px" }}>
+        {data.hero && data.hero.eyebrow && <div style={{ display: "inline-block", fontSize: 12, fontWeight: 700, color: tokens.accent, background: tokens.surface, padding: "4px 12px", borderRadius: 999, marginBottom: 12 }}>{data.hero.eyebrow}</div>}
+        <h1 style={{ fontSize: 25, fontWeight: 900, lineHeight: 1.5, margin: "0 0 10px" }}>{data.hero && data.hero.headline}</h1>
+        <p style={{ fontSize: 14.5, color: tokens.muted, margin: "0 0 18px", lineHeight: 1.8 }}>{data.hero && data.hero.subheadline}</p>
+        {heroImg && <div style={{ borderRadius: tokens.radius, overflow: "hidden", marginBottom: 18, background: tokens.surface }}><img src={heroImg} alt={form.name} style={{ width: "100%", display: "block", maxHeight: 320, objectFit: "cover" }} /></div>}
+        <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 10 }}>
+          <span style={{ fontSize: 26, fontWeight: 900, color: tokens.primary }}>{formatPrice(form.price, country)}</span>
+          {data.hero && data.hero.priceOld && <span style={{ fontSize: 15, color: tokens.muted, textDecoration: "line-through" }}>{formatPrice(data.hero.priceOld, country)}</span>}
+          {data.hero && data.hero.discountPercent && <span style={{ fontSize: 12, fontWeight: 800, color: "#fff", background: "#E63946", padding: "3px 9px", borderRadius: 999 }}>خصم {data.hero.discountPercent}%</span>}
+        </div>
+        {data.hero && data.hero.badges && !!data.hero.badges.length && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 18 }}>
+            {data.hero.badges.map((b, i) => <span key={i} style={{ fontSize: 11.5, fontWeight: 600, color: tokens.muted, background: tokens.surface, padding: "5px 10px", borderRadius: 999, display: "flex", alignItems: "center", gap: 4 }}><Ico size={12} color={tokens.accent}>✓</Ico> {b}</span>)}
+          </div>
+        )}
+        <a href="#order" style={{ display: "block", textAlign: "center", background: tokens.primary, color: tokens.mood === "dark" ? tokens.bg : "#fff", fontWeight: 800, fontSize: 15.5, padding: "15px", borderRadius: tokens.radius, textDecoration: "none" }}>{(data.hero && data.hero.ctaText) || "اطلب الآن"}</a>
+      </section>
+
+      {sections.includes("urgency") && data.urgency && (
+        <section style={{ padding: "0 20px 24px" }}>
+          <div style={{ background: tokens.card, border: "1px solid " + tokens.accent + "33", borderRadius: tokens.radius, padding: "14px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ fontSize: 12.5, fontWeight: 700 }}>{data.urgency.stockLabel}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 5, fontVariantNumeric: "tabular-nums" }}><Ico size={14} color={tokens.accent}>⏰</Ico><span style={{ fontSize: 13, fontWeight: 800, color: tokens.accent }}>{hh}:{mm}:{ss}</span></div>
+          </div>
+        </section>
+      )}
+
+      {sections.includes("features") && data.features && (
+        <Section title={data.features.title} tokens={tokens}>
+          <div style={{ display: "grid", gap: 12 }}>
+            {(data.features.items || []).map((it, i) => (
+              <div key={i} style={{ display: "flex", gap: 12, background: tokens.card, borderRadius: tokens.radius, padding: 14 }}>
+                <ContentIcon name={it.icon} size={20} color={tokens.primary} style={{ flexShrink: 0, marginTop: 2 }} />
+                <div><div style={{ fontWeight: 700, fontSize: 14 }}>{it.title}</div><div style={{ fontSize: 12.5, color: tokens.muted, marginTop: 3, lineHeight: 1.7 }}>{it.desc}</div></div>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {sections.includes("benefits") && data.benefits && (
+        <Section title={data.benefits.title} tokens={tokens}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            {(data.benefits.items || []).map((it, i) => (
+              <div key={i} style={{ background: tokens.card, borderRadius: tokens.radius, padding: 14, textAlign: "center" }}>
+                <ContentIcon name={it.icon} size={20} color={tokens.accent} style={{ margin: "0 auto 8px" }} />
+                <div style={{ fontWeight: 700, fontSize: 13 }}>{it.title}</div>
+                <div style={{ fontSize: 11.5, color: tokens.muted, marginTop: 4, lineHeight: 1.6 }}>{it.desc}</div>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {sections.includes("howToUse") && data.howToUse && (
+        <Section title={data.howToUse.title} tokens={tokens}>
+          <div style={{ display: "grid", gap: 10 }}>
+            {(data.howToUse.steps || []).map((s, i) => (
+              <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                <div style={{ width: 24, height: 24, borderRadius: "50%", background: tokens.primary, color: "#fff", fontSize: 12, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{i + 1}</div>
+                <div style={{ fontSize: 13, lineHeight: 1.8, paddingTop: 2 }}>{s}</div>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {sections.includes("specs") && data.specs && (
+        <Section title={data.specs.title} tokens={tokens}>
+          <div style={{ background: tokens.card, borderRadius: tokens.radius, overflow: "hidden" }}>
+            {(data.specs.items || []).map((it, i) => (
+              <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "10px 14px", borderBottom: i < data.specs.items.length - 1 ? "1px solid " + tokens.bg : "none", fontSize: 12.5 }}>
+                <span style={{ color: tokens.muted }}>{it.label}</span><span style={{ fontWeight: 700 }}>{it.value}</span>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {sections.includes("testimonials") && data.testimonials && (
+        <Section title={data.testimonials.title} tokens={tokens} note={data.testimonials.note}>
+          <div style={{ display: "grid", gap: 10 }}>
+            {(data.testimonials.items || []).map((it, i) => (
+              <div key={i} style={{ background: tokens.card, borderRadius: tokens.radius, padding: 14 }}>
+                <div style={{ display: "flex", gap: 2, marginBottom: 6 }}>{Array.from({ length: it.rating || 5 }).map((_, s) => <Ico key={s} size={12} color={tokens.accent}>⭐</Ico>)}</div>
+                <div style={{ fontSize: 12.5, lineHeight: 1.7, color: tokens.text }}>{it.text}</div>
+                <div style={{ fontSize: 11, color: tokens.muted, marginTop: 6, fontWeight: 700 }}>{it.name}</div>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {sections.includes("faq") && data.faq && (
+        <Section title={data.faq.title} tokens={tokens}>
+          <div style={{ display: "grid", gap: 8 }}>{(data.faq.items || []).map((it, i) => <FaqItem key={i} q={it.q} a={it.a} tokens={tokens} />)}</div>
+        </Section>
+      )}
+
+      <section id="order" style={{ padding: "24px 20px" }}>
+        <div style={{ background: tokens.card, borderRadius: tokens.radius, padding: 18 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 800, margin: "0 0 14px" }}>{(data.orderForm && data.orderForm.title) || "أكمل طلبك الآن"}</h3>
+          <div style={{ display: "grid", gap: 10 }}>
+            {["الاسم الكامل", "رقم الهاتف", "المدينة", "العنوان بالتفصيل"].map((ph, i) => <input key={i} placeholder={ph} readOnly style={{ background: tokens.bg, border: "1px solid " + tokens.muted + "44", borderRadius: 8, padding: "11px 12px", color: tokens.text, fontSize: 13 }} />)}
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: 12.5, color: tokens.muted }}>الكمية</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, background: tokens.bg, borderRadius: 8, padding: "4px 10px", border: "1px solid " + tokens.muted + "44" }}><span>-</span><span style={{ fontWeight: 700 }}>1</span><span>+</span></div>
+            </div>
+            <button style={{ background: tokens.primary, color: tokens.mood === "dark" ? tokens.bg : "#fff", fontWeight: 800, fontSize: 15, padding: "14px", borderRadius: tokens.radius, border: "none", marginTop: 4 }}>{(data.orderForm && data.orderForm.buttonText) || "اطلب الآن"}</button>
+          </div>
+        </div>
+      </section>
+
+      {data.finalCta && (
+        <section style={{ padding: "10px 20px 90px", textAlign: "center" }}>
+          <h3 style={{ fontSize: 17, fontWeight: 800, marginBottom: 14 }}>{data.finalCta.headline}</h3>
+          <a href="#order" style={{ display: "inline-block", background: tokens.accent, color: tokens.bg, fontWeight: 800, padding: "13px 26px", borderRadius: tokens.radius, textDecoration: "none", fontSize: 14 }}>{data.finalCta.buttonText}</a>
+        </section>
+      )}
+
+      <div style={{ position: "sticky", bottom: 0, background: tokens.surface, borderTop: "1px solid " + tokens.muted + "33", padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+        <div><div style={{ fontSize: 15, fontWeight: 900, color: tokens.primary }}>{formatPrice(form.price, country)}</div></div>
+        <a href="#order" style={{ background: tokens.primary, color: tokens.mood === "dark" ? tokens.bg : "#fff", fontWeight: 800, fontSize: 13, padding: "10px 20px", borderRadius: 999, textDecoration: "none" }}>{(data.hero && data.hero.ctaText) || "اطلب الآن"}</a>
+      </div>
+    </div>
+  );
+}
+
+function Section({ title, tokens, note, children }) {
+  return (
+    <section style={{ padding: "10px 20px 24px" }}>
+      {title && <h2 style={{ fontSize: 17, fontWeight: 800, margin: "0 0 4px" }}>{title}</h2>}
+      {note && <p style={{ fontSize: 10.5, color: tokens.muted, margin: "0 0 12px" }}>{note}</p>}
+      <div style={{ marginTop: note ? 0 : 12 }}>{children}</div>
+    </section>
+  );
+}
+function FaqItem({ q, a, tokens }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ background: tokens.card, borderRadius: tokens.radius, overflow: "hidden" }}>
+      <button onClick={() => setOpen((o) => !o)} style={{ width: "100%", background: "none", border: "none", padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", color: tokens.text, fontFamily: "inherit" }}>
+        <span style={{ fontSize: 13, fontWeight: 700, textAlign: "right" }}>{q}</span>
+        <Ico size={16} color={tokens.muted} style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform .2s", flexShrink: 0 }}>▾</Ico>
+      </button>
+      {open && <div style={{ padding: "0 14px 14px", fontSize: 12.5, color: tokens.muted, lineHeight: 1.7 }}>{a}</div>}
+    </div>
+  );
+}
+
+/* ============================== STANDALONE HTML EXPORT ============================== */
+
+function buildStandaloneHTML(data, tokens, images, form, country) {
+  const heroImg = (images[0] && images[0].dataUrl) || "";
+  const sections = data.sections || [];
+  const esc = (s) => String(s == null ? "" : s).replace(/</g, "&lt;");
+  const badgesHtml = (data.hero && data.hero.badges || []).map((b) => '<span class="badge">' + esc(b) + '</span>').join("");
+  const featuresHtml = sections.includes("features") && data.features ? '<section class="sec"><h2>' + esc(data.features.title) + '</h2><div class="grid1">' + (data.features.items || []).map((it) => '<div class="card row"><div><div class="t">' + esc(it.title) + '</div><div class="d">' + esc(it.desc) + '</div></div></div>').join("") + '</div></section>' : "";
+  const benefitsHtml = sections.includes("benefits") && data.benefits ? '<section class="sec"><h2>' + esc(data.benefits.title) + '</h2><div class="grid2">' + (data.benefits.items || []).map((it) => '<div class="card center"><div class="t">' + esc(it.title) + '</div><div class="d">' + esc(it.desc) + '</div></div>').join("") + '</div></section>' : "";
+  const howToHtml = sections.includes("howToUse") && data.howToUse ? '<section class="sec"><h2>' + esc(data.howToUse.title) + '</h2>' + (data.howToUse.steps || []).map((s, i) => '<div class="step"><span class="num">' + (i + 1) + '</span><span>' + esc(s) + '</span></div>').join("") + '</section>' : "";
+  const specsHtml = sections.includes("specs") && data.specs ? '<section class="sec"><h2>' + esc(data.specs.title) + '</h2><div class="card">' + (data.specs.items || []).map((it) => '<div class="spec-row"><span class="muted">' + esc(it.label) + '</span><span class="bold">' + esc(it.value) + '</span></div>').join("") + '</div></section>' : "";
+  const testimonialsHtml = sections.includes("testimonials") && data.testimonials ? '<section class="sec"><h2>' + esc(data.testimonials.title) + '</h2><p class="note">' + esc(data.testimonials.note) + '</p>' + (data.testimonials.items || []).map((it) => '<div class="card"><div class="d">' + esc(it.text) + '</div><div class="name">' + esc(it.name) + '</div></div>').join("") + '</section>' : "";
+  const faqHtml = sections.includes("faq") && data.faq ? '<section class="sec"><h2>' + esc(data.faq.title) + '</h2>' + (data.faq.items || []).map((it) => '<details class="card"><summary>' + esc(it.q) + '</summary><p class="d">' + esc(it.a) + '</p></details>').join("") + '</section>' : "";
+  const urgencyHtml = sections.includes("urgency") && data.urgency ? '<section class="sec"><div class="card row spread"><span class="bold">' + esc(data.urgency.stockLabel) + '</span><span class="accent">' + esc(data.urgency.countdownLabel) + '</span></div></section>' : "";
+  const ctaText = esc((data.hero && data.hero.ctaText) || "اطلب الآن");
+
+  return '<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />' +
+    '<title>' + esc((data.seo && data.seo.title) || form.name) + '</title>' +
+    '<meta name="description" content="' + esc((data.seo && data.seo.description) || "") + '" />' +
+    '<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">' +
+    '<style>:root{--bg:' + tokens.bg + ';--surface:' + tokens.surface + ';--card:' + tokens.card + ';--primary:' + tokens.primary + ';--accent:' + tokens.accent + ';--text:' + tokens.text + ';--muted:' + tokens.muted + ';--radius:' + tokens.radius + ';}' +
+    '*{box-sizing:border-box;margin:0;padding:0;}body{background:var(--bg);color:var(--text);font-family:"Cairo",sans-serif;line-height:1.5;}.wrap{max-width:480px;margin:0 auto;}.hero{padding:28px 20px 24px;}' +
+    '.eyebrow{display:inline-block;font-size:12px;font-weight:700;color:var(--accent);background:var(--surface);padding:4px 12px;border-radius:999px;margin-bottom:12px;}h1{font-size:25px;font-weight:900;margin-bottom:10px;}' +
+    '.sub{font-size:14.5px;color:var(--muted);margin-bottom:18px;}.hero img{width:100%;border-radius:var(--radius);margin-bottom:18px;display:block;max-height:320px;object-fit:cover;}' +
+    '.price-row{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;}.price{font-size:26px;font-weight:900;color:var(--primary);}.old{font-size:15px;color:var(--muted);text-decoration:line-through;}' +
+    '.discount{font-size:12px;font-weight:800;color:#fff;background:#E63946;padding:3px 9px;border-radius:999px;}.badges{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;}' +
+    '.badge{font-size:11.5px;font-weight:600;color:var(--muted);background:var(--surface);padding:5px 10px;border-radius:999px;}.cta{display:block;text-align:center;background:var(--primary);color:' + (tokens.mood === "dark" ? tokens.bg : "#fff") + ';font-weight:800;font-size:15.5px;padding:15px;border-radius:var(--radius);text-decoration:none;}' +
+    '.sec{padding:10px 20px 24px;}.sec h2{font-size:17px;font-weight:800;margin-bottom:12px;}.grid1{display:grid;gap:12px;}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}' +
+    '.card{background:var(--card);border-radius:var(--radius);padding:14px;margin-bottom:10px;}.row{display:flex;gap:12px;}.spread{display:flex;justify-content:space-between;align-items:center;}.center{text-align:center;}' +
+    '.t{font-weight:700;font-size:14px;}.d{font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.7;}.step{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;}' +
+    '.num{width:24px;height:24px;border-radius:50%;background:var(--primary);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}' +
+    '.spec-row{display:flex;justify-content:space-between;padding:8px 0;font-size:12.5px;border-bottom:1px solid var(--bg);}.bold{font-weight:700;}.muted{color:var(--muted);}.accent{color:var(--accent);font-weight:800;}' +
+    '.note{font-size:10.5px;color:var(--muted);margin-bottom:12px;}.name{font-size:11px;color:var(--muted);margin-top:6px;font-weight:700;}summary{cursor:pointer;font-size:13px;font-weight:700;}' +
+    '.order{padding:24px 20px;}.order .card input{width:100%;background:var(--bg);border:1px solid rgba(140,140,140,.3);border-radius:8px;padding:11px 12px;color:var(--text);font-size:13px;margin-bottom:10px;font-family:inherit;}' +
+    '.order button{width:100%;background:var(--primary);color:' + (tokens.mood === "dark" ? tokens.bg : "#fff") + ';font-weight:800;font-size:15px;padding:14px;border-radius:var(--radius);border:none;cursor:pointer;font-family:inherit;}' +
+    '.final{padding:10px 20px 90px;text-align:center;}.final h3{font-size:17px;font-weight:800;margin-bottom:14px;}.final a{display:inline-block;background:var(--accent);color:var(--bg);font-weight:800;padding:13px 26px;border-radius:var(--radius);text-decoration:none;font-size:14px;}' +
+    '.sticky{position:sticky;bottom:0;background:var(--surface);border-top:1px solid rgba(140,140,140,.3);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;}.sticky .price{font-size:15px;}' +
+    '.sticky a{background:var(--primary);color:' + (tokens.mood === "dark" ? tokens.bg : "#fff") + ';font-weight:800;font-size:13px;padding:10px 20px;border-radius:999px;text-decoration:none;}</style></head><body><div class="wrap">' +
+    '<section class="hero">' + (data.hero && data.hero.eyebrow ? '<span class="eyebrow">' + esc(data.hero.eyebrow) + '</span>' : "") +
+    '<h1>' + esc(data.hero && data.hero.headline) + '</h1><p class="sub">' + esc(data.hero && data.hero.subheadline) + '</p>' +
+    (heroImg ? '<img src="' + heroImg + '" alt="' + esc(form.name) + '" />' : "") +
+    '<div class="price-row"><span class="price">' + esc(formatPrice(form.price, country)) + '</span>' +
+    (data.hero && data.hero.priceOld ? '<span class="old">' + esc(formatPrice(data.hero.priceOld, country)) + '</span>' : "") +
+    (data.hero && data.hero.discountPercent ? '<span class="discount">خصم ' + esc(data.hero.discountPercent) + '%</span>' : "") + '</div>' +
+    '<div class="badges">' + badgesHtml + '</div><a class="cta" href="#order">' + ctaText + '</a></section>' +
+    urgencyHtml + featuresHtml + benefitsHtml + howToHtml + specsHtml + testimonialsHtml + faqHtml +
+    '<section class="order" id="order"><div class="card"><h3 style="font-size:16px;font-weight:800;margin-bottom:14px;">' + esc((data.orderForm && data.orderForm.title) || "أكمل طلبك الآن") + '</h3>' +
+    '<input placeholder="الاسم الكامل" /><input placeholder="رقم الهاتف" /><input placeholder="المدينة" /><input placeholder="العنوان بالتفصيل" />' +
+    '<button type="button">' + esc((data.orderForm && data.orderForm.buttonText) || "اطلب الآن") + '</button></div></section>' +
+    (data.finalCta ? '<section class="final"><h3>' + esc(data.finalCta.headline) + '</h3><a href="#order">' + esc(data.finalCta.buttonText) + '</a></section>' : "") +
+    '<div class="sticky"><span class="price">' + esc(formatPrice(form.price, country)) + '</span><a href="#order">' + ctaText + '</a></div></div></body></html>';
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+</script>
+</body>
+</html>
