@@ -23,7 +23,6 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   input, select, textarea { font-family: 'Cairo', sans-serif; }
   input::placeholder, textarea::placeholder { color: #5B6478; }
-  #api-warning { display:none; }
 </style>
 </head>
 <body>
@@ -59,54 +58,18 @@ const COUNTRIES = [
   { code: "KM", name: "جزر القمر", dialect: "القمرية", currency: "فرنك قمري" },
 ];
 
-const DESIGN_SYSTEMS = {
-  Tech: { bg: "#0B0F19", surface: "#131A2A", card: "#161E33", primary: "#3B82F6", accent: "#22D3EE", text: "#F1F5F9", muted: "#8B96AC", radius: "10px", mood: "dark" },
-  Beauty: { bg: "#FDF6F2", surface: "#FFFFFF", card: "#FFF9F6", primary: "#B8860B", accent: "#E7A6A0", text: "#3A2A26", muted: "#8C7871", radius: "22px", mood: "light" },
-  Health: { bg: "#F0FBF6", surface: "#FFFFFF", card: "#F6FDFA", primary: "#0E9D77", accent: "#6FD3B4", text: "#0F3A2E", muted: "#5C8578", radius: "16px", mood: "light" },
-  Home: { bg: "#FBF4EA", surface: "#FFFFFF", card: "#FFFCF7", primary: "#B5602B", accent: "#7C8C5E", text: "#3A2C20", muted: "#8B7A69", radius: "14px", mood: "light" },
-  Fashion: { bg: "#0A0A0A", surface: "#161616", card: "#1D1D1D", primary: "#FFFFFF", accent: "#D4AF37", text: "#F4F4F4", muted: "#9C9C9C", radius: "2px", mood: "dark" },
-  Kids: { bg: "#FFFAEA", surface: "#FFFFFF", card: "#FFF4D6", primary: "#FF6B6B", accent: "#3FBFB3", text: "#332F3D", muted: "#7A7688", radius: "26px", mood: "light" },
-  Car: { bg: "#111214", surface: "#1A1C1F", card: "#212327", primary: "#E63946", accent: "#F2A93B", text: "#F2F2F2", muted: "#9A9CA3", radius: "6px", mood: "dark" },
-  Gadgets: { bg: "#0E0A20", surface: "#181031", card: "#1F1640", primary: "#8B5CF6", accent: "#00E5C7", text: "#F3F0FF", muted: "#A79DCB", radius: "16px", mood: "dark" },
-  Tools: { bg: "#F3F3F1", surface: "#FFFFFF", card: "#FAFAF9", primary: "#374151", accent: "#F59E0B", text: "#1F2933", muted: "#6B7280", radius: "8px", mood: "light" },
-  Lifestyle: { bg: "#FAF6EF", surface: "#FFFFFF", card: "#FFFDF9", primary: "#A8763E", accent: "#6B8E7F", text: "#372F27", muted: "#8B8178", radius: "18px", mood: "light" },
-};
-
-// كل نظام تصميم عندو 4 توليفات ألوان بديلة، باش ما يبقاش نفس اللون ديما لنفس فئة المنتج
-const DESIGN_VARIANTS = {
-  Tech: [{ primary: "#3B82F6", accent: "#22D3EE" }, { primary: "#6366F1", accent: "#34D399" }, { primary: "#0EA5E9", accent: "#F472B6" }, { primary: "#2563EB", accent: "#FBBF24" }],
-  Beauty: [{ primary: "#B8860B", accent: "#E7A6A0" }, { primary: "#C2417A", accent: "#F2C6B4" }, { primary: "#9A6B4F", accent: "#E8B4BC" }, { primary: "#A0785A", accent: "#D9A3C7" }],
-  Health: [{ primary: "#0E9D77", accent: "#6FD3B4" }, { primary: "#0891B2", accent: "#86EFAC" }, { primary: "#16A34A", accent: "#5EEAD4" }, { primary: "#0D9488", accent: "#A7F3D0" }],
-  Home: [{ primary: "#B5602B", accent: "#7C8C5E" }, { primary: "#A16207", accent: "#78716C" }, { primary: "#9F5B3F", accent: "#A3B18A" }, { primary: "#8B5E34", accent: "#6B8E7F" }],
-  Fashion: [{ primary: "#FFFFFF", accent: "#D4AF37" }, { primary: "#FFFFFF", accent: "#E63946" }, { primary: "#FFFFFF", accent: "#22D3EE" }, { primary: "#FFFFFF", accent: "#EC4899" }],
-  Kids: [{ primary: "#FF6B6B", accent: "#3FBFB3" }, { primary: "#F59E0B", accent: "#8B5CF6" }, { primary: "#EC4899", accent: "#34D399" }, { primary: "#6366F1", accent: "#FBBF24" }],
-  Car: [{ primary: "#E63946", accent: "#F2A93B" }, { primary: "#3B82F6", accent: "#E63946" }, { primary: "#F59E0B", accent: "#374151" }, { primary: "#DC2626", accent: "#0EA5E9" }],
-  Gadgets: [{ primary: "#8B5CF6", accent: "#00E5C7" }, { primary: "#EC4899", accent: "#22D3EE" }, { primary: "#F59E0B", accent: "#8B5CF6" }, { primary: "#3B82F6", accent: "#F472B6" }],
-  Tools: [{ primary: "#374151", accent: "#F59E0B" }, { primary: "#4B5563", accent: "#DC2626" }, { primary: "#1F2933", accent: "#0EA5E9" }, { primary: "#334155", accent: "#F97316" }],
-  Lifestyle: [{ primary: "#A8763E", accent: "#6B8E7F" }, { primary: "#B45309", accent: "#7C9885" }, { primary: "#9A6B4F", accent: "#8FA998" }, { primary: "#8B6F47", accent: "#5C8578" }],
-};
-function withColorVariant(baseTokens, designSystemName, variantIndex) {
-  const variants = DESIGN_VARIANTS[designSystemName] || DESIGN_VARIANTS.Lifestyle;
-  const v = variants[variantIndex % variants.length];
-  return Object.assign({}, baseTokens, { primary: v.primary, accent: v.accent });
-}
-
-const EMOJI = {
-  check: "✅", star: "⭐", truck: "🚚", shield: "🛡️", clock: "⏰", heart: "❤️", zap: "⚡",
-  gift: "🎁", phone: "📞", battery: "🔋", drop: "💧", award: "🏆", package: "📦",
-  refresh: "🔄", sparkle: "✨",
-};
-function Ico({ children, size, color, style }) {
-  return <span style={Object.assign({ fontSize: size || 16, lineHeight: 1, display: "inline-flex", color: color || "inherit" }, style || {})}>{children}</span>;
-}
-function ContentIcon({ name, size, color, style }) {
-  return <Ico size={size} color={color} style={style}>{EMOJI[name] || "✨"}</Ico>;
-}
-
-const GEN_STEPS = [
-  "جاري تحليل صور المنتج…", "جاري تحديد الفئة والجمهور المستهدف…", "جاري اختيار نظام التصميم المناسب…",
-  "جاري كتابة المحتوى التسويقي باللهجة المحلية…", "جاري بناء أقسام الصفحة…", "اللمسات الأخيرة…",
+// توجيهات أسلوب عشوائية باش كل توليد يجي بهوية بصرية مختلفة
+const STYLE_SEEDS = [
+  "Glassmorphism فاخر: خلفية داكنة، بطاقات زجاجية شفافة بحواف مضيئة، لون نيون أزرق/سماوي مهيمن",
+  "تدرجات دافئة حيوية: برتقالي وأصفر ذهبي متدرج، Shimmer bar متحرك، خلفية فاتحة نظيفة",
+  "فخامة داكنة: خلفية سوداء/كحلية عميقة، لمسات ذهبية أو نحاسية، طباعة أنيقة، إحساس Premium",
+  "مرح وحيوية: ألوان زاهية متعددة (وردي، تركواز، أصفر)، أشكال دائرية عائمة متحركة بخفة، طاقة إيجابية",
+  "مينيمال أبيض عصري: خلفية بيضاء/رمادي فاتح جداً، لون تمييز واحد قوي فقط، مساحات بيضاء واسعة، طباعة Bold",
+  "تقني نيون: خلفية بنفسجية/كحلية داكنة جداً، توهج نيون سماوي أو وردي، خطوط هندسية دقيقة، إحساس مستقبلي",
+  "طبيعي دافئ: ألوان ترابية (بيج، أخضر زيتوني، بني فاتح)، خلفية فاتحة هادئة، إحساس عضوي وراقي",
 ];
+
+function pickStyleSeed() { return STYLE_SEEDS[Math.floor(Math.random() * STYLE_SEEDS.length)]; }
 
 /* ============================== HELPERS ============================== */
 
@@ -127,70 +90,70 @@ function formatPrice(value, country) {
   if (Number.isNaN(n)) return value + " " + country.currency;
   return n.toLocaleString("en-US") + " " + country.currency;
 }
-function stripToJSON(text) {
+function extractHTML(text) {
   let t = (text || "").trim();
-  t = t.replace(/^```json/i, "").replace(/^```/, "").replace(/```$/, "").trim();
-  const s = t.indexOf("{"), e = t.lastIndexOf("}");
-  if (s !== -1 && e !== -1) t = t.slice(s, e + 1);
-  return JSON.parse(t);
+  t = t.replace(/^```html/i, "").replace(/^```/, "").replace(/```\s*$/i, "").trim();
+  const startIdx = t.search(/<!DOCTYPE html>|<html/i);
+  if (startIdx > 0) t = t.slice(startIdx);
+  const lower = t.toLowerCase();
+  const endIdx = lower.lastIndexOf("</html>");
+  if (endIdx !== -1) t = t.slice(0, endIdx + 7);
+  return t;
 }
-async function callClaude(content) {
-  // يتصل بالـ Backend الخاص بنا (api/generate.js) بدل الاتصال المباشر بـ Anthropic.
-  // مفتاح الـ API مخبّأ فالسيرفر (Environment Variable) وما ظاهرش هنا فالفرونت-إند.
+function injectImages(html, images) {
+  let out = html;
+  for (let i = 0; i < 4; i++) {
+    const token = "IMAGE_" + (i + 1) + "_PLACEHOLDER";
+    const replacement = images[i] ? images[i].dataUrl : "";
+    out = out.split(token).join(replacement);
+  }
+  return out;
+}
+
+async function callClaude(content, maxTokens) {
   const response = await fetch("/api/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ content }),
+    body: JSON.stringify({ content, max_tokens: maxTokens }),
   });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || "تعذّر الاتصال بمحرك الذكاء الاصطناعي.");
   if (!data.text) throw new Error("لم يصل رد نصي من المحرك");
-  return stripToJSON(data.text);
+  return data.text;
 }
 
-const SCHEMA_INSTRUCTIONS = `
-أنت محرك توليد صفحات هبوط (Landing Pages) للتجارة الإلكترونية في العالم العربي.
-أعد ردك بصيغة JSON صِرفة فقط، بدون أي نص قبله أو بعده، وبدون Markdown fences.
+function buildCreativePrompt(form, country, imagesCount, styleSeed, extraInstruction) {
+  return `أنت مصمم Landing Pages خبير متخصص فالتجارة الإلكترونية العربية، بمستوى احترافي عالمي (بحال أفضل صفحات الإعلانات المدفوعة على Facebook/TikTok).
 
-الشكل المطلوب بالضبط:
-{
-  "designSystem": "one of: Tech|Beauty|Health|Home|Fashion|Kids|Car|Gadgets|Tools|Lifestyle",
-  "sections": ["array subset/order from: features,benefits,howToUse,specs,testimonials,faq,urgency"],
-  "hero": { "eyebrow": "...", "headline": "...", "subheadline": "...", "priceOld": "...", "discountPercent": "...", "ctaText": "...", "badges": ["..."] },
-  "features": { "title": "...", "items": [ { "icon": "check|star|truck|shield|clock|heart|zap|gift|phone|battery|drop|award|package|refresh|sparkle", "title": "...", "desc": "..." } ] },
-  "benefits": { "title": "...", "items": [ { "icon": "...", "title": "...", "desc": "..." } ] },
-  "howToUse": { "title": "...", "steps": ["...", "..."] },
-  "specs": { "title": "...", "items": [ { "label": "...", "value": "..." } ] },
-  "testimonials": { "title": "...", "note": "هذه آراء تجريبية Placeholder للمعاينة", "items": [ { "name": "...", "text": "...", "rating": 5 } ] },
-  "faq": { "title": "...", "items": [ { "q": "...", "a": "..." } ] },
-  "urgency": { "countdownLabel": "...", "stockLabel": "..." },
-  "orderForm": { "title": "...", "buttonText": "..." },
-  "finalCta": { "headline": "...", "buttonText": "..." },
-  "seo": { "title": "...", "description": "..." }
-}
+مهمتك: صمم صفحة هبوط HTML كاملة ومستقلة (بكل الـ CSS جوا وسم <style>)، احترافية جداً وجميلة بصرياً، لهاد المنتج:
 
-قواعد مهمة:
-- اختر فقط الأقسام المناسبة فعلاً لطبيعة هذا المنتج تحديدا، لا تُدرج قسماً لا داعي له.
-- اكتب محتوى محدداً بخصائص المنتج الظاهرة في الصور، لا تستخدم عبارات عامة مثل "منتج رائع وعالي الجودة".
-- التزم بلهجة الدولة المطلوبة في كل نصوص الأزرار والعناوين المخاطبة للعميل، بشكل طبيعي غير متكلف.
-- لا تخترع مراجعات عملاء على أنها حقيقية؛ استخدمها كمحتوى Placeholder واضح عبر حقل note.
-- لا تُدرج ادعاءات طبية أو علاجية غير مثبتة إن كان المنتج تجميلياً أو صحياً.
-- priceOld و discountPercent اجعلهما فارغين "" إن لم يكن هناك خصم واضح من السياق.
-`.trim();
+- اسم المنتج: ${form.name}
+- السعر: ${form.price} ${country.currency}
+- الدولة المستهدفة: ${country.name}
+- اللهجة المطلوبة: ${form.dialect === "auto" ? country.dialect + " (تلقائي)" : form.dialect}
+- وصف من المستخدم (استنتج من الصور إذا فارغ): ${form.description || "(لا يوجد، استنتج من الصور المرفقة)"}
+- عدد الصور المتوفرة: ${imagesCount}
+- فورم الطلب: ${form.includeOrderForm ? "ادرج فورم طلب بسيط (الاسم، الهاتف، المدينة، العنوان) قبل زر التأكيد" : "لا تدرج أي فورم أو حقول إدخال، فقط أزرار CTA واضحة"}
 
-function buildGeneratePrompt(form, country) {
-  return SCHEMA_INSTRUCTIONS + "\n\nبيانات المنتج:\n- اسم المنتج: " + form.name +
-    "\n- السعر الحالي: " + form.price + " " + country.currency +
-    "\n- الدولة المستهدفة: " + country.name +
-    "\n- اللهجة المطلوبة: " + (form.dialect === "auto" ? country.dialect + " (تلقائي حسب الدولة)" : form.dialect) +
-    "\n- وصف من المستخدم (قد يكون فارغاً، إن كان فارغاً استنتج الوصف من الصور): " + (form.description || "(لا يوجد، استنتج من الصور)") +
-    "\n\nحلّل الصور المرفقة جيداً (النوع، الشكل، اللون، الاستخدام، الجمهور المحتمل) وابنِ عليها كامل المحتوى.";
-}
-function buildEditPrompt(currentData, instruction, country) {
-  return "أنت تُعدّل صفحة هبوط موجودة بناءً على طلب المستخدم. البيانات الحالية للصفحة بصيغة JSON:\n\n" +
-    JSON.stringify(currentData) + "\n\nطلب التعديل من المستخدم: \"" + instruction + "\"\n\nالدولة: " + country.name +
-    "، العملة: " + country.currency + ".\n\nعدّل فقط ما يطلبه المستخدم، وأعد كامل كائن JSON بنفس الشكل والحقول بالضبط " +
-    "(بما فيها designSystem وsections وhero وseo) بعد تطبيق التعديل، بدون أي نص خارج JSON وبدون Markdown fences.";
+التوجيه الأسلوبي لهاد النسخة بالذات (مهم، التزم بيه): ${styleSeed}
+${extraInstruction ? "\nتوجيهات إضافية من المستخدم: " + extraInstruction : ""}
+
+قواعد تقنية إلزامية:
+1. الصفحة كاملة تبدأ بـ <!DOCTYPE html> وتنتهي بـ </html>، بلا أي نص أو شرح خارج الكود، بلا Markdown fences.
+2. RTL بالكامل (dir="rtl" lang="ar")، خط Cairo من Google Fonts.
+3. Mobile-first: المحتوى فحاوية بعرض أقصى 480px تقريباً، متمركزة، لأن أغلب الزوار من الهاتف عبر إعلانات.
+4. استعمل بالضبط هاد الأسماء كـ src للصور حسب الحاجة (بلا ما تخترع base64 ولا تحط أي داتا فيهم، فقط النص كما هو):
+   ${Array.from({ length: imagesCount }, (_, i) => 'IMAGE_' + (i + 1) + '_PLACEHOLDER').join(", ") || "(بلا صور، لا تستعمل img tags)"}
+5. أضف تفاصيل بصرية راقية: تدرجات لونية (gradients)، ظلال ناعمة، Glow/توهج فوق العناصر المهمة، أنيميشن خفيف (fade-in عند التمرير، shimmer فوق badge الخصم، عناصر زخرفية متحركة بخفة مرتبطة بفئة المنتج إذا مناسب).
+6. اختر فقط الأقسام المناسبة فعلاً لهاد المنتج تحديداً (Hero، مميزات، فوائد، طريقة الاستخدام، مواصفات، آراء عملاء [بوضوح أنها تجريبية Placeholder]، أسئلة شائعة، شريط إلحاح/عد تنازلي إذا مناسب). لا تدرج قسماً بلا داعي.
+7. المحتوى التسويقي يكون محدداً بخصائص المنتج الظاهرة فالصور، بلا عبارات عامة مثل "منتج رائع وعالي الجودة". بلا ادعاءات طبية غير مثبتة إذا المنتج تجميلي/صحي.
+8. أزرار CTA ونصوص الطلب بلهجة الدولة المطلوبة، طبيعية وغير متكلفة.
+9. السعر يظهر بصيغة: ${formatPrice(form.price, country)}
+10. أضف فالـ <head>: meta description مناسبة، Open Graph tags أساسية، و JSON-LD من نوع Product (schema.org) بالاسم والسعر والعملة.
+11. زر CTA رئيسي ثابت أو ملتصق بأسفل الشاشة (sticky) على الهاتف.
+12. لا تستعمل أي مكتبات JS خارجية؛ إذا احتجت عداد تنازلي أو تفاعل بسيط (بحال فتح/غلق سؤال شائع)، اكتب JavaScript صغير Vanilla جوا <script> فآخر الصفحة.
+
+أعد فقط كود HTML الكامل، بدون أي مقدمة أو تعليق.`;
 }
 
 /* ============================== APP ============================== */
@@ -201,26 +164,29 @@ function App() {
   const [images, setImages] = useState([]);
   const [error, setError] = useState("");
   const [genStepIdx, setGenStepIdx] = useState(0);
-  const [colorVariant, setColorVariant] = useState(0);
+  const [productUrl, setProductUrl] = useState("");
+  const [fetchingUrl, setFetchingUrl] = useState(false);
 
   const [history, setHistory] = useState([]);
   const [historyIdx, setHistoryIdx] = useState(-1);
-  const data = historyIdx >= 0 ? history[historyIdx] : null;
+  const html = historyIdx >= 0 ? history[historyIdx] : null;
 
   const [previewMode, setPreviewMode] = useState("mobile");
-  const [editCmd, setEditCmd] = useState("");
-  const [editing, setEditing] = useState(false);
+  const [regenNote, setRegenNote] = useState("");
+  const [regenerating, setRegenerating] = useState(false);
   const [copyStatus, setCopyStatus] = useState("");
 
   const country = COUNTRIES.find((c) => c.code === form.countryCode) || COUNTRIES[0];
-  const baseTokens = data ? (DESIGN_SYSTEMS[data.designSystem] || DESIGN_SYSTEMS.Lifestyle) : DESIGN_SYSTEMS.Tech;
-  const tokens = data ? withColorVariant(baseTokens, data.designSystem || "Lifestyle", colorVariant) : baseTokens;
 
+  const GEN_STEPS = [
+    "جاري تحليل صور المنتج…", "جاري تحديد الهوية البصرية المناسبة…", "جاري تصميم الأقسام والتخطيط…",
+    "جاري كتابة المحتوى التسويقي باللهجة المحلية…", "جاري إضافة التأثيرات البصرية…", "اللمسات الأخيرة…",
+  ];
   const genTimer = useRef(null);
   useEffect(() => {
     if (step === "loading") {
       setGenStepIdx(0);
-      genTimer.current = setInterval(() => setGenStepIdx((i) => (i < GEN_STEPS.length - 1 ? i + 1 : i)), 1400);
+      genTimer.current = setInterval(() => setGenStepIdx((i) => (i < GEN_STEPS.length - 1 ? i + 1 : i)), 1600);
     } else if (genTimer.current) clearInterval(genTimer.current);
     return () => genTimer.current && clearInterval(genTimer.current);
   }, [step]);
@@ -240,6 +206,55 @@ function App() {
   }
   function removeImage(i) { setImages((prev) => prev.filter((_, idx) => idx !== i)); }
 
+  async function handleFetchFromUrl() {
+    setError("");
+    if (!productUrl.trim()) return setError("الصق رابط المنتج أولاً.");
+    setFetchingUrl(true);
+    try {
+      const response = await fetch("/api/fetch-product", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: productUrl.trim() }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "تعذّر استخراج بيانات المنتج");
+
+      if (data.title) setForm((f) => ({ ...f, name: data.title }));
+      if (data.price) setForm((f) => ({ ...f, price: String(data.price) }));
+      if (data.description) setForm((f) => ({ ...f, description: data.description }));
+
+      const fetchedImages = [];
+      for (const dataUrl of data.images || []) {
+        const parts = dataUrlParts(dataUrl);
+        if (parts) fetchedImages.push({ dataUrl, mediaType: parts.mediaType, base64: parts.base64 });
+      }
+      if (fetchedImages.length > 0) {
+        setImages((prev) => [...prev, ...fetchedImages].slice(0, 4));
+      } else if (!data.title && !data.price) {
+        setError("ما قدرناش نستخرجو معلومات من هاد الرابط، عمّر الحقول يدوياً.");
+      } else {
+        setError("استخرجنا بعض المعلومات، لكن ما لقيناش صور — ارفعها يدوياً.");
+      }
+    } catch (err) {
+      setError(err.message || "تعذّر استخراج بيانات المنتج من هاد الرابط، عمّر الحقول يدوياً.");
+    } finally {
+      setFetchingUrl(false);
+    }
+  }
+
+  async function runGeneration(extraInstruction) {
+    setError("");
+    const styleSeed = pickStyleSeed();
+    const content = [
+      { type: "text", text: buildCreativePrompt(form, country, images.length, styleSeed, extraInstruction) },
+      ...images.map((img) => ({ type: "image", source: { type: "base64", media_type: img.mediaType, data: img.base64 } })),
+    ];
+    const rawText = await callClaude(content, 8000);
+    const cleanHtml = injectImages(extractHTML(rawText), images);
+    if (!cleanHtml || cleanHtml.length < 50) throw new Error("الرد الذي وصل غير مكتمل، حاول مرة أخرى.");
+    return cleanHtml;
+  }
+
   async function handleGenerate() {
     setError("");
     if (!form.name.trim()) return setError("أدخل اسم المنتج أولاً.");
@@ -247,80 +262,80 @@ function App() {
     if (images.length === 0) return setError("ارفع صورة واحدة على الأقل للمنتج.");
     setStep("loading");
     try {
-      const content = [
-        { type: "text", text: buildGeneratePrompt(form, country) },
-        ...images.map((img) => ({ type: "image", source: { type: "base64", media_type: img.mediaType, data: img.base64 } })),
-      ];
-      const result = await callClaude(content);
-      setHistory([result]); setHistoryIdx(0); setStep("preview");
-      setColorVariant(Math.floor(Math.random() * 4));
+      const cleanHtml = await runGeneration(null);
+      setHistory([cleanHtml]); setHistoryIdx(0); setStep("preview");
     } catch (err) {
       setError(err.message || "حدث خطأ أثناء التوليد، حاول مرة أخرى.");
       setStep("form");
     }
   }
 
-  async function handleApplyEdit() {
-    if (!editCmd.trim() || !data) return;
-    setEditing(true); setError("");
+  async function handleRegenerate() {
+    if (!regenNote.trim()) return;
+    setRegenerating(true); setError("");
     try {
-      const content = [{ type: "text", text: buildEditPrompt(data, editCmd.trim(), country) }];
-      const result = await callClaude(content);
+      const cleanHtml = await runGeneration(regenNote.trim());
       const truncated = history.slice(0, historyIdx + 1);
-      const nextHistory = [...truncated, result];
-      setHistory(nextHistory); setHistoryIdx(nextHistory.length - 1); setEditCmd("");
+      const nextHistory = [...truncated, cleanHtml];
+      setHistory(nextHistory); setHistoryIdx(nextHistory.length - 1); setRegenNote("");
     } catch (err) {
-      setError(err.message || "تعذّر تنفيذ التعديل.");
-    } finally { setEditing(false); }
+      setError(err.message || "تعذّر إعادة التوليد.");
+    } finally { setRegenerating(false); }
   }
 
   function undo() { if (historyIdx > 0) setHistoryIdx(historyIdx - 1); }
   function redo() { if (historyIdx < history.length - 1) setHistoryIdx(historyIdx + 1); }
 
-  const htmlString = data ? buildStandaloneHTML(data, tokens, images, form, country) : "";
-
   async function copyHTML() {
-    try { await navigator.clipboard.writeText(htmlString); setCopyStatus("تم نسخ الكود ✓"); }
+    try { await navigator.clipboard.writeText(html); setCopyStatus("تم نسخ الكود ✓"); }
     catch { setCopyStatus("تعذّر النسخ التلقائي، استخدم زر التحميل"); }
     setTimeout(() => setCopyStatus(""), 2500);
   }
   function downloadHTML() {
-    const blob = new Blob([htmlString], { type: "text/html;charset=utf-8" });
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url; a.download = (form.name || "landing-page").trim().replace(/\s+/g, "-") + ".html";
     document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
   }
 
+  const iframeRef = useRef(null);
+  const [iframeHeight, setIframeHeight] = useState(700);
+  function handleIframeLoad() {
+    try {
+      const doc = iframeRef.current.contentDocument;
+      const h = Math.max(doc.documentElement.scrollHeight, doc.body.scrollHeight);
+      setIframeHeight(h + 20);
+    } catch (e) {}
+  }
   const [exportingJPG, setExportingJPG] = useState(false);
   async function downloadJPG() {
-    const node = document.getElementById("landing-capture");
-    if (!node || !window.html2canvas) return;
-    setExportingJPG(true);
+    if (!iframeRef.current || !window.html2canvas) return;
+    setExportingJPG(true); setError("");
     try {
-      const canvas = await window.html2canvas(node, { useCORS: true, backgroundColor: null, scale: 3 });
+      const doc = iframeRef.current.contentDocument;
+      const canvas = await window.html2canvas(doc.body, { useCORS: true, backgroundColor: null, scale: 2.5, windowWidth: doc.documentElement.scrollWidth, windowHeight: doc.documentElement.scrollHeight });
       const link = document.createElement("a");
-      link.href = canvas.toDataURL("image/jpeg", 0.97);
+      link.href = canvas.toDataURL("image/jpeg", 0.95);
       link.download = (form.name || "landing-page").trim().replace(/\s+/g, "-") + ".jpg";
       document.body.appendChild(link); link.click(); link.remove();
     } catch (err) {
-      setError("تعذّر تصدير الصورة، حاول مرة أخرى.");
-    } finally {
-      setExportingJPG(false);
-    }
+      setError("تعذّر تصدير الصورة، حاول تحميل HTML بدلاً من ذلك.");
+    } finally { setExportingJPG(false); }
   }
 
   return (
     <div dir="rtl" style={{ fontFamily: "'Cairo', sans-serif", minHeight: "100vh", background: "#0B0F19" }}>
-      {step === "form" && <FormScreen form={form} setForm={setForm} images={images} onUpload={handleImageUpload} onRemoveImage={removeImage} error={error} onGenerate={handleGenerate} />}
-      {step === "loading" && <LoadingScreen stepIdx={genStepIdx} />}
-      {step === "preview" && data && (
-        <PreviewScreen data={data} tokens={tokens} images={images} form={form} country={country}
+      {step === "form" && <FormScreen form={form} setForm={setForm} images={images} onUpload={handleImageUpload} onRemoveImage={removeImage} error={error} onGenerate={handleGenerate}
+        productUrl={productUrl} setProductUrl={setProductUrl} onFetchUrl={handleFetchFromUrl} fetchingUrl={fetchingUrl} />}
+      {step === "loading" && <LoadingScreen stepIdx={genStepIdx} steps={GEN_STEPS} />}
+      {step === "preview" && html && (
+        <PreviewScreen html={html} iframeRef={iframeRef} iframeHeight={iframeHeight} onIframeLoad={handleIframeLoad}
           previewMode={previewMode} setPreviewMode={setPreviewMode}
-          editCmd={editCmd} setEditCmd={setEditCmd} onApplyEdit={handleApplyEdit} editing={editing}
+          regenNote={regenNote} setRegenNote={setRegenNote} onRegenerate={handleRegenerate} regenerating={regenerating}
           canUndo={historyIdx > 0} canRedo={historyIdx < history.length - 1} onUndo={undo} onRedo={redo}
-          onCopy={copyHTML} onDownload={downloadHTML} onDownloadJPG={downloadJPG} exportingJPG={exportingJPG} copyStatus={copyStatus} error={error}
-          onBack={() => setStep("form")} />
+          onCopy={copyHTML} onDownload={downloadHTML} onDownloadJPG={downloadJPG} exportingJPG={exportingJPG}
+          copyStatus={copyStatus} error={error} onBack={() => setStep("form")} />
       )}
     </div>
   );
@@ -328,16 +343,29 @@ function App() {
 
 /* ============================== SCREENS ============================== */
 
-function FormScreen({ form, setForm, images, onUpload, onRemoveImage, error, onGenerate }) {
+function FormScreen({ form, setForm, images, onUpload, onRemoveImage, error, onGenerate, productUrl, setProductUrl, onFetchUrl, fetchingUrl }) {
   return (
     <div style={{ maxWidth: 640, margin: "0 auto", padding: "48px 20px 80px" }} className="fade-in">
       <div style={{ textAlign: "center", marginBottom: 40 }}>
         <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 14px", borderRadius: 999, background: "#161E33", color: "#22D3EE", fontSize: 13, fontWeight: 600, marginBottom: 18 }}>
-          <Ico size={14}>✨</Ico> Arabic Landing AI
+          <span>✨</span> Arabic Landing AI
         </div>
         <h1 style={{ color: "#F1F5F9", fontSize: 30, fontWeight: 800, lineHeight: 1.4, margin: 0 }}>أنشئ صفحة هبوط احترافية لمنتجك بالذكاء الاصطناعي</h1>
-        <p style={{ color: "#8B96AC", fontSize: 15, marginTop: 10 }}>منتج + سعر + صور + دولة = صفحة هبوط جاهزة خلال أقل من دقيقة</p>
+        <p style={{ color: "#8B96AC", fontSize: 15, marginTop: 10 }}>تصميم حر ومخصص 100% لكل منتج — هوية بصرية مختلفة فكل مرة</p>
       </div>
+
+      <div style={{ background: "#131A2A", border: "1px solid #202A42", borderRadius: 18, padding: 22, marginBottom: 16 }}>
+        <Field label="أو ابدأ من رابط منتج (AliExpress / Alibaba)">
+          <div style={{ display: "flex", gap: 8 }}>
+            <input value={productUrl} onChange={(e) => setProductUrl(e.target.value)} placeholder="https://www.aliexpress.com/item/..." style={inputStyle} disabled={fetchingUrl} />
+            <button type="button" onClick={onFetchUrl} disabled={fetchingUrl || !productUrl.trim()} style={Object.assign({}, toggleBtn, { flex: "0 0 auto", padding: "10px 16px", background: "#3B82F6", color: "#fff", opacity: fetchingUrl || !productUrl.trim() ? 0.5 : 1 })}>
+              {fetchingUrl ? "⟳ جاري..." : "🔗 استخراج"}
+            </button>
+          </div>
+          <span style={{ color: "#5B6478", fontSize: 11, marginTop: 4, display: "block" }}>الاستخراج غير مضمون 100% (بعض المواقع محمية) — تحقق من الحقول تحت وعدّلها عند الحاجة</span>
+        </Field>
+      </div>
+
       <div style={{ background: "#131A2A", border: "1px solid #202A42", borderRadius: 18, padding: 22, display: "grid", gap: 16 }}>
         <Field label="اسم المنتج"><input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="مثال: سماعة بلوتوث لاسلكية" style={inputStyle} /></Field>
         <Field label="سعر المنتج"><input type="number" value={form.price} onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))} placeholder="مثال: 149" style={inputStyle} /></Field>
@@ -346,12 +374,12 @@ function FormScreen({ form, setForm, images, onUpload, onRemoveImage, error, onG
             {images.map((img, i) => (
               <div key={i} style={{ position: "relative", width: 76, height: 76, borderRadius: 12, overflow: "hidden", border: "1px solid #202A42" }}>
                 <img src={img.dataUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                <button onClick={() => onRemoveImage(i)} style={{ position: "absolute", top: 3, left: 3, background: "rgba(0,0,0,.6)", border: "none", borderRadius: 6, color: "#fff", padding: 2, cursor: "pointer", display: "flex" }}><Ico size={12}>✕</Ico></button>
+                <button onClick={() => onRemoveImage(i)} style={{ position: "absolute", top: 3, left: 3, background: "rgba(0,0,0,.6)", border: "none", borderRadius: 6, color: "#fff", padding: 2, cursor: "pointer", display: "flex" }}>✕</button>
               </div>
             ))}
             {images.length < 4 && (
               <label style={{ width: 76, height: 76, borderRadius: 12, border: "1.5px dashed #2A3654", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#5B6478", gap: 4 }}>
-                <Ico size={18}>🖼️</Ico><span style={{ fontSize: 10 }}>رفع</span>
+                <span style={{ fontSize: 18 }}>🖼️</span><span style={{ fontSize: 10 }}>رفع</span>
                 <input type="file" accept="image/*" multiple onChange={onUpload} style={{ display: "none" }} />
               </label>
             )}
@@ -380,55 +408,56 @@ function Field({ label, children }) { return <label style={{ display: "grid", ga
 const inputStyle = { background: "#0E1526", border: "1px solid #202A42", borderRadius: 10, color: "#F1F5F9", padding: "11px 13px", fontSize: 14.5, outline: "none", width: "100%" };
 const toggleBtn = { flex: 1, border: "1px solid #202A42", borderRadius: 10, padding: "10px 8px", fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" };
 
-function LoadingScreen({ stepIdx }) {
+function LoadingScreen({ stepIdx, steps }) {
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 22, padding: 20 }} className="fade-in">
       <div style={{ width: 64, height: 64, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: "#131A2A", border: "1px solid #202A42" }}>
-        <Ico size={28} color="#22D3EE" style={{ animation: "spin 1s linear infinite" }}>⟳</Ico>
+        <span style={{ fontSize: 28, display: "inline-flex", color: "#22D3EE", animation: "spin 1s linear infinite" }}>⟳</span>
       </div>
-      <div style={{ color: "#F1F5F9", fontWeight: 700, fontSize: 16 }}>{GEN_STEPS[stepIdx]}</div>
+      <div style={{ color: "#F1F5F9", fontWeight: 700, fontSize: 16, textAlign: "center", maxWidth: 280 }}>{steps[stepIdx]}</div>
       <div style={{ width: 220, height: 6, borderRadius: 4, overflow: "hidden", background: "#131A2A" }}>
-        <div className="shimmer" style={{ width: ((stepIdx + 1) / GEN_STEPS.length) * 100 + "%", height: "100%", background: "linear-gradient(90deg,#3B82F6,#22D3EE)", transition: "width .5s ease" }} />
+        <div className="shimmer" style={{ width: ((stepIdx + 1) / steps.length) * 100 + "%", height: "100%", background: "linear-gradient(90deg,#3B82F6,#22D3EE)", transition: "width .5s ease" }} />
       </div>
+      <div style={{ color: "#5B6478", fontSize: 12 }}>التصميم الحر قد يأخذ وقتاً أطول قليلاً…</div>
     </div>
   );
 }
 
 function PreviewScreen(props) {
-  const { data, tokens, images, form, country, previewMode, setPreviewMode, editCmd, setEditCmd, onApplyEdit, editing, canUndo, canRedo, onUndo, onRedo, onCopy, onDownload, onDownloadJPG, exportingJPG, copyStatus, error, onBack } = props;
+  const { html, iframeRef, iframeHeight, onIframeLoad, previewMode, setPreviewMode, regenNote, setRegenNote, onRegenerate, regenerating, canUndo, canRedo, onUndo, onRedo, onCopy, onDownload, onDownloadJPG, exportingJPG, copyStatus, error, onBack } = props;
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <div style={{ position: "sticky", top: 0, zIndex: 20, background: "#0E1526", borderBottom: "1px solid #1D2740", padding: "10px 16px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <button onClick={onBack} style={toolBtn}>← مشروع جديد</button>
         <div style={{ flex: 1 }} />
-        <button onClick={onUndo} disabled={!canUndo} style={Object.assign({}, toolBtn, { opacity: canUndo ? 1 : 0.4 })}><Ico size={14}>↶</Ico></button>
-        <button onClick={onRedo} disabled={!canRedo} style={Object.assign({}, toolBtn, { opacity: canRedo ? 1 : 0.4 })}><Ico size={14}>↷</Ico></button>
+        <button onClick={onUndo} disabled={!canUndo} style={Object.assign({}, toolBtn, { opacity: canUndo ? 1 : 0.4 })}>↶</button>
+        <button onClick={onRedo} disabled={!canRedo} style={Object.assign({}, toolBtn, { opacity: canRedo ? 1 : 0.4 })}>↷</button>
         <div style={{ display: "flex", background: "#131A2A", borderRadius: 8, padding: 3, gap: 2 }}>
-          <button onClick={() => setPreviewMode("mobile")} style={Object.assign({}, segBtn, { background: previewMode === "mobile" ? "#22D3EE" : "transparent", color: previewMode === "mobile" ? "#04101C" : "#B7C0D4" })}><Ico size={14}>📱</Ico></button>
-          <button onClick={() => setPreviewMode("desktop")} style={Object.assign({}, segBtn, { background: previewMode === "desktop" ? "#22D3EE" : "transparent", color: previewMode === "desktop" ? "#04101C" : "#B7C0D4" })}><Ico size={14}>🖥️</Ico></button>
+          <button onClick={() => setPreviewMode("mobile")} style={Object.assign({}, segBtn, { background: previewMode === "mobile" ? "#22D3EE" : "transparent", color: previewMode === "mobile" ? "#04101C" : "#B7C0D4" })}>📱</button>
+          <button onClick={() => setPreviewMode("desktop")} style={Object.assign({}, segBtn, { background: previewMode === "desktop" ? "#22D3EE" : "transparent", color: previewMode === "desktop" ? "#04101C" : "#B7C0D4" })}>🖥️</button>
         </div>
-        <button onClick={onCopy} style={toolBtn}><Ico size={14}>📋</Ico> نسخ HTML</button>
-        <button onClick={onDownloadJPG} disabled={exportingJPG} style={Object.assign({}, toolBtn, { opacity: exportingJPG ? 0.6 : 1 })}>
-          <Ico size={14} style={exportingJPG ? { animation: "spin 1s linear infinite" } : {}}>{exportingJPG ? "⟳" : "🖼️"}</Ico> {exportingJPG ? "جاري التصدير…" : "تصدير JPG"}
-        </button>
-        <button onClick={onDownload} style={Object.assign({}, toolBtn, { background: "#22D3EE", color: "#04101C", borderColor: "#22D3EE" })}><Ico size={14}>⬇️</Ico> تحميل HTML</button>
+        <button onClick={onCopy} style={toolBtn}>📋 نسخ HTML</button>
+        <button onClick={onDownloadJPG} disabled={exportingJPG} style={Object.assign({}, toolBtn, { opacity: exportingJPG ? 0.6 : 1 })}>{exportingJPG ? "⟳ جاري..." : "🖼️ تصدير JPG"}</button>
+        <button onClick={onDownload} style={Object.assign({}, toolBtn, { background: "#22D3EE", color: "#04101C", borderColor: "#22D3EE" })}>⬇️ تحميل HTML</button>
       </div>
       {copyStatus && <div style={{ textAlign: "center", color: "#6EE7B7", fontSize: 12, padding: "6px 0", background: "#0E1526" }}>{copyStatus}</div>}
+
       <div style={{ background: "#0E1526", borderBottom: "1px solid #1D2740", padding: "10px 16px", display: "flex", gap: 8 }}>
-        <div style={{ flex: 1, position: "relative" }}>
-          <span style={{ position: "absolute", top: "50%", right: 12, transform: "translateY(-50%)" }}><Ico size={15} color="#5B6478">🪄</Ico></span>
-          <input value={editCmd} onChange={(e) => setEditCmd(e.target.value)} onKeyDown={(e) => e.key === "Enter" && onApplyEdit()} placeholder='مثال: "غيّر العنوان ليكون أكثر إقناعاً" أو "احذف آراء العملاء"' style={Object.assign({}, inputStyle, { paddingRight: 34 })} disabled={editing} />
-        </div>
-        <button onClick={onApplyEdit} disabled={editing || !editCmd.trim()} style={Object.assign({}, toolBtn, { background: "#3B82F6", color: "#fff", borderColor: "#3B82F6", opacity: editing || !editCmd.trim() ? 0.5 : 1 })}>
-          <Ico size={14} style={editing ? { animation: "spin 1s linear infinite" } : {}}>{editing ? "⟳" : "➤"}</Ico>
+        <input value={regenNote} onChange={(e) => setRegenNote(e.target.value)} onKeyDown={(e) => e.key === "Enter" && onRegenerate()}
+          placeholder='أعد التوليد بلمسة مختلفة: مثلاً "اجعل الألوان أكثر دفئاً" أو "بسّط التصميم"'
+          style={inputStyle} disabled={regenerating} />
+        <button onClick={onRegenerate} disabled={regenerating || !regenNote.trim()} style={Object.assign({}, toolBtn, { background: "#3B82F6", color: "#fff", borderColor: "#3B82F6", opacity: regenerating || !regenNote.trim() ? 0.5 : 1, whiteSpace: "nowrap" })}>
+          {regenerating ? "⟳ جاري التوليد…" : "🪄 أعد التصميم"}
         </button>
       </div>
+      <div style={{ textAlign: "center", color: "#5B6478", fontSize: 11, padding: "4px 16px 8px", background: "#0E1526" }}>
+        ملاحظة: التصميم حر بالكامل، فكل "إعادة تصميم" يعيد بناء الصفحة من جديد بالتوجيه المطلوب (ماشي تعديل جزئي دقيق)
+      </div>
       {error && <div style={{ color: "#F87171", fontSize: 12, textAlign: "center", padding: "6px 0", background: "#0E1526" }}>{error}</div>}
+
       <div style={{ flex: 1, background: "#05070C", padding: "28px 16px", display: "flex", justifyContent: "center" }}>
-        <div style={{ width: previewMode === "mobile" ? 390 : "100%", maxWidth: previewMode === "mobile" ? 390 : 1100, borderRadius: previewMode === "mobile" ? 30 : 16, overflow: "hidden", border: previewMode === "mobile" ? "8px solid #1B1F2B" : "1px solid #1D2740", boxShadow: "0 30px 60px rgba(0,0,0,.5)", height: "fit-content" }}>
-          <div id="landing-capture">
-            <LandingPage data={data} tokens={tokens} images={images} form={form} country={country} />
-          </div>
+        <div style={{ width: previewMode === "mobile" ? 390 : "100%", maxWidth: previewMode === "mobile" ? 390 : 1100, borderRadius: previewMode === "mobile" ? 30 : 16, overflow: "hidden", border: previewMode === "mobile" ? "8px solid #1B1F2B" : "1px solid #1D2740", boxShadow: "0 30px 60px rgba(0,0,0,.5)", height: "fit-content", background: "#fff" }}>
+          <iframe ref={iframeRef} srcDoc={html} onLoad={onIframeLoad} title="landing-preview" style={{ width: "100%", height: iframeHeight, border: "none", display: "block" }} />
         </div>
       </div>
     </div>
@@ -437,280 +466,9 @@ function PreviewScreen(props) {
 const toolBtn = { display: "flex", alignItems: "center", gap: 6, background: "#131A2A", border: "1px solid #202A42", color: "#E2E8F5", fontSize: 12.5, fontWeight: 600, padding: "8px 12px", borderRadius: 8, cursor: "pointer" };
 const segBtn = { border: "none", borderRadius: 6, padding: "6px 9px", cursor: "pointer", display: "flex" };
 
-/* ============================== LANDING PAGE RENDER ============================== */
-
-function LandingPage({ data, tokens, images, form, country }) {
-  const sections = data.sections || [];
-  const heroImg = images[0] && images[0].dataUrl;
-  const [secondsLeft, setSecondsLeft] = useState(3600 * 2 + 1500);
-  useEffect(() => { const t = setInterval(() => setSecondsLeft((s) => (s > 0 ? s - 1 : 0)), 1000); return () => clearInterval(t); }, []);
-  const hh = String(Math.floor(secondsLeft / 3600)).padStart(2, "0");
-  const mm = String(Math.floor((secondsLeft % 3600) / 60)).padStart(2, "0");
-  const ss = String(secondsLeft % 60).padStart(2, "0");
-
-  return (
-    <div dir="rtl" style={{ background: tokens.bg, color: tokens.text, fontFamily: "'Cairo', sans-serif", position: "relative" }}>
-      <section style={{ padding: "28px 20px 24px" }}>
-        {data.hero && data.hero.eyebrow && <div style={{ display: "inline-block", fontSize: 12, fontWeight: 700, color: tokens.accent, background: tokens.surface, padding: "4px 12px", borderRadius: 999, marginBottom: 12 }}>{data.hero.eyebrow}</div>}
-        <h1 style={{ fontSize: 25, fontWeight: 900, lineHeight: 1.5, margin: "0 0 10px" }}>{data.hero && data.hero.headline}</h1>
-        <p style={{ fontSize: 14.5, color: tokens.muted, margin: "0 0 18px", lineHeight: 1.8 }}>{data.hero && data.hero.subheadline}</p>
-        {images[0] && (
-          <div style={{ borderRadius: tokens.radius, overflow: "hidden", marginBottom: 18, background: tokens.surface }}>
-            <img src={images[0].dataUrl} alt={form.name} style={{ width: "100%", display: "block", objectFit: "cover" }} />
-          </div>
-        )}
-        <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 10 }}>
-          <span style={{ fontSize: 26, fontWeight: 900, color: tokens.primary }}>{formatPrice(form.price, country)}</span>
-          {data.hero && data.hero.priceOld && <span style={{ fontSize: 15, color: tokens.muted, textDecoration: "line-through" }}>{formatPrice(data.hero.priceOld, country)}</span>}
-          {data.hero && data.hero.discountPercent && <span style={{ fontSize: 12, fontWeight: 800, color: "#fff", background: "#E63946", padding: "3px 9px", borderRadius: 999 }}>خصم {data.hero.discountPercent}%</span>}
-        </div>
-        {data.hero && data.hero.badges && !!data.hero.badges.length && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 18 }}>
-            {data.hero.badges.map((b, i) => <span key={i} style={{ fontSize: 11.5, fontWeight: 600, color: tokens.muted, background: tokens.surface, padding: "5px 10px", borderRadius: 999, display: "flex", alignItems: "center", gap: 4 }}><Ico size={12} color={tokens.accent}>✓</Ico> {b}</span>)}
-          </div>
-        )}
-        <a href="#order" style={{ display: "block", textAlign: "center", background: tokens.primary, color: tokens.mood === "dark" ? tokens.bg : "#fff", fontWeight: 800, fontSize: 15.5, padding: "15px", borderRadius: tokens.radius, textDecoration: "none" }}>{(data.hero && data.hero.ctaText) || "اطلب الآن"}</a>
-      </section>
-
-      {data.hero && data.hero.priceOld && (
-        <section style={{ padding: "0 20px 24px" }}>
-          <div style={{ background: tokens.card, borderRadius: tokens.radius, padding: "16px 18px" }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: tokens.muted, marginBottom: 10 }}>مقارنة السعر</div>
-            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <div style={{ flex: 1, textAlign: "center", opacity: 0.6 }}>
-                <div style={{ fontSize: 11, color: tokens.muted, marginBottom: 4 }}>السعر السابق</div>
-                <div style={{ fontSize: 17, fontWeight: 800, textDecoration: "line-through", color: tokens.muted }}>{formatPrice(data.hero.priceOld, country)}</div>
-              </div>
-              <div style={{ fontSize: 20, color: tokens.accent }}>←</div>
-              <div style={{ flex: 1, textAlign: "center" }}>
-                <div style={{ fontSize: 11, color: tokens.accent, marginBottom: 4, fontWeight: 700 }}>السعر الآن</div>
-                <div style={{ fontSize: 20, fontWeight: 900, color: tokens.primary }}>{formatPrice(form.price, country)}</div>
-              </div>
-            </div>
-            {data.hero.discountPercent && (
-              <div style={{ marginTop: 10, textAlign: "center", fontSize: 12, fontWeight: 700, color: tokens.accent }}>وفّر {data.hero.discountPercent}% من السعر الأصلي</div>
-            )}
-          </div>
-        </section>
-      )}
-
-      {sections.includes("urgency") && data.urgency && (
-        <section style={{ padding: "0 20px 24px" }}>
-          <div style={{ background: tokens.card, border: "1px solid " + tokens.accent + "33", borderRadius: tokens.radius, padding: "14px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div style={{ fontSize: 12.5, fontWeight: 700 }}>{data.urgency.stockLabel}</div>
-            <div style={{ display: "flex", alignItems: "center", gap: 5, fontVariantNumeric: "tabular-nums" }}><Ico size={14} color={tokens.accent}>⏰</Ico><span style={{ fontSize: 13, fontWeight: 800, color: tokens.accent }}>{hh}:{mm}:{ss}</span></div>
-          </div>
-        </section>
-      )}
-
-      {sections.includes("features") && data.features && (
-        <Section title={data.features.title} tokens={tokens}>
-          <div style={{ display: "grid", gap: 12 }}>
-            {(data.features.items || []).map((it, i) => (
-              <div key={i} style={{ display: "flex", gap: 12, background: tokens.card, borderRadius: tokens.radius, padding: 14 }}>
-                <ContentIcon name={it.icon} size={20} color={tokens.primary} style={{ flexShrink: 0, marginTop: 2 }} />
-                <div><div style={{ fontWeight: 700, fontSize: 14 }}>{it.title}</div><div style={{ fontSize: 12.5, color: tokens.muted, marginTop: 3, lineHeight: 1.7 }}>{it.desc}</div></div>
-              </div>
-            ))}
-          </div>
-        </Section>
-      )}
-
-      {images[1] && <ImageBlock img={images[1]} tokens={tokens} alt={form.name} />}
-
-      {sections.includes("benefits") && data.benefits && (
-        <Section title={data.benefits.title} tokens={tokens}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            {(data.benefits.items || []).map((it, i) => (
-              <div key={i} style={{ background: tokens.card, borderRadius: tokens.radius, padding: 14, textAlign: "center" }}>
-                <ContentIcon name={it.icon} size={20} color={tokens.accent} style={{ margin: "0 auto 8px" }} />
-                <div style={{ fontWeight: 700, fontSize: 13 }}>{it.title}</div>
-                <div style={{ fontSize: 11.5, color: tokens.muted, marginTop: 4, lineHeight: 1.6 }}>{it.desc}</div>
-              </div>
-            ))}
-          </div>
-        </Section>
-      )}
-
-      {sections.includes("howToUse") && data.howToUse && (
-        <Section title={data.howToUse.title} tokens={tokens}>
-          <div style={{ display: "grid", gap: 10 }}>
-            {(data.howToUse.steps || []).map((s, i) => (
-              <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                <div style={{ width: 24, height: 24, borderRadius: "50%", background: tokens.primary, color: "#fff", fontSize: 12, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{i + 1}</div>
-                <div style={{ fontSize: 13, lineHeight: 1.8, paddingTop: 2 }}>{s}</div>
-              </div>
-            ))}
-          </div>
-        </Section>
-      )}
-
-      {images[2] && <ImageBlock img={images[2]} tokens={tokens} alt={form.name} />}
-
-      {sections.includes("specs") && data.specs && (
-        <Section title={data.specs.title} tokens={tokens}>
-          <div style={{ background: tokens.card, borderRadius: tokens.radius, overflow: "hidden" }}>
-            {(data.specs.items || []).map((it, i) => (
-              <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "10px 14px", borderBottom: i < data.specs.items.length - 1 ? "1px solid " + tokens.bg : "none", fontSize: 12.5 }}>
-                <span style={{ color: tokens.muted }}>{it.label}</span><span style={{ fontWeight: 700 }}>{it.value}</span>
-              </div>
-            ))}
-          </div>
-        </Section>
-      )}
-
-      {sections.includes("testimonials") && data.testimonials && (
-        <Section title={data.testimonials.title} tokens={tokens} note={data.testimonials.note}>
-          <div style={{ display: "grid", gap: 10 }}>
-            {(data.testimonials.items || []).map((it, i) => (
-              <div key={i} style={{ background: tokens.card, borderRadius: tokens.radius, padding: 14 }}>
-                <div style={{ display: "flex", gap: 2, marginBottom: 6 }}>{Array.from({ length: it.rating || 5 }).map((_, s) => <Ico key={s} size={12} color={tokens.accent}>⭐</Ico>)}</div>
-                <div style={{ fontSize: 12.5, lineHeight: 1.7, color: tokens.text }}>{it.text}</div>
-                <div style={{ fontSize: 11, color: tokens.muted, marginTop: 6, fontWeight: 700 }}>{it.name}</div>
-              </div>
-            ))}
-          </div>
-        </Section>
-      )}
-
-      {sections.includes("faq") && data.faq && (
-        <Section title={data.faq.title} tokens={tokens}>
-          <div style={{ display: "grid", gap: 8 }}>{(data.faq.items || []).map((it, i) => <FaqItem key={i} q={it.q} a={it.a} tokens={tokens} />)}</div>
-        </Section>
-      )}
-
-      {images[3] && <ImageBlock img={images[3]} tokens={tokens} alt={form.name} />}
-
-      <section id="order" style={{ padding: "24px 20px" }}>
-        {form.includeOrderForm ? (
-          <div style={{ background: tokens.card, borderRadius: tokens.radius, padding: 18 }}>
-            <h3 style={{ fontSize: 16, fontWeight: 800, margin: "0 0 14px" }}>{(data.orderForm && data.orderForm.title) || "أكمل طلبك الآن"}</h3>
-            <div style={{ display: "grid", gap: 10 }}>
-              {["الاسم الكامل", "رقم الهاتف", "المدينة", "العنوان بالتفصيل"].map((ph, i) => <input key={i} placeholder={ph} readOnly style={{ background: tokens.bg, border: "1px solid " + tokens.muted + "44", borderRadius: 8, padding: "11px 12px", color: tokens.text, fontSize: 13 }} />)}
-              <button style={{ background: tokens.primary, color: tokens.mood === "dark" ? tokens.bg : "#fff", fontWeight: 800, fontSize: 15, padding: "14px", borderRadius: tokens.radius, border: "none", marginTop: 4 }}>{(data.orderForm && data.orderForm.buttonText) || "اطلب الآن"}</button>
-            </div>
-          </div>
-        ) : (
-          <a href="#order" style={{ display: "block", textAlign: "center", background: tokens.primary, color: tokens.mood === "dark" ? tokens.bg : "#fff", fontWeight: 800, fontSize: 16, padding: "17px", borderRadius: tokens.radius, textDecoration: "none" }}>
-            {(data.orderForm && data.orderForm.buttonText) || (data.hero && data.hero.ctaText) || "اطلب الآن"}
-          </a>
-        )}
-      </section>
-
-      {data.finalCta && (
-        <section style={{ padding: "10px 20px 90px", textAlign: "center" }}>
-          <h3 style={{ fontSize: 17, fontWeight: 800, marginBottom: 14 }}>{data.finalCta.headline}</h3>
-          <a href="#order" style={{ display: "inline-block", background: tokens.accent, color: tokens.bg, fontWeight: 800, padding: "13px 26px", borderRadius: tokens.radius, textDecoration: "none", fontSize: 14 }}>{data.finalCta.buttonText}</a>
-        </section>
-      )}
-
-      <div style={{ position: "sticky", bottom: 0, background: tokens.surface, borderTop: "1px solid " + tokens.muted + "33", padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-        <div><div style={{ fontSize: 15, fontWeight: 900, color: tokens.primary }}>{formatPrice(form.price, country)}</div></div>
-        <a href="#order" style={{ background: tokens.primary, color: tokens.mood === "dark" ? tokens.bg : "#fff", fontWeight: 800, fontSize: 13, padding: "10px 20px", borderRadius: 999, textDecoration: "none" }}>{(data.hero && data.hero.ctaText) || "اطلب الآن"}</a>
-      </div>
-    </div>
-  );
-}
-
-function ImageBlock({ img, tokens, alt }) {
-  return (
-    <div style={{ padding: "0 20px 24px" }}>
-      <div style={{ borderRadius: tokens.radius, overflow: "hidden", background: tokens.surface }}>
-        <img src={img.dataUrl} alt={alt} style={{ width: "100%", display: "block", objectFit: "cover" }} />
-      </div>
-    </div>
-  );
-}
-
-function Section({ title, tokens, note, children }) {
-  return (
-    <section style={{ padding: "10px 20px 24px" }}>
-      {title && <h2 style={{ fontSize: 17, fontWeight: 800, margin: "0 0 4px" }}>{title}</h2>}
-      {note && <p style={{ fontSize: 10.5, color: tokens.muted, margin: "0 0 12px" }}>{note}</p>}
-      <div style={{ marginTop: note ? 0 : 12 }}>{children}</div>
-    </section>
-  );
-}
-function FaqItem({ q, a, tokens }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div style={{ background: tokens.card, borderRadius: tokens.radius, overflow: "hidden" }}>
-      <button onClick={() => setOpen((o) => !o)} style={{ width: "100%", background: "none", border: "none", padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", color: tokens.text, fontFamily: "inherit" }}>
-        <span style={{ fontSize: 13, fontWeight: 700, textAlign: "right" }}>{q}</span>
-        <Ico size={16} color={tokens.muted} style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform .2s", flexShrink: 0 }}>▾</Ico>
-      </button>
-      {open && <div style={{ padding: "0 14px 14px", fontSize: 12.5, color: tokens.muted, lineHeight: 1.7 }}>{a}</div>}
-    </div>
-  );
-}
-
-/* ============================== STANDALONE HTML EXPORT ============================== */
-
-function buildStandaloneHTML(data, tokens, images, form, country) {
-  const sections = data.sections || [];
-  const esc = (s) => String(s == null ? "" : s).replace(/</g, "&lt;");
-  const imgTag = (img) => '<img src="' + img.dataUrl + '" alt="' + esc(form.name) + '" />';
-  const heroImgHtml = images[0] ? imgTag(images[0]) : "";
-  const img1Html = images[1] ? '<section class="sec imgblock">' + imgTag(images[1]) + '</section>' : "";
-  const img2Html = images[2] ? '<section class="sec imgblock">' + imgTag(images[2]) + '</section>' : "";
-  const img3Html = images[3] ? '<section class="sec imgblock">' + imgTag(images[3]) + '</section>' : "";
-  const badgesHtml = (data.hero && data.hero.badges || []).map((b) => '<span class="badge">' + esc(b) + '</span>').join("");
-  const priceCompareHtml = data.hero && data.hero.priceOld ? '<section class="sec"><div class="card"><div class="cmp-label">مقارنة السعر</div><div class="cmp-row"><div class="cmp-col cmp-old"><div class="cmp-sub">السعر السابق</div><div class="cmp-val old">' + esc(formatPrice(data.hero.priceOld, country)) + '</div></div><div class="cmp-arrow">←</div><div class="cmp-col"><div class="cmp-sub accent">السعر الآن</div><div class="cmp-val price">' + esc(formatPrice(form.price, country)) + '</div></div></div>' + (data.hero.discountPercent ? '<div class="cmp-save">وفّر ' + esc(data.hero.discountPercent) + '% من السعر الأصلي</div>' : "") + '</div></section>' : "";
-  const featuresHtml = sections.includes("features") && data.features ? '<section class="sec"><h2>' + esc(data.features.title) + '</h2><div class="grid1">' + (data.features.items || []).map((it) => '<div class="card row"><div><div class="t">' + esc(it.title) + '</div><div class="d">' + esc(it.desc) + '</div></div></div>').join("") + '</div></section>' : "";
-  const benefitsHtml = sections.includes("benefits") && data.benefits ? '<section class="sec"><h2>' + esc(data.benefits.title) + '</h2><div class="grid2">' + (data.benefits.items || []).map((it) => '<div class="card center"><div class="t">' + esc(it.title) + '</div><div class="d">' + esc(it.desc) + '</div></div>').join("") + '</div></section>' : "";
-  const howToHtml = sections.includes("howToUse") && data.howToUse ? '<section class="sec"><h2>' + esc(data.howToUse.title) + '</h2>' + (data.howToUse.steps || []).map((s, i) => '<div class="step"><span class="num">' + (i + 1) + '</span><span>' + esc(s) + '</span></div>').join("") + '</section>' : "";
-  const specsHtml = sections.includes("specs") && data.specs ? '<section class="sec"><h2>' + esc(data.specs.title) + '</h2><div class="card">' + (data.specs.items || []).map((it) => '<div class="spec-row"><span class="muted">' + esc(it.label) + '</span><span class="bold">' + esc(it.value) + '</span></div>').join("") + '</div></section>' : "";
-  const testimonialsHtml = sections.includes("testimonials") && data.testimonials ? '<section class="sec"><h2>' + esc(data.testimonials.title) + '</h2><p class="note">' + esc(data.testimonials.note) + '</p>' + (data.testimonials.items || []).map((it) => '<div class="card"><div class="d">' + esc(it.text) + '</div><div class="name">' + esc(it.name) + '</div></div>').join("") + '</section>' : "";
-  const faqHtml = sections.includes("faq") && data.faq ? '<section class="sec"><h2>' + esc(data.faq.title) + '</h2>' + (data.faq.items || []).map((it) => '<details class="card"><summary>' + esc(it.q) + '</summary><p class="d">' + esc(it.a) + '</p></details>').join("") + '</section>' : "";
-  const urgencyHtml = sections.includes("urgency") && data.urgency ? '<section class="sec"><div class="card row spread"><span class="bold">' + esc(data.urgency.stockLabel) + '</span><span class="accent">' + esc(data.urgency.countdownLabel) + '</span></div></section>' : "";
-  const ctaText = esc((data.hero && data.hero.ctaText) || "اطلب الآن");
-  const orderHtml = form.includeOrderForm
-    ? '<section class="order" id="order"><div class="card"><h3 class="order-title">' + esc((data.orderForm && data.orderForm.title) || "أكمل طلبك الآن") + '</h3>' +
-      '<input placeholder="الاسم الكامل" /><input placeholder="رقم الهاتف" /><input placeholder="المدينة" /><input placeholder="العنوان بالتفصيل" />' +
-      '<button type="button">' + esc((data.orderForm && data.orderForm.buttonText) || ctaText) + '</button></div></section>'
-    : '<section class="order" id="order"><a href="#order">' + esc((data.orderForm && data.orderForm.buttonText) || ctaText) + '</a></section>';
-
-  return '<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />' +
-    '<title>' + esc((data.seo && data.seo.title) || form.name) + '</title>' +
-    '<meta name="description" content="' + esc((data.seo && data.seo.description) || "") + '" />' +
-    '<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">' +
-    '<style>:root{--bg:' + tokens.bg + ';--surface:' + tokens.surface + ';--card:' + tokens.card + ';--primary:' + tokens.primary + ';--accent:' + tokens.accent + ';--text:' + tokens.text + ';--muted:' + tokens.muted + ';--radius:' + tokens.radius + ';}' +
-    '*{box-sizing:border-box;margin:0;padding:0;}body{background:var(--bg);color:var(--text);font-family:"Cairo",sans-serif;line-height:1.5;}.wrap{max-width:480px;margin:0 auto;}.hero{padding:28px 20px 24px;}' +
-    '.eyebrow{display:inline-block;font-size:12px;font-weight:700;color:var(--accent);background:var(--surface);padding:4px 12px;border-radius:999px;margin-bottom:12px;}h1{font-size:25px;font-weight:900;margin-bottom:10px;}' +
-    '.sub{font-size:14.5px;color:var(--muted);margin-bottom:18px;}.hero img{width:100%;border-radius:var(--radius);margin-bottom:18px;display:block;object-fit:cover;}.imgblock img{width:100%;border-radius:var(--radius);display:block;object-fit:cover;}' +
-    '.price-row{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;}.price{font-size:26px;font-weight:900;color:var(--primary);}.old{font-size:15px;color:var(--muted);text-decoration:line-through;}' +
-    '.discount{font-size:12px;font-weight:800;color:#fff;background:#E63946;padding:3px 9px;border-radius:999px;}.badges{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;}' +
-    '.badge{font-size:11.5px;font-weight:600;color:var(--muted);background:var(--surface);padding:5px 10px;border-radius:999px;}.cta{display:block;text-align:center;background:var(--primary);color:' + (tokens.mood === "dark" ? tokens.bg : "#fff") + ';font-weight:800;font-size:15.5px;padding:15px;border-radius:var(--radius);text-decoration:none;}' +
-    '.sec{padding:10px 20px 24px;}.sec h2{font-size:17px;font-weight:800;margin-bottom:12px;}.grid1{display:grid;gap:12px;}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}' +
-    '.card{background:var(--card);border-radius:var(--radius);padding:14px;margin-bottom:10px;}.row{display:flex;gap:12px;}.spread{display:flex;justify-content:space-between;align-items:center;}.center{text-align:center;}' +
-    '.t{font-weight:700;font-size:14px;}.d{font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.7;}.step{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;}' +
-    '.num{width:24px;height:24px;border-radius:50%;background:var(--primary);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}' +
-    '.spec-row{display:flex;justify-content:space-between;padding:8px 0;font-size:12.5px;border-bottom:1px solid var(--bg);}.bold{font-weight:700;}.muted{color:var(--muted);}.accent{color:var(--accent);font-weight:800;}' +
-    '.note{font-size:10.5px;color:var(--muted);margin-bottom:12px;}.name{font-size:11px;color:var(--muted);margin-top:6px;font-weight:700;}summary{cursor:pointer;font-size:13px;font-weight:700;}' +
-    '.cmp-label{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:10px;}.cmp-row{display:flex;align-items:center;gap:14px;}.cmp-col{flex:1;text-align:center;}.cmp-old{opacity:.6;}' +
-    '.cmp-sub{font-size:11px;color:var(--muted);margin-bottom:4px;}.cmp-sub.accent{color:var(--accent);font-weight:700;}.cmp-val{font-size:17px;font-weight:800;}.cmp-val.price{font-size:20px;font-weight:900;color:var(--primary);}' +
-    '.cmp-val.old{text-decoration:line-through;color:var(--muted);}.cmp-arrow{font-size:20px;color:var(--accent);}.cmp-save{margin-top:10px;text-align:center;font-size:12px;font-weight:700;color:var(--accent);}' +
-    '.order{padding:24px 20px;}.order a{display:block;text-align:center;background:var(--primary);color:' + (tokens.mood === "dark" ? tokens.bg : "#fff") + ';font-weight:800;font-size:16px;padding:17px;border-radius:var(--radius);text-decoration:none;}' +
-    '.order-title{font-size:16px;font-weight:800;margin-bottom:14px;}.order .card input{width:100%;background:var(--bg);border:1px solid rgba(140,140,140,.3);border-radius:8px;padding:11px 12px;color:var(--text);font-size:13px;margin-bottom:10px;font-family:inherit;}' +
-    '.order .card button{width:100%;background:var(--primary);color:' + (tokens.mood === "dark" ? tokens.bg : "#fff") + ';font-weight:800;font-size:15px;padding:14px;border-radius:var(--radius);border:none;cursor:pointer;font-family:inherit;}' +
-    '.final{padding:10px 20px 90px;text-align:center;}.final h3{font-size:17px;font-weight:800;margin-bottom:14px;}.final a{display:inline-block;background:var(--accent);color:var(--bg);font-weight:800;padding:13px 26px;border-radius:var(--radius);text-decoration:none;font-size:14px;}' +
-    '.sticky{position:sticky;bottom:0;background:var(--surface);border-top:1px solid rgba(140,140,140,.3);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;}.sticky .price{font-size:15px;}' +
-    '.sticky a{background:var(--primary);color:' + (tokens.mood === "dark" ? tokens.bg : "#fff") + ';font-weight:800;font-size:13px;padding:10px 20px;border-radius:999px;text-decoration:none;}</style></head><body><div class="wrap">' +
-    '<section class="hero">' + (data.hero && data.hero.eyebrow ? '<span class="eyebrow">' + esc(data.hero.eyebrow) + '</span>' : "") +
-    '<h1>' + esc(data.hero && data.hero.headline) + '</h1><p class="sub">' + esc(data.hero && data.hero.subheadline) + '</p>' +
-    heroImgHtml +
-    '<div class="price-row"><span class="price">' + esc(formatPrice(form.price, country)) + '</span>' +
-    (data.hero && data.hero.priceOld ? '<span class="old">' + esc(formatPrice(data.hero.priceOld, country)) + '</span>' : "") +
-    (data.hero && data.hero.discountPercent ? '<span class="discount">خصم ' + esc(data.hero.discountPercent) + '%</span>' : "") + '</div>' +
-    '<div class="badges">' + badgesHtml + '</div><a class="cta" href="#order">' + ctaText + '</a></section>' +
-    priceCompareHtml + urgencyHtml + featuresHtml + img1Html + benefitsHtml + howToHtml + img2Html + specsHtml + testimonialsHtml + faqHtml + img3Html +
-    orderHtml +
-    (data.finalCta ? '<section class="final"><h3>' + esc(data.finalCta.headline) + '</h3><a href="#order">' + esc(data.finalCta.buttonText) + '</a></section>' : "") +
-    '<div class="sticky"><span class="price">' + esc(formatPrice(form.price, country)) + '</span><a href="#order">' + ctaText + '</a></div></div></body></html>';
-}
-
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<App />);
 </script>
 </body>
 </html>
+
