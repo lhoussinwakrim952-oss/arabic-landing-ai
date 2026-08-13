@@ -1,474 +1,2254 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Arabic Landing AI — مولّد صفحات الهبوط</title>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
 <style>
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; background: #0B0F19; }
-  body { font-family: 'Cairo', sans-serif; }
-  ::-webkit-scrollbar { width: 8px; height: 8px; }
-  ::-webkit-scrollbar-thumb { background: #2A3346; border-radius: 8px; }
-  .fade-in { animation: fadeIn .4s ease both; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px);} to { opacity: 1; transform: translateY(0);} }
-  .shimmer { background: linear-gradient(90deg, rgba(255,255,255,.04) 25%, rgba(255,255,255,.10) 37%, rgba(255,255,255,.04) 63%); background-size: 400% 100%; animation: shimmer 1.6s ease infinite; }
-  @keyframes shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  input, select, textarea { font-family: 'Cairo', sans-serif; }
-  input::placeholder, textarea::placeholder { color: #5B6478; }
+*{
+  box-sizing:border-box;
+}
+
+html,body{
+  margin:0;
+  padding:0;
+  background:#080c14;
+}
+
+body{
+  font-family:'Cairo',sans-serif;
+  color:#f1f5f9;
+}
+
+button,
+input,
+textarea,
+select{
+  font-family:'Cairo',sans-serif;
+}
+
+button{
+  -webkit-tap-highlight-color:transparent;
+}
+
+input::placeholder,
+textarea::placeholder{
+  color:#59657b;
+}
+
+::-webkit-scrollbar{
+  width:8px;
+  height:8px;
+}
+
+::-webkit-scrollbar-thumb{
+  background:#29344a;
+  border-radius:20px;
+}
+
+.fade{
+  animation:fade .35s ease both;
+}
+
+@keyframes fade{
+  from{
+    opacity:0;
+    transform:translateY(8px);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+@keyframes spin{
+  to{
+    transform:rotate(360deg);
+  }
+}
+
+@keyframes pulse{
+  0%,100%{opacity:.6}
+  50%{opacity:1}
+}
+
+@media(max-width:600px){
+  .desktopOnly{
+    display:none!important;
+  }
+
+  .formGrid{
+    grid-template-columns:1fr!important;
+  }
+
+  .topActions{
+    overflow-x:auto;
+    flex-wrap:nowrap!important;
+  }
+
+  .topActions button{
+    flex-shrink:0;
+  }
+}
 </style>
 </head>
+
 <body>
+
 <div id="root"></div>
 
 <script type="text/babel" data-presets="react">
-const { useState, useEffect, useRef } = React;
 
-/* ============================== DATA ============================== */
+const {
+  useState,
+  useEffect,
+  useRef
+}=React;
 
-const COUNTRIES = [
-  { code: "SA", name: "السعودية", dialect: "السعودية", currency: "ريال سعودي" },
-  { code: "AE", name: "الإمارات", dialect: "الإماراتية", currency: "درهم إماراتي" },
-  { code: "KW", name: "الكويت", dialect: "الكويتية", currency: "دينار كويتي" },
-  { code: "QA", name: "قطر", dialect: "القطرية", currency: "ريال قطري" },
-  { code: "BH", name: "البحرين", dialect: "البحرينية", currency: "دينار بحريني" },
-  { code: "OM", name: "عُمان", dialect: "العُمانية", currency: "ريال عُماني" },
-  { code: "IQ", name: "العراق", dialect: "العراقية", currency: "دينار عراقي" },
-  { code: "JO", name: "الأردن", dialect: "الأردنية", currency: "دينار أردني" },
-  { code: "PS", name: "فلسطين", dialect: "الفلسطينية", currency: "شيكل" },
-  { code: "LB", name: "لبنان", dialect: "اللبنانية", currency: "ليرة لبنانية" },
-  { code: "SY", name: "سوريا", dialect: "السورية", currency: "ليرة سورية" },
-  { code: "EG", name: "مصر", dialect: "المصرية", currency: "جنيه مصري" },
-  { code: "SD", name: "السودان", dialect: "السودانية", currency: "جنيه سوداني" },
-  { code: "LY", name: "ليبيا", dialect: "الليبية", currency: "دينار ليبي" },
-  { code: "TN", name: "تونس", dialect: "التونسية", currency: "دينار تونسي" },
-  { code: "DZ", name: "الجزائر", dialect: "الجزائرية", currency: "دينار جزائري" },
-  { code: "MA", name: "المغرب", dialect: "المغربية", currency: "درهم مغربي" },
-  { code: "MR", name: "موريتانيا", dialect: "الموريتانية", currency: "أوقية موريتانية" },
-  { code: "YE", name: "اليمن", dialect: "اليمنية", currency: "ريال يمني" },
-  { code: "DJ", name: "جيبوتي", dialect: "المحلية", currency: "فرنك جيبوتي" },
-  { code: "SO", name: "الصومال", dialect: "الصومالية", currency: "شلن صومالي" },
-  { code: "KM", name: "جزر القمر", dialect: "القمرية", currency: "فرنك قمري" },
+
+/* =========================================================
+   COUNTRIES
+========================================================= */
+
+const COUNTRIES=[
+  {code:"SA",name:"السعودية",dialect:"السعودية",currency:"ريال سعودي"},
+  {code:"AE",name:"الإمارات",dialect:"الإماراتية",currency:"درهم إماراتي"},
+  {code:"KW",name:"الكويت",dialect:"الكويتية",currency:"دينار كويتي"},
+  {code:"QA",name:"قطر",dialect:"القطرية",currency:"ريال قطري"},
+  {code:"BH",name:"البحرين",dialect:"البحرينية",currency:"دينار بحريني"},
+  {code:"OM",name:"عُمان",dialect:"العُمانية",currency:"ريال عُماني"},
+  {code:"IQ",name:"العراق",dialect:"العراقية",currency:"دينار عراقي"},
+  {code:"JO",name:"الأردن",dialect:"الأردنية",currency:"دينار أردني"},
+  {code:"PS",name:"فلسطين",dialect:"الفلسطينية",currency:"شيكل"},
+  {code:"LB",name:"لبنان",dialect:"اللبنانية",currency:"ليرة لبنانية"},
+  {code:"SY",name:"سوريا",dialect:"السورية",currency:"ليرة سورية"},
+  {code:"EG",name:"مصر",dialect:"المصرية",currency:"جنيه مصري"},
+  {code:"SD",name:"السودان",dialect:"السودانية",currency:"جنيه سوداني"},
+  {code:"LY",name:"ليبيا",dialect:"الليبية",currency:"دينار ليبي"},
+  {code:"TN",name:"تونس",dialect:"التونسية",currency:"دينار تونسي"},
+  {code:"DZ",name:"الجزائر",dialect:"الجزائرية",currency:"دينار جزائري"},
+  {code:"MA",name:"المغرب",dialect:"المغربية",currency:"درهم مغربي"},
+  {code:"MR",name:"موريتانيا",dialect:"الموريتانية",currency:"أوقية موريتانية"},
+  {code:"YE",name:"اليمن",dialect:"اليمنية",currency:"ريال يمني"},
+  {code:"DJ",name:"جيبوتي",dialect:"المحلية",currency:"فرنك جيبوتي"},
+  {code:"SO",name:"الصومال",dialect:"الصومالية",currency:"شلن صومالي"},
+  {code:"KM",name:"جزر القمر",dialect:"القمرية",currency:"فرنك قمري"}
 ];
 
-// توجيهات أسلوب عشوائية باش كل توليد يجي بهوية بصرية مختلفة
-const STYLE_SEEDS = [
-  "Glassmorphism فاخر: خلفية داكنة، بطاقات زجاجية شفافة بحواف مضيئة، لون نيون أزرق/سماوي مهيمن",
-  "تدرجات دافئة حيوية: برتقالي وأصفر ذهبي متدرج، Shimmer bar متحرك، خلفية فاتحة نظيفة",
-  "فخامة داكنة: خلفية سوداء/كحلية عميقة، لمسات ذهبية أو نحاسية، طباعة أنيقة، إحساس Premium",
-  "مرح وحيوية: ألوان زاهية متعددة (وردي، تركواز، أصفر)، أشكال دائرية عائمة متحركة بخفة، طاقة إيجابية",
-  "مينيمال أبيض عصري: خلفية بيضاء/رمادي فاتح جداً، لون تمييز واحد قوي فقط، مساحات بيضاء واسعة، طباعة Bold",
-  "تقني نيون: خلفية بنفسجية/كحلية داكنة جداً، توهج نيون سماوي أو وردي، خطوط هندسية دقيقة، إحساس مستقبلي",
-  "طبيعي دافئ: ألوان ترابية (بيج، أخضر زيتوني، بني فاتح)، خلفية فاتحة هادئة، إحساس عضوي وراقي",
+
+/* =========================================================
+   VISUAL STYLES
+========================================================= */
+
+const STYLE_SEEDS=[
+  "فخامة داكنة: خلفية سوداء وكحلية عميقة، لمسات ذهبية، Typography فاخرة وإحساس Premium",
+  "Glassmorphism: بطاقات زجاجية، توهج سماوي، خلفية داكنة، حدود مضيئة وتأثيرات حديثة",
+  "Minimal Luxury: أبيض ورمادي فاتح، لون رئيسي واحد، مساحات واسعة وتصميم راقٍ جداً",
+  "Warm Commerce: ألوان دافئة مثل البرتقالي والذهبي، CTA قوي، إحساس متجر ناجح",
+  "Modern Tech: بنفسجي وكحلي مع Neon glow، خطوط هندسية وتأثيرات مستقبلية",
+  "Natural Premium: بيج، أخضر زيتوني، بني فاتح، إحساس طبيعي وعضوي",
+  "Bold Social Ads: تصميم قوي ومباشر، عناوين ضخمة، بطاقات جذابة وCTA واضح مناسب لإعلانات TikTok وFacebook"
 ];
 
-function pickStyleSeed() { return STYLE_SEEDS[Math.floor(Math.random() * STYLE_SEEDS.length)]; }
+function pickStyle(){
+  return STYLE_SEEDS[
+    Math.floor(Math.random()*STYLE_SEEDS.length)
+  ];
+}
 
-/* ============================== HELPERS ============================== */
 
-function fileToDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(r.result);
-    r.onerror = reject;
-    r.readAsDataURL(file);
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function fileToDataUrl(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+
+    reader.onload=()=>{
+      resolve(reader.result);
+    };
+
+    reader.onerror=reject;
+
+    reader.readAsDataURL(file);
   });
 }
-function dataUrlParts(dataUrl) {
-  const m = /^data:(.+?);base64,(.+)$/.exec(dataUrl || "");
-  return m ? { mediaType: m[1], base64: m[2] } : null;
+
+function dataUrlParts(dataUrl){
+  const match=/^data:(.+?);base64,(.+)$/.exec(dataUrl||"");
+
+  return match
+    ? {
+        mediaType:match[1],
+        base64:match[2]
+      }
+    : null;
 }
-function formatPrice(value, country) {
-  const n = Number(value);
-  if (Number.isNaN(n)) return value + " " + country.currency;
-  return n.toLocaleString("en-US") + " " + country.currency;
-}
-function extractHTML(text) {
-  let t = (text || "").trim();
-  t = t.replace(/^```html/i, "").replace(/^```/, "").replace(/```\s*$/i, "").trim();
-  const startIdx = t.search(/<!DOCTYPE html>|<html/i);
-  if (startIdx > 0) t = t.slice(startIdx);
-  const lower = t.toLowerCase();
-  const endIdx = lower.lastIndexOf("</html>");
-  if (endIdx !== -1) t = t.slice(0, endIdx + 7);
-  return t;
-}
-function injectImages(html, images) {
-  let out = html;
-  for (let i = 0; i < 4; i++) {
-    const token = "IMAGE_" + (i + 1) + "_PLACEHOLDER";
-    const replacement = images[i] ? images[i].dataUrl : "";
-    out = out.split(token).join(replacement);
+
+function formatPrice(value,country){
+  const number=Number(value);
+
+  if(Number.isNaN(number)){
+    return value+" "+country.currency;
   }
-  return out;
+
+  return number.toLocaleString("en-US")+" "+country.currency;
 }
 
-async function callClaude(content, maxTokens) {
-  const response = await fetch("/api/generate", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ content, max_tokens: maxTokens }),
+function calculateDiscount(original,sale){
+  const oldPrice=Number(original);
+  const newPrice=Number(sale);
+
+  if(
+    !oldPrice ||
+    !newPrice ||
+    oldPrice<=newPrice
+  ){
+    return 0;
+  }
+
+  return Math.round(
+    ((oldPrice-newPrice)/oldPrice)*100
+  );
+}
+
+function extractHTML(text){
+
+  let result=(text||"").trim();
+
+  result=result
+    .replace(/^```html/i,"")
+    .replace(/^```/,"")
+    .replace(/```\s*$/i,"")
+    .trim();
+
+  const start=result.search(/<!DOCTYPE html>|<html/i);
+
+  if(start>0){
+    result=result.slice(start);
+  }
+
+  const end=result.toLowerCase().lastIndexOf("</html>");
+
+  if(end!==-1){
+    result=result.slice(0,end+7);
+  }
+
+  return result;
+}
+
+function injectImages(html,images){
+
+  let result=html;
+
+  for(let i=0;i<4;i++){
+
+    const token=`IMAGE_${i+1}_PLACEHOLDER`;
+
+    result=result
+      .split(token)
+      .join(images[i]?.dataUrl||"");
+  }
+
+  return result;
+}
+
+
+/* =========================================================
+   AI REQUEST
+========================================================= */
+
+async function callClaude(content,maxTokens){
+
+  const response=await fetch("/api/generate",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json"
+    },
+    body:JSON.stringify({
+      content,
+      max_tokens:maxTokens
+    })
   });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error || "تعذّر الاتصال بمحرك الذكاء الاصطناعي.");
-  if (!data.text) throw new Error("لم يصل رد نصي من المحرك");
+
+  const data=await response.json();
+
+  if(!response.ok){
+    throw new Error(
+      data.error ||
+      "تعذّر الاتصال بمحرك الذكاء الاصطناعي."
+    );
+  }
+
+  if(!data.text){
+    throw new Error("لم يصل رد من محرك الذكاء الاصطناعي.");
+  }
+
   return data.text;
 }
 
-function buildCreativePrompt(form, country, imagesCount, styleSeed, extraInstruction) {
-  return `أنت مصمم Landing Pages خبير متخصص فالتجارة الإلكترونية العربية، بمستوى احترافي عالمي (بحال أفضل صفحات الإعلانات المدفوعة على Facebook/TikTok).
 
-مهمتك: صمم صفحة هبوط HTML كاملة ومستقلة (بكل الـ CSS جوا وسم <style>)، احترافية جداً وجميلة بصرياً، لهاد المنتج:
+/* =========================================================
+   PROMPT
+========================================================= */
 
-- اسم المنتج: ${form.name}
-- السعر: ${form.price} ${country.currency}
-- الدولة المستهدفة: ${country.name}
-- اللهجة المطلوبة: ${form.dialect === "auto" ? country.dialect + " (تلقائي)" : form.dialect}
-- وصف من المستخدم (استنتج من الصور إذا فارغ): ${form.description || "(لا يوجد، استنتج من الصور المرفقة)"}
-- عدد الصور المتوفرة: ${imagesCount}
-- فورم الطلب: ${form.includeOrderForm ? "ادرج فورم طلب بسيط (الاسم، الهاتف، المدينة، العنوان) قبل زر التأكيد" : "لا تدرج أي فورم أو حقول إدخال، فقط أزرار CTA واضحة"}
+function buildCreativePrompt(
+  form,
+  country,
+  imagesCount,
+  styleSeed,
+  extraInstruction
+){
 
-التوجيه الأسلوبي لهاد النسخة بالذات (مهم، التزم بيه): ${styleSeed}
-${extraInstruction ? "\nتوجيهات إضافية من المستخدم: " + extraInstruction : ""}
+  const discount=calculateDiscount(
+    form.originalPrice,
+    form.price
+  );
 
-قواعد تقنية إلزامية:
-1. الصفحة كاملة تبدأ بـ <!DOCTYPE html> وتنتهي بـ </html>، بلا أي نص أو شرح خارج الكود، بلا Markdown fences.
-2. RTL بالكامل (dir="rtl" lang="ar")، خط Cairo من Google Fonts.
-3. Mobile-first: المحتوى فحاوية بعرض أقصى 480px تقريباً، متمركزة، لأن أغلب الزوار من الهاتف عبر إعلانات.
-4. استعمل بالضبط هاد الأسماء كـ src للصور حسب الحاجة (بلا ما تخترع base64 ولا تحط أي داتا فيهم، فقط النص كما هو):
-   ${Array.from({ length: imagesCount }, (_, i) => 'IMAGE_' + (i + 1) + '_PLACEHOLDER').join(", ") || "(بلا صور، لا تستعمل img tags)"}
-5. أضف تفاصيل بصرية راقية: تدرجات لونية (gradients)، ظلال ناعمة، Glow/توهج فوق العناصر المهمة، أنيميشن خفيف (fade-in عند التمرير، shimmer فوق badge الخصم، عناصر زخرفية متحركة بخفة مرتبطة بفئة المنتج إذا مناسب).
-6. اختر فقط الأقسام المناسبة فعلاً لهاد المنتج تحديداً (Hero، مميزات، فوائد، طريقة الاستخدام، مواصفات، آراء عملاء [بوضوح أنها تجريبية Placeholder]، أسئلة شائعة، شريط إلحاح/عد تنازلي إذا مناسب). لا تدرج قسماً بلا داعي.
-7. المحتوى التسويقي يكون محدداً بخصائص المنتج الظاهرة فالصور، بلا عبارات عامة مثل "منتج رائع وعالي الجودة". بلا ادعاءات طبية غير مثبتة إذا المنتج تجميلي/صحي.
-8. أزرار CTA ونصوص الطلب بلهجة الدولة المطلوبة، طبيعية وغير متكلفة.
-9. السعر يظهر بصيغة: ${formatPrice(form.price, country)}
-10. أضف فالـ <head>: meta description مناسبة، Open Graph tags أساسية، و JSON-LD من نوع Product (schema.org) بالاسم والسعر والعملة.
-11. زر CTA رئيسي ثابت أو ملتصق بأسفل الشاشة (sticky) على الهاتف.
-12. لا تستعمل أي مكتبات JS خارجية؛ إذا احتجت عداد تنازلي أو تفاعل بسيط (بحال فتح/غلق سؤال شائع)، اكتب JavaScript صغير Vanilla جوا <script> فآخر الصفحة.
+  return `
+أنت مصمم ومطور Landing Pages احترافي متخصص في التجارة الإلكترونية العربية.
 
-أعد فقط كود HTML الكامل، بدون أي مقدمة أو تعليق.`;
+مهمتك إنشاء صفحة هبوط HTML كاملة وجاهزة للاستخدام لمنتج واحد.
+
+الهدف الأساسي:
+إنشاء صفحة Landing Page عالية التحويل مناسبة لإعلانات Facebook وTikTok وSnapchat، ومصممة أولاً للهاتف.
+
+========================
+بيانات المنتج
+========================
+
+اسم المنتج:
+${form.name}
+
+السعر الأصلي:
+${form.originalPrice} ${country.currency}
+
+سعر البيع:
+${form.price} ${country.currency}
+
+نسبة الخصم التقريبية:
+${discount > 0 ? discount+"%" : "لا يوجد خصم"}
+
+الدولة:
+${country.name}
+
+اللهجة:
+${form.dialect==="auto"
+  ? country.dialect+" تلقائياً"
+  : form.dialect}
+
+الوصف:
+${form.description || "غير متوفر — استنتج المعلومات من صور المنتج بدون اختلاق مواصفات غير ظاهرة."}
+
+عدد الصور:
+${imagesCount}
+
+فورم الطلب:
+${
+  form.includeOrderForm
+    ? "نعم، أضف فورم طلب بسيط"
+    : "لا، لا تضف فورم. استخدم CTA فقط."
 }
 
-/* ============================== APP ============================== */
+========================
+الهوية البصرية
+========================
 
-function App() {
-  const [step, setStep] = useState("form");
-  const [form, setForm] = useState({ name: "", price: "", description: "", countryCode: "SA", dialect: "auto", includeOrderForm: false });
-  const [images, setImages] = useState([]);
-  const [error, setError] = useState("");
-  const [genStepIdx, setGenStepIdx] = useState(0);
-  const [productUrl, setProductUrl] = useState("");
-  const [fetchingUrl, setFetchingUrl] = useState(false);
+${styleSeed}
 
-  const [history, setHistory] = useState([]);
-  const [historyIdx, setHistoryIdx] = useState(-1);
-  const html = historyIdx >= 0 ? history[historyIdx] : null;
+كل عملية توليد يجب أن تبدو مختلفة عن السابقة.
 
-  const [previewMode, setPreviewMode] = useState("mobile");
-  const [regenNote, setRegenNote] = useState("");
-  const [regenerating, setRegenerating] = useState(false);
-  const [copyStatus, setCopyStatus] = useState("");
+لا تستخدم قالباً ثابتاً.
 
-  const country = COUNTRIES.find((c) => c.code === form.countryCode) || COUNTRIES[0];
+========================
+الصور
+========================
 
-  const GEN_STEPS = [
-    "جاري تحليل صور المنتج…", "جاري تحديد الهوية البصرية المناسبة…", "جاري تصميم الأقسام والتخطيط…",
-    "جاري كتابة المحتوى التسويقي باللهجة المحلية…", "جاري إضافة التأثيرات البصرية…", "اللمسات الأخيرة…",
+استخدم فقط:
+
+${Array.from(
+  {length:imagesCount},
+  (_,i)=>`IMAGE_${i+1}_PLACEHOLDER`
+).join(", ")}
+
+لا تستخدم صوراً من الإنترنت.
+
+لا تخترع صوراً.
+
+========================
+قواعد المحتوى
+========================
+
+- اكتب بالعربية.
+- استخدم اللهجة المطلوبة بشكل طبيعي.
+- لا تستخدم لغة روبوتية.
+- لا تكرر نفس الجمل.
+- لا تضع ادعاءات طبية أو نتائج غير مثبتة.
+- لا تخترع مواصفات غير واضحة من الصور.
+- اجعل النصوص قصيرة وقوية.
+- ركز على الفوائد الحقيقية للعميل.
+- CTA واضح ومكرر بشكل منطقي.
+- إذا كان هناك سعر أصلي وسعر بيع، اعرض السعر الأصلي مشطوباً وسعر البيع بشكل بارز.
+- لا تذكر أي شيء عن "صافي الربح".
+- لا تذكر تكلفة المنتج.
+- لا تذكر أن الصفحة مولدة بالذكاء الاصطناعي.
+
+========================
+هيكلة الصفحة
+========================
+
+اختر الأقسام المناسبة للمنتج فقط.
+
+يمكن استخدام:
+
+Hero
+Benefits
+Features
+Product Gallery
+How It Works
+Specifications
+Social Proof
+FAQ
+Offer
+Urgency
+CTA
+
+لا تضف أقساماً لمجرد ملء الصفحة.
+
+========================
+التصميم
+========================
+
+- RTL بالكامل.
+- Mobile-first.
+- عرض الهاتف تقريباً 390-480px.
+- Responsive.
+- CSS داخل الصفحة.
+- بدون مكتبات خارجية.
+- Gradients.
+- Shadows.
+- Glass effects إذا كانت مناسبة.
+- Micro animations.
+- Scroll reveal.
+- CTA واضح.
+- Sticky CTA على الهاتف.
+- تصميم Premium.
+- لا تجعل الصفحة تبدو كقالب Shopify.
+
+========================
+SEO
+========================
+
+أضف:
+
+meta description
+Open Graph
+Product JSON-LD
+
+ويجب أن يحتوي JSON-LD على:
+
+اسم المنتج
+السعر الحالي
+العملة
+السعر الأصلي إن كان مناسباً
+الصورة
+
+========================
+قواعد تقنية
+========================
+
+1. أعد HTML فقط.
+2. يبدأ بـ <!DOCTYPE html>.
+3. ينتهي بـ </html>.
+4. لا Markdown.
+5. لا شرح خارج HTML.
+6. CSS داخل <style>.
+7. JavaScript داخل <script>.
+8. لا تستعمل React داخل Landing Page النهائية.
+9. الصور تستخدم placeholders المحددة.
+10. اجعل الصفحة تعمل مباشرة عند فتح ملف HTML.
+
+========================
+
+${extraInstruction
+  ? "توجيه إضافي من المستخدم: "+extraInstruction
+  : ""}
+
+أنشئ الآن صفحة هبوط احترافية كاملة.
+`;
+}
+
+
+/* =========================================================
+   APP
+========================================================= */
+
+function App(){
+
+  const [step,setStep]=useState("form");
+
+  const [form,setForm]=useState({
+    name:"",
+    originalPrice:"",
+    price:"",
+    description:"",
+    countryCode:"SA",
+    dialect:"auto",
+    includeOrderForm:false
+  });
+
+  const [images,setImages]=useState([]);
+
+  const [error,setError]=useState("");
+
+  const [genStepIdx,setGenStepIdx]=useState(0);
+
+  const [history,setHistory]=useState([]);
+
+  const [historyIdx,setHistoryIdx]=useState(-1);
+
+  const html=
+    historyIdx>=0
+      ? history[historyIdx]
+      : null;
+
+  const [previewMode,setPreviewMode]=useState("mobile");
+
+  const [regenNote,setRegenNote]=useState("");
+
+  const [regenerating,setRegenerating]=useState(false);
+
+  const [copyStatus,setCopyStatus]=useState("");
+
+  const country=
+    COUNTRIES.find(
+      c=>c.code===form.countryCode
+    )||COUNTRIES[0];
+
+
+  const GEN_STEPS=[
+    "جاري تحليل صور المنتج…",
+    "جاري تحديد الهوية البصرية…",
+    "جاري بناء هيكلة الصفحة…",
+    "جاري كتابة المحتوى التسويقي…",
+    "جاري تحسين تجربة الهاتف…",
+    "جاري إضافة اللمسات النهائية…"
   ];
-  const genTimer = useRef(null);
-  useEffect(() => {
-    if (step === "loading") {
+
+  const timerRef=useRef(null);
+
+  useEffect(()=>{
+
+    if(step==="loading"){
+
       setGenStepIdx(0);
-      genTimer.current = setInterval(() => setGenStepIdx((i) => (i < GEN_STEPS.length - 1 ? i + 1 : i)), 1600);
-    } else if (genTimer.current) clearInterval(genTimer.current);
-    return () => genTimer.current && clearInterval(genTimer.current);
-  }, [step]);
 
-  async function handleImageUpload(e) {
-    const files = Array.from(e.target.files || []).slice(0, 4 - images.length);
-    const next = [];
-    for (const f of files) {
-      try {
-        const dataUrl = await fileToDataUrl(f);
-        const parts = dataUrlParts(dataUrl);
-        if (parts) next.push({ dataUrl, mediaType: parts.mediaType, base64: parts.base64 });
-      } catch (e2) {}
-    }
-    setImages((prev) => [...prev, ...next].slice(0, 4));
-    e.target.value = "";
-  }
-  function removeImage(i) { setImages((prev) => prev.filter((_, idx) => idx !== i)); }
+      timerRef.current=setInterval(()=>{
 
-  async function handleFetchFromUrl() {
-    setError("");
-    if (!productUrl.trim()) return setError("الصق رابط المنتج أولاً.");
-    setFetchingUrl(true);
-    try {
-      const response = await fetch("/api/fetch-product", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: productUrl.trim() }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "تعذّر استخراج بيانات المنتج");
+        setGenStepIdx(
+          current=>
+            current<GEN_STEPS.length-1
+              ? current+1
+              : current
+        );
 
-      if (data.title) setForm((f) => ({ ...f, name: data.title }));
-      if (data.price) setForm((f) => ({ ...f, price: String(data.price) }));
-      if (data.description) setForm((f) => ({ ...f, description: data.description }));
+      },1500);
 
-      const fetchedImages = [];
-      for (const dataUrl of data.images || []) {
-        const parts = dataUrlParts(dataUrl);
-        if (parts) fetchedImages.push({ dataUrl, mediaType: parts.mediaType, base64: parts.base64 });
+    }else{
+
+      if(timerRef.current){
+        clearInterval(timerRef.current);
       }
-      if (fetchedImages.length > 0) {
-        setImages((prev) => [...prev, ...fetchedImages].slice(0, 4));
-      } else if (!data.title && !data.price) {
-        setError("ما قدرناش نستخرجو معلومات من هاد الرابط، عمّر الحقول يدوياً.");
-      } else {
-        setError("استخرجنا بعض المعلومات، لكن ما لقيناش صور — ارفعها يدوياً.");
-      }
-    } catch (err) {
-      setError(err.message || "تعذّر استخراج بيانات المنتج من هاد الرابط، عمّر الحقول يدوياً.");
-    } finally {
-      setFetchingUrl(false);
+
     }
+
+    return ()=>{
+      if(timerRef.current){
+        clearInterval(timerRef.current);
+      }
+    };
+
+  },[step]);
+
+
+  /* =====================================================
+     IMAGE UPLOAD
+  ===================================================== */
+
+  async function handleImageUpload(event){
+
+    const files=
+      Array.from(event.target.files||[])
+      .slice(0,4-images.length);
+
+    const next=[];
+
+    for(const file of files){
+
+      try{
+
+        const dataUrl=
+          await fileToDataUrl(file);
+
+        const parts=
+          dataUrlParts(dataUrl);
+
+        if(parts){
+
+          next.push({
+            dataUrl,
+            mediaType:parts.mediaType,
+            base64:parts.base64
+          });
+
+        }
+
+      }catch(error){}
+
+    }
+
+    setImages(
+      previous=>
+        [...previous,...next].slice(0,4)
+    );
+
+    event.target.value="";
   }
 
-  async function runGeneration(extraInstruction) {
-    setError("");
-    const styleSeed = pickStyleSeed();
-    const content = [
-      { type: "text", text: buildCreativePrompt(form, country, images.length, styleSeed, extraInstruction) },
-      ...images.map((img) => ({ type: "image", source: { type: "base64", media_type: img.mediaType, data: img.base64 } })),
+
+  function removeImage(index){
+
+    setImages(
+      previous=>
+        previous.filter(
+          (_,i)=>i!==index
+        )
+    );
+  }
+
+
+  /* =====================================================
+     GENERATION
+  ===================================================== */
+
+  async function runGeneration(extraInstruction){
+
+    const styleSeed=pickStyle();
+
+    const content=[
+      {
+        type:"text",
+        text:buildCreativePrompt(
+          form,
+          country,
+          images.length,
+          styleSeed,
+          extraInstruction
+        )
+      },
+      ...images.map(image=>({
+        type:"image",
+        source:{
+          type:"base64",
+          media_type:image.mediaType,
+          data:image.base64
+        }
+      }))
     ];
-    const rawText = await callClaude(content, 8000);
-    const cleanHtml = injectImages(extractHTML(rawText), images);
-    if (!cleanHtml || cleanHtml.length < 50) throw new Error("الرد الذي وصل غير مكتمل، حاول مرة أخرى.");
-    return cleanHtml;
+
+    const raw=
+      await callClaude(
+        content,
+        9000
+      );
+
+    const clean=
+      injectImages(
+        extractHTML(raw),
+        images
+      );
+
+    if(
+      !clean ||
+      clean.length<100
+    ){
+      throw new Error(
+        "الصفحة الناتجة غير مكتملة."
+      );
+    }
+
+    return clean;
   }
 
-  async function handleGenerate() {
+
+  async function handleGenerate(){
+
     setError("");
-    if (!form.name.trim()) return setError("أدخل اسم المنتج أولاً.");
-    if (!form.price) return setError("أدخل سعر المنتج أولاً.");
-    if (images.length === 0) return setError("ارفع صورة واحدة على الأقل للمنتج.");
+
+    if(!form.name.trim()){
+      return setError(
+        "أدخل اسم المنتج أولاً."
+      );
+    }
+
+    if(!form.originalPrice){
+      return setError(
+        "أدخل السعر الأصلي."
+      );
+    }
+
+    if(!form.price){
+      return setError(
+        "أدخل سعر البيع."
+      );
+    }
+
+    if(images.length===0){
+      return setError(
+        "ارفع صورة واحدة على الأقل."
+      );
+    }
+
     setStep("loading");
-    try {
-      const cleanHtml = await runGeneration(null);
-      setHistory([cleanHtml]); setHistoryIdx(0); setStep("preview");
-    } catch (err) {
-      setError(err.message || "حدث خطأ أثناء التوليد، حاول مرة أخرى.");
+
+    try{
+
+      const result=
+        await runGeneration(null);
+
+      setHistory([result]);
+
+      setHistoryIdx(0);
+
+      setStep("preview");
+
+    }catch(error){
+
+      setError(
+        error.message ||
+        "حدث خطأ أثناء التوليد."
+      );
+
       setStep("form");
     }
   }
 
-  async function handleRegenerate() {
-    if (!regenNote.trim()) return;
-    setRegenerating(true); setError("");
-    try {
-      const cleanHtml = await runGeneration(regenNote.trim());
-      const truncated = history.slice(0, historyIdx + 1);
-      const nextHistory = [...truncated, cleanHtml];
-      setHistory(nextHistory); setHistoryIdx(nextHistory.length - 1); setRegenNote("");
-    } catch (err) {
-      setError(err.message || "تعذّر إعادة التوليد.");
-    } finally { setRegenerating(false); }
+
+  async function handleRegenerate(){
+
+    if(!regenNote.trim()){
+      return;
+    }
+
+    setRegenerating(true);
+
+    setError("");
+
+    try{
+
+      const result=
+        await runGeneration(
+          regenNote.trim()
+        );
+
+      const previous=
+        history.slice(
+          0,
+          historyIdx+1
+        );
+
+      const next=[
+        ...previous,
+        result
+      ];
+
+      setHistory(next);
+
+      setHistoryIdx(
+        next.length-1
+      );
+
+      setRegenNote("");
+
+    }catch(error){
+
+      setError(
+        error.message ||
+        "تعذّر إعادة التصميم."
+      );
+
+    }finally{
+
+      setRegenerating(false);
+    }
   }
 
-  function undo() { if (historyIdx > 0) setHistoryIdx(historyIdx - 1); }
-  function redo() { if (historyIdx < history.length - 1) setHistoryIdx(historyIdx + 1); }
 
-  async function copyHTML() {
-    try { await navigator.clipboard.writeText(html); setCopyStatus("تم نسخ الكود ✓"); }
-    catch { setCopyStatus("تعذّر النسخ التلقائي، استخدم زر التحميل"); }
-    setTimeout(() => setCopyStatus(""), 2500);
-  }
-  function downloadHTML() {
-    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = (form.name || "landing-page").trim().replace(/\s+/g, "-") + ".html";
-    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  function undo(){
+
+    if(historyIdx>0){
+      setHistoryIdx(
+        historyIdx-1
+      );
+    }
   }
 
-  const iframeRef = useRef(null);
-  const [iframeHeight, setIframeHeight] = useState(700);
-  function handleIframeLoad() {
-    try {
-      const doc = iframeRef.current.contentDocument;
-      const h = Math.max(doc.documentElement.scrollHeight, doc.body.scrollHeight);
-      setIframeHeight(h + 20);
-    } catch (e) {}
-  }
-  const [exportingJPG, setExportingJPG] = useState(false);
-  async function downloadJPG() {
-    if (!iframeRef.current || !window.html2canvas) return;
-    setExportingJPG(true); setError("");
-    try {
-      const doc = iframeRef.current.contentDocument;
-      const canvas = await window.html2canvas(doc.body, { useCORS: true, backgroundColor: null, scale: 2.5, windowWidth: doc.documentElement.scrollWidth, windowHeight: doc.documentElement.scrollHeight });
-      const link = document.createElement("a");
-      link.href = canvas.toDataURL("image/jpeg", 0.95);
-      link.download = (form.name || "landing-page").trim().replace(/\s+/g, "-") + ".jpg";
-      document.body.appendChild(link); link.click(); link.remove();
-    } catch (err) {
-      setError("تعذّر تصدير الصورة، حاول تحميل HTML بدلاً من ذلك.");
-    } finally { setExportingJPG(false); }
+
+  function redo(){
+
+    if(historyIdx<history.length-1){
+      setHistoryIdx(
+        historyIdx+1
+      );
+    }
   }
 
-  return (
-    <div dir="rtl" style={{ fontFamily: "'Cairo', sans-serif", minHeight: "100vh", background: "#0B0F19" }}>
-      {step === "form" && <FormScreen form={form} setForm={setForm} images={images} onUpload={handleImageUpload} onRemoveImage={removeImage} error={error} onGenerate={handleGenerate}
-        productUrl={productUrl} setProductUrl={setProductUrl} onFetchUrl={handleFetchFromUrl} fetchingUrl={fetchingUrl} />}
-      {step === "loading" && <LoadingScreen stepIdx={genStepIdx} steps={GEN_STEPS} />}
-      {step === "preview" && html && (
-        <PreviewScreen html={html} iframeRef={iframeRef} iframeHeight={iframeHeight} onIframeLoad={handleIframeLoad}
-          previewMode={previewMode} setPreviewMode={setPreviewMode}
-          regenNote={regenNote} setRegenNote={setRegenNote} onRegenerate={handleRegenerate} regenerating={regenerating}
-          canUndo={historyIdx > 0} canRedo={historyIdx < history.length - 1} onUndo={undo} onRedo={redo}
-          onCopy={copyHTML} onDownload={downloadHTML} onDownloadJPG={downloadJPG} exportingJPG={exportingJPG}
-          copyStatus={copyStatus} error={error} onBack={() => setStep("form")} />
+
+  /* =====================================================
+     COPY
+  ===================================================== */
+
+  async function copyHTML(){
+
+    try{
+
+      await navigator.clipboard.writeText(
+        html
+      );
+
+      setCopyStatus(
+        "تم نسخ HTML ✓"
+      );
+
+    }catch{
+
+      setCopyStatus(
+        "تعذّر النسخ التلقائي."
+      );
+    }
+
+    setTimeout(
+      ()=>setCopyStatus(""),
+      2500
+    );
+  }
+
+
+  /* =====================================================
+     DOWNLOAD
+  ===================================================== */
+
+  function downloadHTML(){
+
+    const blob=
+      new Blob(
+        [html],
+        {
+          type:"text/html;charset=utf-8"
+        }
+      );
+
+    const url=
+      URL.createObjectURL(blob);
+
+    const link=
+      document.createElement("a");
+
+    link.href=url;
+
+    link.download=
+      (
+        form.name||
+        "landing-page"
+      )
+      .trim()
+      .replace(/\s+/g,"-")
+      +".html";
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    link.remove();
+
+    URL.revokeObjectURL(url);
+  }
+
+
+  /* =====================================================
+     PREVIEW
+  ===================================================== */
+
+  const iframeRef=
+    useRef(null);
+
+  const [iframeHeight,setIframeHeight]=
+    useState(700);
+
+  function handleIframeLoad(){
+
+    try{
+
+      const doc=
+        iframeRef.current.contentDocument;
+
+      const height=
+        Math.max(
+          doc.documentElement.scrollHeight,
+          doc.body.scrollHeight
+        );
+
+      setIframeHeight(
+        height+20
+      );
+
+    }catch(error){}
+  }
+
+
+  /* =====================================================
+     JPG
+  ===================================================== */
+
+  const [exportingJPG,setExportingJPG]=
+    useState(false);
+
+  async function downloadJPG(){
+
+    if(
+      !iframeRef.current ||
+      !window.html2canvas
+    ){
+      return;
+    }
+
+    setExportingJPG(true);
+
+    setError("");
+
+    try{
+
+      const doc=
+        iframeRef.current.contentDocument;
+
+      const canvas=
+        await window.html2canvas(
+          doc.body,
+          {
+            useCORS:true,
+            backgroundColor:null,
+            scale:2,
+            windowWidth:
+              doc.documentElement.scrollWidth,
+            windowHeight:
+              doc.documentElement.scrollHeight
+          }
+        );
+
+      const link=
+        document.createElement("a");
+
+      link.href=
+        canvas.toDataURL(
+          "image/jpeg",
+          .95
+        );
+
+      link.download=
+        (
+          form.name||
+          "landing-page"
+        )
+        .trim()
+        .replace(/\s+/g,"-")
+        +".jpg";
+
+      document.body.appendChild(link);
+
+      link.click();
+
+      link.remove();
+
+    }catch(error){
+
+      setError(
+        "تعذّر تصدير JPG."
+      );
+
+    }finally{
+
+      setExportingJPG(false);
+    }
+  }
+
+
+  return(
+
+    <div
+      dir="rtl"
+      style={{
+        minHeight:"100vh",
+        background:"#080c14",
+        fontFamily:"'Cairo',sans-serif"
+      }}
+    >
+
+      {step==="form" && (
+
+        <FormScreen
+          form={form}
+          setForm={setForm}
+          images={images}
+          onUpload={handleImageUpload}
+          onRemoveImage={removeImage}
+          error={error}
+          onGenerate={handleGenerate}
+        />
+
       )}
+
+      {step==="loading" && (
+
+        <LoadingScreen
+          stepIdx={genStepIdx}
+          steps={GEN_STEPS}
+        />
+
+      )}
+
+      {step==="preview" && html && (
+
+        <PreviewScreen
+          html={html}
+          iframeRef={iframeRef}
+          iframeHeight={iframeHeight}
+          onIframeLoad={handleIframeLoad}
+          previewMode={previewMode}
+          setPreviewMode={setPreviewMode}
+          regenNote={regenNote}
+          setRegenNote={setRegenNote}
+          onRegenerate={handleRegenerate}
+          regenerating={regenerating}
+          canUndo={historyIdx>0}
+          canRedo={
+            historyIdx<
+            history.length-1
+          }
+          onUndo={undo}
+          onRedo={redo}
+          onCopy={copyHTML}
+          onDownload={downloadHTML}
+          onDownloadJPG={downloadJPG}
+          exportingJPG={exportingJPG}
+          copyStatus={copyStatus}
+          error={error}
+          onBack={()=>setStep("form")}
+        />
+
+      )}
+
     </div>
   );
 }
 
-/* ============================== SCREENS ============================== */
 
-function FormScreen({ form, setForm, images, onUpload, onRemoveImage, error, onGenerate, productUrl, setProductUrl, onFetchUrl, fetchingUrl }) {
-  return (
-    <div style={{ maxWidth: 640, margin: "0 auto", padding: "48px 20px 80px" }} className="fade-in">
-      <div style={{ textAlign: "center", marginBottom: 40 }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 14px", borderRadius: 999, background: "#161E33", color: "#22D3EE", fontSize: 13, fontWeight: 600, marginBottom: 18 }}>
-          <span>✨</span> Arabic Landing AI
+/* =========================================================
+   FORM SCREEN
+========================================================= */
+
+function FormScreen({
+  form,
+  setForm,
+  images,
+  onUpload,
+  onRemoveImage,
+  error,
+  onGenerate
+}){
+
+  const country=
+    COUNTRIES.find(
+      c=>c.code===form.countryCode
+    )||COUNTRIES[0];
+
+  const discount=
+    calculateDiscount(
+      form.originalPrice,
+      form.price
+    );
+
+  return(
+
+    <div
+      className="fade"
+      style={{
+        width:"100%",
+        maxWidth:680,
+        margin:"0 auto",
+        padding:"45px 18px 80px"
+      }}
+    >
+
+      {/* HEADER */}
+
+      <div
+        style={{
+          textAlign:"center",
+          marginBottom:32
+        }}
+      >
+
+        <div
+          style={{
+            display:"inline-flex",
+            alignItems:"center",
+            gap:8,
+            padding:"7px 15px",
+            borderRadius:50,
+            background:"#111a2c",
+            border:"1px solid #20304b",
+            color:"#22d3ee",
+            fontSize:12,
+            fontWeight:700,
+            marginBottom:16
+          }}
+        >
+          ✨ Arabic Landing AI
         </div>
-        <h1 style={{ color: "#F1F5F9", fontSize: 30, fontWeight: 800, lineHeight: 1.4, margin: 0 }}>أنشئ صفحة هبوط احترافية لمنتجك بالذكاء الاصطناعي</h1>
-        <p style={{ color: "#8B96AC", fontSize: 15, marginTop: 10 }}>تصميم حر ومخصص 100% لكل منتج — هوية بصرية مختلفة فكل مرة</p>
+
+        <h1
+          style={{
+            fontSize:30,
+            lineHeight:1.45,
+            margin:"0 0 10px",
+            fontWeight:900,
+            color:"#f8fafc"
+          }}
+        >
+          أنشئ صفحة هبوط احترافية
+          <br/>
+          <span style={{color:"#22d3ee"}}>
+            بالذكاء الاصطناعي
+          </span>
+        </h1>
+
+        <p
+          style={{
+            color:"#8995aa",
+            fontSize:14,
+            margin:0
+          }}
+        >
+          أدخل معلومات منتجك، وارفع صوره، واترك التصميم والمحتوى للذكاء الاصطناعي.
+        </p>
+
       </div>
 
-      <div style={{ background: "#131A2A", border: "1px solid #202A42", borderRadius: 18, padding: 22, marginBottom: 16 }}>
-        <Field label="أو ابدأ من رابط منتج (AliExpress / Alibaba)">
-          <div style={{ display: "flex", gap: 8 }}>
-            <input value={productUrl} onChange={(e) => setProductUrl(e.target.value)} placeholder="https://www.aliexpress.com/item/..." style={inputStyle} disabled={fetchingUrl} />
-            <button type="button" onClick={onFetchUrl} disabled={fetchingUrl || !productUrl.trim()} style={Object.assign({}, toggleBtn, { flex: "0 0 auto", padding: "10px 16px", background: "#3B82F6", color: "#fff", opacity: fetchingUrl || !productUrl.trim() ? 0.5 : 1 })}>
-              {fetchingUrl ? "⟳ جاري..." : "🔗 استخراج"}
-            </button>
-          </div>
-          <span style={{ color: "#5B6478", fontSize: 11, marginTop: 4, display: "block" }}>الاستخراج غير مضمون 100% (بعض المواقع محمية) — تحقق من الحقول تحت وعدّلها عند الحاجة</span>
-        </Field>
-      </div>
 
-      <div style={{ background: "#131A2A", border: "1px solid #202A42", borderRadius: 18, padding: 22, display: "grid", gap: 16 }}>
-        <Field label="اسم المنتج"><input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="مثال: سماعة بلوتوث لاسلكية" style={inputStyle} /></Field>
-        <Field label="سعر المنتج"><input type="number" value={form.price} onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))} placeholder="مثال: 149" style={inputStyle} /></Field>
-        <Field label="صور المنتج (حتى 4 صور)">
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-            {images.map((img, i) => (
-              <div key={i} style={{ position: "relative", width: 76, height: 76, borderRadius: 12, overflow: "hidden", border: "1px solid #202A42" }}>
-                <img src={img.dataUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                <button onClick={() => onRemoveImage(i)} style={{ position: "absolute", top: 3, left: 3, background: "rgba(0,0,0,.6)", border: "none", borderRadius: 6, color: "#fff", padding: 2, cursor: "pointer", display: "flex" }}>✕</button>
+      {/* MAIN CARD */}
+
+      <div
+        style={{
+          background:"#111827",
+          border:"1px solid #202b42",
+          borderRadius:20,
+          padding:22,
+          boxShadow:"0 20px 60px rgba(0,0,0,.25)"
+        }}
+      >
+
+        <div
+          style={{
+            display:"grid",
+            gap:18
+          }}
+        >
+
+          {/* PRODUCT NAME */}
+
+          <Field label="اسم المنتج">
+
+            <input
+              value={form.name}
+              onChange={e=>
+                setForm(
+                  f=>({
+                    ...f,
+                    name:e.target.value
+                  })
+                )
+              }
+              placeholder="مثال: جهاز تنظيف بالبخار"
+              style={inputStyle}
+            />
+
+          </Field>
+
+
+          {/* PRICES */}
+
+          <div
+            className="formGrid"
+            style={{
+              display:"grid",
+              gridTemplateColumns:"1fr 1fr",
+              gap:12
+            }}
+          >
+
+            <Field label="السعر الأصلي">
+
+              <div style={{position:"relative"}}>
+
+                <input
+                  type="number"
+                  min="0"
+                  value={form.originalPrice}
+                  onChange={e=>
+                    setForm(
+                      f=>({
+                        ...f,
+                        originalPrice:e.target.value
+                      })
+                    )
+                  }
+                  placeholder="مثال: 299"
+                  style={inputStyle}
+                />
+
               </div>
-            ))}
-            {images.length < 4 && (
-              <label style={{ width: 76, height: 76, borderRadius: 12, border: "1.5px dashed #2A3654", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#5B6478", gap: 4 }}>
-                <span style={{ fontSize: 18 }}>🖼️</span><span style={{ fontSize: 10 }}>رفع</span>
-                <input type="file" accept="image/*" multiple onChange={onUpload} style={{ display: "none" }} />
-              </label>
-            )}
+
+            </Field>
+
+
+            <Field label="سعر البيع">
+
+              <input
+                type="number"
+                min="0"
+                value={form.price}
+                onChange={e=>
+                  setForm(
+                    f=>({
+                      ...f,
+                      price:e.target.value
+                    })
+                  )
+                }
+                placeholder="مثال: 149"
+                style={{
+                  ...inputStyle,
+                  borderColor:"#22d3ee"
+                }}
+              />
+
+            </Field>
+
           </div>
-        </Field>
-        <Field label="وصف المنتج (اختياري)"><textarea value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder="اتركه فارغاً وسيقوم الذكاء الاصطناعي بكتابة وصف من الصور" rows={3} style={Object.assign({}, inputStyle, { resize: "vertical" })} /></Field>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          <Field label="الدولة المستهدفة"><select value={form.countryCode} onChange={(e) => setForm((f) => ({ ...f, countryCode: e.target.value }))} style={inputStyle}>{COUNTRIES.map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}</select></Field>
-          <Field label="اللهجة"><select value={form.dialect} onChange={(e) => setForm((f) => ({ ...f, dialect: e.target.value }))} style={inputStyle}><option value="auto">تلقائي حسب الدولة</option>{COUNTRIES.map((c) => <option key={c.code} value={c.dialect}>{c.dialect}</option>)}</select></Field>
-        </div>
-        <Field label="فورم الطلب فالصفحة">
-          <div style={{ display: "flex", gap: 8 }}>
-            <button type="button" onClick={() => setForm((f) => ({ ...f, includeOrderForm: false }))} style={Object.assign({}, toggleBtn, { background: !form.includeOrderForm ? "#22D3EE" : "#0E1526", color: !form.includeOrderForm ? "#04101C" : "#B7C0D4" })}>بلا فورم (زر فقط)</button>
-            <button type="button" onClick={() => setForm((f) => ({ ...f, includeOrderForm: true }))} style={Object.assign({}, toggleBtn, { background: form.includeOrderForm ? "#22D3EE" : "#0E1526", color: form.includeOrderForm ? "#04101C" : "#B7C0D4" })}>مع فورم (اسم، هاتف...)</button>
+
+
+          {/* PRICE PREVIEW */}
+
+          {form.originalPrice &&
+           form.price &&
+           Number(form.originalPrice)>Number(form.price) && (
+
+            <div
+              style={{
+                background:"#0b1623",
+                border:"1px solid #18354a",
+                borderRadius:12,
+                padding:"10px 13px",
+                display:"flex",
+                alignItems:"center",
+                justifyContent:"space-between",
+                gap:10
+              }}
+            >
+
+              <div>
+
+                <span
+                  style={{
+                    color:"#64748b",
+                    fontSize:11
+                  }}
+                >
+                  عرض السعر
+                </span>
+
+                <div
+                  style={{
+                    display:"flex",
+                    alignItems:"center",
+                    gap:8
+                  }}
+                >
+
+                  <span
+                    style={{
+                      color:"#64748b",
+                      textDecoration:"line-through",
+                      fontSize:13
+                    }}
+                  >
+                    {Number(form.originalPrice).toLocaleString("en-US")}
+                  </span>
+
+                  <strong
+                    style={{
+                      color:"#22d3ee",
+                      fontSize:18
+                    }}
+                  >
+                    {Number(form.price).toLocaleString("en-US")}
+                  </strong>
+
+                  <span
+                    style={{
+                      color:"#94a3b8",
+                      fontSize:11
+                    }}
+                  >
+                    {country.currency}
+                  </span>
+
+                </div>
+
+              </div>
+
+              <div
+                style={{
+                  background:"#123d32",
+                  color:"#6ee7b7",
+                  borderRadius:8,
+                  padding:"5px 9px",
+                  fontSize:11,
+                  fontWeight:800
+                }}
+              >
+                خصم {calculateDiscount(
+                  form.originalPrice,
+                  form.price
+                )}%
+              </div>
+
+            </div>
+
+          )}
+
+
+          {/* IMAGES */}
+
+          <Field label="صور المنتج — حتى 4 صور">
+
+            <div
+              style={{
+                display:"grid",
+                gridTemplateColumns:
+                  "repeat(4,1fr)",
+                gap:9
+              }}
+            >
+
+              {images.map((img,index)=>(
+
+                <div
+                  key={index}
+                  style={{
+                    position:"relative",
+                    aspectRatio:"1",
+                    borderRadius:12,
+                    overflow:"hidden",
+                    border:"1px solid #29364d",
+                    background:"#0b1220"
+                  }}
+                >
+
+                  <img
+                    src={img.dataUrl}
+                    alt=""
+                    style={{
+                      width:"100%",
+                      height:"100%",
+                      objectFit:"cover"
+                    }}
+                  />
+
+                  <button
+                    onClick={()=>
+                      onRemoveImage(index)
+                    }
+                    style={{
+                      position:"absolute",
+                      top:5,
+                      left:5,
+                      width:25,
+                      height:25,
+                      border:0,
+                      borderRadius:7,
+                      background:"rgba(0,0,0,.7)",
+                      color:"#fff",
+                      cursor:"pointer"
+                    }}
+                  >
+                    ×
+                  </button>
+
+                </div>
+
+              ))}
+
+
+              {images.length<4 && (
+
+                <label
+                  style={{
+                    aspectRatio:"1",
+                    borderRadius:12,
+                    border:"1.5px dashed #33435d",
+                    display:"flex",
+                    flexDirection:"column",
+                    alignItems:"center",
+                    justifyContent:"center",
+                    gap:5,
+                    cursor:"pointer",
+                    color:"#718096",
+                    background:"#0d1524"
+                  }}
+                >
+
+                  <span
+                    style={{
+                      fontSize:22
+                    }}
+                  >
+                    ＋
+                  </span>
+
+                  <span
+                    style={{
+                      fontSize:10
+                    }}
+                  >
+                    إضافة صورة
+                  </span>
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={onUpload}
+                    style={{display:"none"}}
+                  />
+
+                </label>
+
+              )}
+
+            </div>
+
+            <span
+              style={{
+                color:"#59657b",
+                fontSize:11,
+                display:"block",
+                marginTop:6
+              }}
+            >
+              يمكنك رفع حتى 4 صور للمنتج
+            </span>
+
+          </Field>
+
+
+          {/* DESCRIPTION */}
+
+          <Field label="وصف المنتج — اختياري">
+
+            <textarea
+              value={form.description}
+              onChange={e=>
+                setForm(
+                  f=>({
+                    ...f,
+                    description:e.target.value
+                  })
+                )
+              }
+              placeholder="اكتب معلومات إضافية عن المنتج، أو اترك الحقل فارغاً ليحلل الذكاء الاصطناعي الصور."
+              rows={4}
+              style={{
+                ...inputStyle,
+                resize:"vertical",
+                lineHeight:1.8
+              }}
+            />
+
+          </Field>
+
+
+          {/* COUNTRY + DIALECT */}
+
+          <div
+            className="formGrid"
+            style={{
+              display:"grid",
+              gridTemplateColumns:"1fr 1fr",
+              gap:12
+            }}
+          >
+
+            <Field label="الدولة المستهدفة">
+
+              <select
+                value={form.countryCode}
+                onChange={e=>
+                  setForm(
+                    f=>({
+                      ...f,
+                      countryCode:e.target.value
+                    })
+                  )
+                }
+                style={inputStyle}
+              >
+
+                {COUNTRIES.map(country=>
+
+                  <option
+                    key={country.code}
+                    value={country.code}
+                  >
+                    {country.name}
+                  </option>
+
+                )}
+
+              </select>
+
+            </Field>
+
+
+            <Field label="اللهجة">
+
+              <select
+                value={form.dialect}
+                onChange={e=>
+                  setForm(
+                    f=>({
+                      ...f,
+                      dialect:e.target.value
+                    })
+                  )
+                }
+                style={inputStyle}
+              >
+
+                <option value="auto">
+                  تلقائي حسب الدولة
+                </option>
+
+                {COUNTRIES.map(country=>
+
+                  <option
+                    key={country.code}
+                    value={country.dialect}
+                  >
+                    {country.dialect}
+                  </option>
+
+                )}
+
+              </select>
+
+            </Field>
+
           </div>
-        </Field>
-        {error && <div style={{ color: "#F87171", fontSize: 13, background: "#2A1519", padding: "8px 12px", borderRadius: 8 }}>{error}</div>}
-        <button onClick={onGenerate} style={{ marginTop: 6, background: "linear-gradient(90deg,#3B82F6,#22D3EE)", border: "none", borderRadius: 12, color: "#04101C", fontWeight: 800, fontSize: 16, padding: "15px 20px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-          أنشئ صفحة الهبوط <span style={{ fontSize: 18 }}>🚀</span>
-        </button>
-      </div>
-    </div>
-  );
-}
-function Field({ label, children }) { return <label style={{ display: "grid", gap: 6 }}><span style={{ color: "#B7C0D4", fontSize: 13, fontWeight: 600 }}>{label}</span>{children}</label>; }
-const inputStyle = { background: "#0E1526", border: "1px solid #202A42", borderRadius: 10, color: "#F1F5F9", padding: "11px 13px", fontSize: 14.5, outline: "none", width: "100%" };
-const toggleBtn = { flex: 1, border: "1px solid #202A42", borderRadius: 10, padding: "10px 8px", fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" };
 
-function LoadingScreen({ stepIdx, steps }) {
-  return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 22, padding: 20 }} className="fade-in">
-      <div style={{ width: 64, height: 64, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: "#131A2A", border: "1px solid #202A42" }}>
-        <span style={{ fontSize: 28, display: "inline-flex", color: "#22D3EE", animation: "spin 1s linear infinite" }}>⟳</span>
-      </div>
-      <div style={{ color: "#F1F5F9", fontWeight: 700, fontSize: 16, textAlign: "center", maxWidth: 280 }}>{steps[stepIdx]}</div>
-      <div style={{ width: 220, height: 6, borderRadius: 4, overflow: "hidden", background: "#131A2A" }}>
-        <div className="shimmer" style={{ width: ((stepIdx + 1) / steps.length) * 100 + "%", height: "100%", background: "linear-gradient(90deg,#3B82F6,#22D3EE)", transition: "width .5s ease" }} />
-      </div>
-      <div style={{ color: "#5B6478", fontSize: 12 }}>التصميم الحر قد يأخذ وقتاً أطول قليلاً…</div>
-    </div>
-  );
-}
 
-function PreviewScreen(props) {
-  const { html, iframeRef, iframeHeight, onIframeLoad, previewMode, setPreviewMode, regenNote, setRegenNote, onRegenerate, regenerating, canUndo, canRedo, onUndo, onRedo, onCopy, onDownload, onDownloadJPG, exportingJPG, copyStatus, error, onBack } = props;
-  return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      <div style={{ position: "sticky", top: 0, zIndex: 20, background: "#0E1526", borderBottom: "1px solid #1D2740", padding: "10px 16px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-        <button onClick={onBack} style={toolBtn}>← مشروع جديد</button>
-        <div style={{ flex: 1 }} />
-        <button onClick={onUndo} disabled={!canUndo} style={Object.assign({}, toolBtn, { opacity: canUndo ? 1 : 0.4 })}>↶</button>
-        <button onClick={onRedo} disabled={!canRedo} style={Object.assign({}, toolBtn, { opacity: canRedo ? 1 : 0.4 })}>↷</button>
-        <div style={{ display: "flex", background: "#131A2A", borderRadius: 8, padding: 3, gap: 2 }}>
-          <button onClick={() => setPreviewMode("mobile")} style={Object.assign({}, segBtn, { background: previewMode === "mobile" ? "#22D3EE" : "transparent", color: previewMode === "mobile" ? "#04101C" : "#B7C0D4" })}>📱</button>
-          <button onClick={() => setPreviewMode("desktop")} style={Object.assign({}, segBtn, { background: previewMode === "desktop" ? "#22D3EE" : "transparent", color: previewMode === "desktop" ? "#04101C" : "#B7C0D4" })}>🖥️</button>
+          {/* ORDER FORM */}
+
+          <Field label="فورم الطلب في الصفحة">
+
+            <div
+              style={{
+                display:"grid",
+                gridTemplateColumns:"1fr 1fr",
+                gap:8
+              }}
+            >
+
+              <button
+                type="button"
+                onClick={()=>
+                  setForm(
+                    f=>({
+                      ...f,
+                      includeOrderForm:false
+                    })
+                  )
+                }
+                style={{
+                  ...toggleBtn,
+                  background:
+                    !form.includeOrderForm
+                      ? "#22d3ee"
+                      : "#0c1423",
+                  color:
+                    !form.includeOrderForm
+                      ? "#06121a"
+                      : "#aeb9ca",
+                  borderColor:
+                    !form.includeOrderForm
+                      ? "#22d3ee"
+                      : "#27354d"
+                }}
+              >
+                زر طلب فقط
+              </button>
+
+
+              <button
+                type="button"
+                onClick={()=>
+                  setForm(
+                    f=>({
+                      ...f,
+                      includeOrderForm:true
+                    })
+                  )
+                }
+                style={{
+                  ...toggleBtn,
+                  background:
+                    form.includeOrderForm
+                      ? "#22d3ee"
+                      : "#0c1423",
+                  color:
+                    form.includeOrderForm
+                      ? "#06121a"
+                      : "#aeb9ca",
+                  borderColor:
+                    form.includeOrderForm
+                      ? "#22d3ee"
+                      : "#27354d"
+                }}
+              >
+                مع فورم الطلب
+              </button>
+
+            </div>
+
+          </Field>
+
+
+          {/* ERROR */}
+
+          {error && (
+
+            <div
+              style={{
+                background:"#29151a",
+                border:"1px solid #4a222a",
+                color:"#f87171",
+                borderRadius:10,
+                padding:"10px 12px",
+                fontSize:12
+              }}
+            >
+              {error}
+            </div>
+
+          )}
+
+
+          {/* GENERATE */}
+
+          <button
+            onClick={onGenerate}
+            style={{
+              border:0,
+              borderRadius:13,
+              padding:"16px 20px",
+              marginTop:4,
+              cursor:"pointer",
+              fontSize:16,
+              fontWeight:900,
+              color:"#031019",
+              background:
+                "linear-gradient(100deg,#3b82f6,#22d3ee)",
+              boxShadow:
+                "0 12px 30px rgba(34,211,238,.15)"
+            }}
+          >
+            إنشاء صفحة الهبوط
+            <span style={{marginRight:8}}>
+              🚀
+            </span>
+          </button>
+
         </div>
-        <button onClick={onCopy} style={toolBtn}>📋 نسخ HTML</button>
-        <button onClick={onDownloadJPG} disabled={exportingJPG} style={Object.assign({}, toolBtn, { opacity: exportingJPG ? 0.6 : 1 })}>{exportingJPG ? "⟳ جاري..." : "🖼️ تصدير JPG"}</button>
-        <button onClick={onDownload} style={Object.assign({}, toolBtn, { background: "#22D3EE", color: "#04101C", borderColor: "#22D3EE" })}>⬇️ تحميل HTML</button>
-      </div>
-      {copyStatus && <div style={{ textAlign: "center", color: "#6EE7B7", fontSize: 12, padding: "6px 0", background: "#0E1526" }}>{copyStatus}</div>}
 
-      <div style={{ background: "#0E1526", borderBottom: "1px solid #1D2740", padding: "10px 16px", display: "flex", gap: 8 }}>
-        <input value={regenNote} onChange={(e) => setRegenNote(e.target.value)} onKeyDown={(e) => e.key === "Enter" && onRegenerate()}
-          placeholder='أعد التوليد بلمسة مختلفة: مثلاً "اجعل الألوان أكثر دفئاً" أو "بسّط التصميم"'
-          style={inputStyle} disabled={regenerating} />
-        <button onClick={onRegenerate} disabled={regenerating || !regenNote.trim()} style={Object.assign({}, toolBtn, { background: "#3B82F6", color: "#fff", borderColor: "#3B82F6", opacity: regenerating || !regenNote.trim() ? 0.5 : 1, whiteSpace: "nowrap" })}>
-          {regenerating ? "⟳ جاري التوليد…" : "🪄 أعد التصميم"}
-        </button>
       </div>
-      <div style={{ textAlign: "center", color: "#5B6478", fontSize: 11, padding: "4px 16px 8px", background: "#0E1526" }}>
-        ملاحظة: التصميم حر بالكامل، فكل "إعادة تصميم" يعيد بناء الصفحة من جديد بالتوجيه المطلوب (ماشي تعديل جزئي دقيق)
-      </div>
-      {error && <div style={{ color: "#F87171", fontSize: 12, textAlign: "center", padding: "6px 0", background: "#0E1526" }}>{error}</div>}
 
-      <div style={{ flex: 1, background: "#05070C", padding: "28px 16px", display: "flex", justifyContent: "center" }}>
-        <div style={{ width: previewMode === "mobile" ? 390 : "100%", maxWidth: previewMode === "mobile" ? 390 : 1100, borderRadius: previewMode === "mobile" ? 30 : 16, overflow: "hidden", border: previewMode === "mobile" ? "8px solid #1B1F2B" : "1px solid #1D2740", boxShadow: "0 30px 60px rgba(0,0,0,.5)", height: "fit-content", background: "#fff" }}>
-          <iframe ref={iframeRef} srcDoc={html} onLoad={onIframeLoad} title="landing-preview" style={{ width: "100%", height: iframeHeight, border: "none", display: "block" }} />
-        </div>
+
+      {/* FOOTER */}
+
+      <div
+        style={{
+          textAlign:"center",
+          color:"#4e5a70",
+          fontSize:11,
+          marginTop:18
+        }}
+      >
+        ذكاء اصطناعي لإنشاء صفحات هبوط مخصصة للتجارة الإلكترونية
       </div>
+
     </div>
   );
 }
-const toolBtn = { display: "flex", alignItems: "center", gap: 6, background: "#131A2A", border: "1px solid #202A42", color: "#E2E8F5", fontSize: 12.5, fontWeight: 600, padding: "8px 12px", borderRadius: 8, cursor: "pointer" };
-const segBtn = { border: "none", borderRadius: 6, padding: "6px 9px", cursor: "pointer", display: "flex" };
 
-const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(<App />);
+
+/* =========================================================
+   FIELD
+========================================================= */
+
+function Field({label,children}){
+
+  return(
+
+    <label
+      style={{
+        display:"grid",
+        gap:7
+      }}
+    >
+
+      <span
+        style={{
+          color:"#b7c1d3",
+          fontSize:12.5,
+          fontWeight:700
+        }}
+      >
+        {label}
+      </span>
+
+      {children}
+
+    </label>
+  );
+}
+
+
+/* =========================================================
+   STYLES
+========================================================= */
+
+const inputStyle={
+  width:"100%",
+  background:"#0b1220",
+  border:"1px solid #26334b",
+  borderRadius:10,
+  color:"#f1f5f9",
+  padding:"12px 13px",
+  fontSize:13.5,
+  outline:"none"
+};
+
+const toggleBtn={
+  border:"1px solid #27354d",
+  borderRadius:10,
+  padding:"11px 8px",
+  fontSize:12,
+  fontWeight:800,
+  cursor:"pointer"
+};
+
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+function LoadingScreen({
+  stepIdx,
+  steps
+}){
+
+  const progress=
+    ((stepIdx+1)/steps.length)*100;
+
+  return(
+
+    <div
+      className="fade"
+      style={{
+        minHeight:"100vh",
+        display:"flex",
+        alignItems:"center",
+        justifyContent:"center",
+        flexDirection:"column",
+        padding:20,
+        gap:20
+      }}
+    >
+
+      <div
+        style={{
+          width:70,
+          height:70,
+          borderRadius:"50%",
+          display:"flex",
+          alignItems:"center",
+          justifyContent:"center",
+          background:"#111827",
+          border:"1px solid #26334b"
+        }}
+      >
+
+        <span
+          style={{
+            fontSize:30,
+            color:"#22d3ee",
+            animation:
+              "spin 1s linear infinite"
+          }}
+        >
+          ⟳
+        </span>
+
+      </div>
+
+
+      <div
+        style={{
+          fontSize:16,
+          fontWeight:800,
+          color:"#f8fafc",
+          textAlign:"center"
+        }}
+      >
+        {steps[stepIdx]}
+      </div>
+
+
+      <div
+        style={{
+          width:240,
+          height:6,
+          background:"#111827",
+          borderRadius:20,
+          overflow:"hidden"
+        }}
+      >
+
+        <div
+          style={{
+            width:`${progress}%`,
+            height:"100%",
+            background:
+              "linear-gradient(90deg,#3b82f6,#22d3ee)",
+            transition:"width .5s ease"
+          }}
+        />
+
+      </div>
+
+
+      <div
+        style={{
+          color:"#56627a",
+          fontSize:11
+        }}
+      >
+        يتم إنشاء صفحة مخصصة لهذا المنتج…
+      </div>
+
+    </div>
+  );
+}
+
+
+/* =========================================================
+   PREVIEW
+========================================================= */
+
+function PreviewScreen(props){
+
+  const {
+    html,
+    iframeRef,
+    iframeHeight,
+    onIframeLoad,
+    previewMode,
+    setPreviewMode,
+    regenNote,
+    setRegenNote,
+    onRegenerate,
+    regenerating,
+    canUndo,
+    canRedo,
+    onUndo,
+    onRedo,
+    onCopy,
+    onDownload,
+    onDownloadJPG,
+    exportingJPG,
+    copyStatus,
+    error,
+    onBack
+  }=props;
+
+  return(
+
+    <div
+      style={{
+        minHeight:"100vh",
+        background:"#05070c"
+      }}
+    >
+
+      {/* TOP BAR */}
+
+      <div
+        className="topActions"
+        style={{
+          position:"sticky",
+          top:0,
+          zIndex:50,
+          display:"flex",
+          alignItems:"center",
+          gap:7,
+          padding:"9px 12px",
+          background:"#0c1321",
+          borderBottom:"1px solid #1d2940"
+        }}
+      >
+
+        <button
+          onClick={onBack}
+          style={toolBtn}
+        >
+          ← مشروع جديد
+        </button>
+
+        <div style={{flex:1}}/>
+
+
+        <button
+          onClick={onUndo}
+          disabled={!canUndo}
+          style={{
+            ...toolBtn,
+            opacity:canUndo?1:.35
+          }}
+        >
+          ↶
+        </button>
+
+        <button
+          onClick={onRedo}
+          disabled={!canRedo}
+          style={{
+            ...toolBtn,
+            opacity:canRedo?1:.35
+          }}
+        >
+          ↷
+        </button>
+
+
+        <div
+          style={{
+            display:"flex",
+            background:"#111827",
+            borderRadius:8,
+            padding:3,
+            gap:2
+          }}
+        >
+
+          <button
+            onClick={()=>
+              setPreviewMode("mobile")
+            }
+            style={{
+              ...segBtn,
+              background:
+                previewMode==="mobile"
+                  ? "#22d3ee"
+                  : "transparent",
+              color:
+                previewMode==="mobile"
+                  ? "#031019"
+                  : "#aab5c7"
+            }}
+          >
+            📱
+          </button>
+
+          <button
+            onClick={()=>
+              setPreviewMode("desktop")
+            }
+            style={{
+              ...segBtn,
+              background:
+                previewMode==="desktop"
+                  ? "#22d3ee"
+                  : "transparent",
+              color:
+                previewMode==="desktop"
+                  ? "#031019"
+                  : "#aab5c7"
+            }}
+          >
+            🖥
+          </button>
+
+        </div>
+
+
+        <button
+          onClick={onCopy}
+          style={toolBtn}
+        >
+          📋 نسخ HTML
+        </button>
+
+
+        <button
+          onClick={onDownloadJPG}
+          disabled={exportingJPG}
+          style={{
+            ...toolBtn,
+            opacity:
+              exportingJPG?.5:1
+          }}
+        >
+          {exportingJPG
+            ? "⟳ جاري..."
+            : "🖼 تصدير JPG"}
+        </button>
+
+
+        <button
+          onClick={onDownload}
+          style={{
+            ...toolBtn,
+            background:"#22d3ee",
+            color:"#031019",
+            borderColor:"#22d3ee"
+          }}
+        >
+          ⬇ تحميل HTML
+        </button>
+
+      </div>
+
+
+      {/* COPY STATUS */}
+
+      {copyStatus && (
+
+        <div
+          style={{
+            textAlign:"center",
+            background:"#0c1321",
+            color:"#6ee7b7",
+            padding:"6px",
+            fontSize:11
+          }}
+        >
+          {copyStatus}
+        </div>
+
+      )}
+
+
+      {/* REGENERATE */}
+
+      <div
+        style={{
+          padding:"10px 12px",
+          background:"#0c1321",
+          borderBottom:"1px solid #1d2940",
+          display:"flex",
+          gap:7
+        }}
+      >
+
+        <input
+          value={regenNote}
+          onChange={e=>
+            setRegenNote(e.target.value)
+          }
+          onKeyDown={e=>{
+            if(e.key==="Enter"){
+              onRegenerate();
+            }
+          }}
+          disabled={regenerating}
+          placeholder="مثال: اجعل التصميم أكثر فخامة، غيّر الألوان، اجعل الصفحة أبسط..."
+          style={inputStyle}
+        />
+
+        <button
+          onClick={onRegenerate}
+          disabled={
+            regenerating ||
+            !regenNote.trim()
+          }
+          style={{
+            ...toolBtn,
+            background:"#3b82f6",
+            borderColor:"#3b82f6",
+            color:"#fff",
+            whiteSpace:"nowrap",
+            opacity:
+              regenerating ||
+              !regenNote.trim()
+                ? .45
+                : 1
+          }}
+        >
+          {regenerating
+            ? "⟳ جاري..."
+            : "🪄 إعادة التصميم"}
+        </button>
+
+      </div>
+
+
+      {error && (
+
+        <div
+          style={{
+            background:"#0c1321",
+            color:"#f87171",
+            textAlign:"center",
+            fontSize:11,
+            padding:6
+          }}
+        >
+          {error}
+        </div>
+
+      )}
+
+
+      {/* PREVIEW */}
+
+      <div
+        style={{
+          minHeight:"calc(100vh - 120px)",
+          padding:"28px 15px 60px",
+          display:"flex",
+          justifyContent:"center",
+          background:"#05070c"
+        }}
+      >
+
+        <div
+          style={{
+            width:
+              previewMode==="mobile"
+                ? 390
+                : "100%",
+            maxWidth:
+              previewMode==="mobile"
+                ? 390
+                : 1200,
+            height:"fit-content",
+            overflow:"hidden",
+            background:"#fff",
+            borderRadius:
+              previewMode==="mobile"
+                ? 30
+                : 14,
+            border:
+              previewMode==="mobile"
+                ? "8px solid #1a1f2b"
+                : "1px solid #202a40",
+            boxShadow:
+              "0 30px 80px rgba(0,0,0,.55)"
+          }}
+        >
+
+          <iframe
+            ref={iframeRef}
+            srcDoc={html}
+            onLoad={onIframeLoad}
+            title="landing-preview"
+            style={{
+              width:"100%",
+              height:iframeHeight,
+              border:0,
+              display:"block"
+            }}
+          />
+
+        </div>
+
+      </div>
+
+    </div>
+  );
+}
+
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+const toolBtn={
+  display:"flex",
+  alignItems:"center",
+  gap:5,
+  border:"1px solid #27344b",
+  borderRadius:8,
+  background:"#111827",
+  color:"#e2e8f0",
+  padding:"8px 11px",
+  fontSize:11.5,
+  fontWeight:700,
+  cursor:"pointer",
+  whiteSpace:"nowrap"
+};
+
+const segBtn={
+  border:0,
+  borderRadius:6,
+  padding:"6px 9px",
+  cursor:"pointer",
+  fontSize:12
+};
+
+
+/* =========================================================
+   START
+========================================================= */
+
+const root=
+  ReactDOM.createRoot(
+    document.getElementById("root")
+  );
+
+root.render(<App/>);
+
 </script>
+
 </body>
 </html>
-
