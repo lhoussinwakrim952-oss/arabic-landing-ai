@@ -142,6 +142,25 @@ const PRODUCT_CATEGORIES=[
 ];
 
 /* =========================================================
+   PALETTE SEEDS PER CATEGORY
+   هدفها كسر النمط الافتراضي لأي AI (كريمي+طوبي، أو أسود+أخضر فسفوري)
+   وإعطاء كل فئة منتج هوية لونية خاصة بها فعلاً.
+========================================================= */
+
+const PALETTES={
+  "إلكترونيات":{name:"تقني ليلي", bg:"#0B1220", surface:"#111a2b", primary:"#2563EB", primaryDeep:"#1D4ED8", accent:"#38BDF8", text:"#F4F7FB", muted:"#94A3B8"},
+  "جمال وعناية":{name:"وردي دافئ", bg:"#FFF7F5", surface:"#FFFFFF", primary:"#D8536B", primaryDeep:"#B23A52", accent:"#F2B872", text:"#3A2230", muted:"#8A6B72"},
+  "منزل ومطبخ":{name:"تراكوتا دافئ", bg:"#FBF6EF", surface:"#FFFFFF", primary:"#C2703D", primaryDeep:"#9C5628", accent:"#3E7C6B", text:"#3B2A1E", muted:"#8A7A6A"},
+  "أزياء":{name:"أنيق داكن", bg:"#141215", surface:"#1D1A1E", primary:"#B08D57", primaryDeep:"#8A6C3F", accent:"#E8C77E", text:"#F5F1EA", muted:"#9C9298"},
+  "إكسسوارات":{name:"ذهبي فاخر", bg:"#0E0D0B", surface:"#18150F", primary:"#C9A227", primaryDeep:"#9E7E1B", accent:"#EADFB4", text:"#F7F3E8", muted:"#a89f86"},
+  "رياضة":{name:"طاقة حمراء", bg:"#0F1113", surface:"#1A1D21", primary:"#E63946", primaryDeep:"#B22B37", accent:"#F4A62A", text:"#F5F6F7", muted:"#9AA1A8"},
+  "سيارات":{name:"غرافيت رياضي", bg:"#101214", surface:"#1B1E22", primary:"#C1121F", primaryDeep:"#8C0E17", accent:"#9CA3AF", text:"#F2F3F5", muted:"#8B929B"},
+  "أطفال":{name:"مرح ناعم", bg:"#FFFDF7", surface:"#FFFFFF", primary:"#4FB0A8", primaryDeep:"#37897F", accent:"#F6B93B", text:"#2E3A3D", muted:"#8B9DA0"},
+  "منتجات طبيعية":{name:"عشبي هادئ", bg:"#F6F5EE", surface:"#FFFFFF", primary:"#5F7A54", primaryDeep:"#48603F", accent:"#C89B5C", text:"#2E3327", muted:"#8B9282"},
+  "منتج عام":{name:"نيلي متوازن", bg:"#0E1424", surface:"#171E33", primary:"#4C6FE7", primaryDeep:"#3A56C0", accent:"#22D3AE", text:"#F3F5FA", muted:"#96A0C0"}
+};
+
+/* =========================================================
    HELPERS
 ========================================================= */
 
@@ -185,81 +204,424 @@ function replaceImageTokens(html,images){
 }
 
 /* =========================================================
-   CLAUDE GENERATION & FALLBACK MOCK
+   PROMPT ENGINEERING LAYER
+   هادي هي القلب ديال الجودة. كل صفحة كتخرج بهاد المستوى
+   لازم توصل للمعايير التالية باش تكون احترافية بحال الأمثلة.
 ========================================================= */
 
-async function generateLandingPageAPI(payload, form, country, images){
+const SYSTEM_PROMPT = `أنت مصمم ومطور ويب خبير متخصص في صفحات الهبوط العربية للتجارة الإلكترونية (COD - الدفع عند الاستلام) في السوق العربي. لديك خبرة 10 سنوات في تصميم صفحات حققت معدلات تحويل عالية جداً في السعودية، الإمارات، المغرب، مصر والعراق.
+
+مهمتك: إخراج ملف HTML واحد كامل، جاهز للنشر مباشرة، لا يحتاج أي ملفات خارجية غير Google Fonts وTailwind CDN إذا احتجت.
+
+# قواعد صارمة يجب اتباعها دائماً
+
+1. أخرج كود HTML فقط بين <!DOCTYPE html> و </html>. بدون أي شرح، بدون Markdown، بدون تعليقات خارج الكود.
+2. اللغة عربية بالكامل، lang="ar" dir="rtl"، وكل الـCSS يجب أن يكون متوافقاً مع RTL (padding/margin/position بالاتجاه الصحيح).
+3. الخطوط: Cairo للعناوين الثقيلة، Tajawal لنص القراءة. حمّلهما عبر Google Fonts.
+4. استخدم رموز الصور IMAGE_1_PLACEHOLDER إلى IMAGE_4_PLACEHOLDER بالضبط كقيم src حيث تحتاج صور المنتج — لا تخترع روابط صور خارجية أبداً.
+5. لا تستخدم أبداً لوحة الألوان الافتراضية المكررة (كريمي + طوبي/برتقالي محروق، أو أسود + أخضر فسفوري وحيد). التزم بلوحة الألوان المعطاة لك في بيانات المنتج، ووسّعها بذكاء (درجات، شفافية، تدرجات) بدل اختراع لوحة أخرى.
+6. صمّم هوية بصرية مرتبطة فعلياً بفئة المنتج ومزاجه، وليس قالباً عاماً.
+
+# البنية الإجبارية للصفحة (كل قسم مطلوب فعلياً في الكود، وليس وصفاً)
+
+1. **Header/Hero**: خلفية متدرجة أو مشهد بصري يعكس المنتج، عنوان قوي (H1) يبيع الفائدة الأساسية وليس مجرد اسم المنتج، سطر فرعي، السعر الحالي بارز + السعر القديم بخط مشطوب + نسبة الخصم كـbadge، شارات ثقة (توصيل مجاني/دفع عند الاستلام/ضمان)، زر CTA أساسي يقود لقسم الطلب (#order)، وصورة المنتج الأولى (IMAGE_1_PLACEHOLDER) بحركة عائمة خفيفة (CSS animation) داخل عنصر بصري (دائرة زجاجية/إطار متوهج).
+2. **لماذا هذا المنتج / نقاط القوة**: شبكة من 3-4 بطاقات، كل بطاقة أيقونة (emoji مناسب) + عنوان قصير + جملة شرح واحدة.
+3. **معرض الصور**: صورة رئيسية كبيرة + صور مصغرة (thumbnails) قابلة للنقر لتبديل الصورة الرئيسية، باستخدام IMAGE_1..IMAGE_4_PLACEHOLDER. أضف JS بسيط للتبديل.
+4. **الفوائد التفصيلية**: 3-5 فقرات أو بطاقات تشرح كل فائدة بعمق أكبر من القسم الأول (استخدم وصف المنتج المُعطى كمصدر حقيقي للمحتوى، ووسّعه باحترافية، لا تخترع مواصفات تقنية دقيقة غير معطاة).
+5. **آراء العملاء**: 3 بطاقات تقييم بأسماء عربية واقعية، نجوم ★★★★★، وجملة رأي قصيرة مقنعة وواقعية (بدون أرقام أو ادعاءات طبية/علمية كاذبة).
+6. **الأسئلة الشائعة (FAQ)**: 4-5 أسئلة بنظام Accordion قابل للطي/الفتح عبر JS، تغطي: التوصيل، الدفع، الضمان، طريقة الاستخدام.
+7. **قسم العرض/الإلحاح**: عرض السعر مع عداد تنازلي حقيقي (JS setInterval) لخلق شعور بالندرة، وزر CTA.
+8. **نموذج الطلب المباشر (#order)**: عنوان الاسم الكامل، رقم الهاتف (مع كود الدولة المعطى ثابتاً قبل الحقل)، المدينة/المحافظة (قائمة اختيار إن أمكن أو حقل نص)، العنوان بالتفصيل، زر "تأكيد الطلب". عند الإرسال (JS، onsubmit، preventDefault) أخفِ النموذج واعرض رسالة نجاح (شكر + تأكيد أن فريق المبيعات سيتصل).
+9. **Sticky CTA سفلي**: شريط ثابت أسفل الشاشة على الموبايل يظهر بعد تمرير الهيرو، فيه السعر وزر طلب سريع يقود لـ#order.
+10. **أزرار عائمة**: واتساب واتصال هاتفي (استخدم SVG بسيط inline، وأرقام placeholder منطقية بكود الدولة المعطى).
+11. **Footer**: شارات ثقة مختصرة + حقوق النشر.
+
+# جودة الكود المطلوبة
+
+- CSS منظم بمتغيرات :root (--primary, --primary-deep, --accent, --bg, --surface, --text, --muted) مبنية على اللوحة المعطاة.
+- تصميم Mobile-first، متجاوب بالكامل حتى 375px، مع تكيّف سلس للشاشات الأكبر.
+- حركات دخول عند التمرير (scroll reveal) عبر IntersectionObserver — عنصر واحد كافٍ لكل الأقسام، أضف كلاس .in عند الظهور.
+- لا تستخدم أرقام تسلسلية (01/02/03) كزخرفة إلا إذا كان المحتوى فعلاً خطوات متسلسلة.
+- النص التسويقي بلهجة/فصحى عربية مقنعة، جمل قصيرة وواضحة، بدون ادعاءات طبية أو مبالغات كاذبة (مثل "علاج نهائي" أو نسب شفاء).
+- الأسعار والعملة وكود الهاتف يجب أن تُستخدم بالضبط كما وردت في بيانات المنتج المعطاة (لا تحول العملة ولا تخترع رقماً آخر).
+- لا تكرر نفس بنية القسم بصرياً مرتين متتاليتين (نوّع بين خلفيات فاتحة وداكنة، بين شبكات وقوائم).
+
+أعد فقط الكود الكامل للصفحة، من <!DOCTYPE html> إلى </html>، بدون أي نص إضافي قبله أو بعده.`;
+
+function buildProductBrief(form, country, palette){
+  const discount = discountPercent(form.originalPrice, form.price);
+  return `# بيانات المنتج
+- الاسم: ${form.name}
+- الفئة: ${form.category}
+- الوصف المُدخل من التاجر: ${form.description || "غير مُحدد — استنتج وصفاً تسويقياً مناسباً من اسم المنتج وفئته فقط، بدون اختراع مواصفات تقنية دقيقة."}
+- السعر الحالي: ${form.price} ${country.symbol}
+- السعر قبل الخصم: ${form.originalPrice || "لا يوجد"} ${form.originalPrice ? country.symbol : ""}
+- نسبة الخصم المحسوبة: ${discount ? discount+"%" : "لا يوجد خصم، لا تعرض شارة خصم"}
+- الدولة المستهدفة: ${country.name}
+- العملة ورمزها: ${country.currency} (${country.symbol})
+- كود الهاتف الدولي: ${country.phoneCode}
+- عدد صور المنتج المتوفرة فعلياً: ${form.imagesCount} (استخدم فقط IMAGE_1_PLACEHOLDER إلى IMAGE_${form.imagesCount}_PLACEHOLDER، لا تشر إلى صور غير موجودة)
+- تضمين نموذج طلب مباشر بالكامل: ${form.includeOrderForm ? "نعم، اجعله قسماً كاملاً بحقول متعددة" : "لا، اكتفِ بأزرار CTA تقود إلى واتساب/اتصال بدون نموذج تفصيلي"}
+
+# لوحة الألوان الإجبارية (${palette.name})
+- خلفية أساسية: ${palette.bg}
+- خلفية سطح/بطاقات: ${palette.surface}
+- لون أساسي: ${palette.primary}
+- لون أساسي غامق (hover/تدرج): ${palette.primaryDeep}
+- لون ثانوي/تمييز: ${palette.accent}
+- لون النص الأساسي: ${palette.text}
+- لون النص الثانوي: ${palette.muted}
+
+ابنِ الصفحة الآن بالكامل وفق هذه البيانات وقواعد النظام.`;
+}
+
+function buildEditInstruction(instruction){
+  return `# طلب تعديل على الصفحة الحالية
+هذا هو تعديل على صفحة موجودة بالفعل، وليس إنشاءً من الصفر. لديك كود HTML الحالي بالكامل في الرسالة أعلاه.
+
+طلب التاجر: "${instruction}"
+
+نفّذ هذا التعديل بدقة مع الحفاظ على:
+- كل البنية والأقسام الموجودة التي لم يُطلب تغييرها.
+- رموز الصور IMAGE_1_PLACEHOLDER إلى IMAGE_4_PLACEHOLDER كما هي في أماكنها (لا تحذفها ولا تستبدلها بروابط).
+- جودة الكود ومعايير النظام نفسها.
+
+أعد الكود الكامل المعدّل بالكامل من <!DOCTYPE html> إلى </html>، وليس فقط الجزء المعدّل.`;
+}
+
+function imageContentBlocks(images){
+  return images.filter(img=>img && img.base64).map(img=>({
+    type:"image",
+    source:{ type:"base64", media_type: img.mediaType || "image/jpeg", data: img.base64 }
+  }));
+}
+
+/* =========================================================
+   CLAUDE GENERATION & FALLBACK
+========================================================= */
+
+async function generateLandingPageAPI({ form, country, images, instruction, currentHtml }){
+  const palette = PALETTES[form.category] || PALETTES["منتج عام"];
+  const briefForm = { ...form, imagesCount: images.length };
+  const brief = buildProductBrief(briefForm, country, palette);
+
+  const userContent = [];
+
+  if(currentHtml){
+    userContent.push({ type:"text", text:`# كود HTML الحالي\n\n${currentHtml}` });
+  }
+
+  userContent.push({ type:"text", text: brief });
+  userContent.push(...imageContentBlocks(images));
+
+  if(instruction){
+    userContent.push({ type:"text", text: buildEditInstruction(instruction) });
+  }
+
+  const payload = {
+    // النموذج: claude-sonnet-5 يعطي توازناً جيداً بين الجودة والسرعة/التكلفة.
+    // للحصول على أعلى جودة تصميم استعمل claude-opus-4-8.
+    model:"claude-sonnet-5",
+    max_tokens:8000,
+    system: SYSTEM_PROMPT,
+    messages:[
+      { role:"user", content:userContent }
+    ]
+  };
+
   try{
     const response = await fetch("/api/generate", {
       method:"POST",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify(payload)
     });
-    
+
     if(!response.ok) throw new Error("السيرفر لم يستجب بالشكل المطلوب.");
     const data = await response.json();
+    // يدعم شكل استجابة Anthropic (content: [{type:"text", text}]) وأشكال مبسطة بديلة
+    if(Array.isArray(data.content)){
+      const textBlock = data.content.find(b=>b.type==="text");
+      if(textBlock) return textBlock.text;
+    }
     return data.text || data.html || data.content;
   }catch(e){
-    // محاكاة فورية احترافية في حالة عدم توفر Backend API مباشر
-    const discount = discountPercent(form.originalPrice, form.price);
-    const img1 = images[0]?.dataUrl || '[https://via.placeholder.com/600x400](https://via.placeholder.com/600x400)';
-    return `
-<!DOCTYPE html>
+    return buildFallbackTemplate(form, country, images, palette);
+  }
+}
+
+/* ---------------------------------------------------------
+   FALLBACK: قالب احترافي كامل الأقسام يُستخدم فقط إذا فشل
+   الاتصال بالـ API، حتى لا يخرج المستخدم بصفحة فارغة القيمة.
+--------------------------------------------------------- */
+
+function buildFallbackTemplate(form, country, images, palette){
+  const discount = discountPercent(form.originalPrice, form.price);
+  const desc = form.description || `منتج ${form.category} عالي الجودة، مصمم ليقدم لك تجربة استخدام مريحة وموثوقة.`;
+  const img = (i)=> images[i]?.dataUrl || `IMAGE_${i+1}_PLACEHOLDER`;
+  const thumbs = images.map((im,i)=>`<img data-i="${i}" class="thumb ${i===0?'active':''}" src="${img(i)}" onclick="setGallery(${i})" alt="">`).join("");
+
+  return `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${form.name}</title>
-<script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"><\/script>
-<link href="[https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap](https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap)" rel="stylesheet">
-<style>body{font-family:'Cairo',sans-serif;}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:${palette.bg}; --surface:${palette.surface}; --primary:${palette.primary};
+  --primary-deep:${palette.primaryDeep}; --accent:${palette.accent}; --text:${palette.text}; --muted:${palette.muted};
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden;}
+h1,h2,h3,.display{font-family:'Cairo',sans-serif;font-weight:800;}
+img{max-width:100%;display:block;}
+a{color:inherit;text-decoration:none;}
+.container{width:92%;max-width:1080px;margin:0 auto;}
+.section{padding:64px 0;}
+.eyebrow{display:inline-block;font-family:'Cairo';font-weight:700;font-size:12px;color:var(--accent);background:rgba(255,255,255,.08);padding:7px 16px;border-radius:30px;margin-bottom:14px;}
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s ease;}
+.reveal.in{opacity:1;transform:translateY(0);}
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:'Cairo';font-weight:800;font-size:16px;padding:15px 30px;border-radius:14px;border:none;cursor:pointer;background:linear-gradient(135deg,var(--primary),var(--primary-deep));color:#fff;box-shadow:0 14px 30px -8px var(--primary);transition:transform .2s;}
+.btn:hover{transform:translateY(-2px);}
+.hero{min-height:92vh;display:flex;align-items:center;background:radial-gradient(circle at 25% 15%,var(--primary) 0%,var(--bg) 60%);position:relative;padding-top:30px;}
+.hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;}
+.hero h1{font-size:clamp(28px,5vw,46px);margin-bottom:16px;color:#fff;line-height:1.25;}
+.hero p{color:rgba(255,255,255,.85);font-size:17px;max-width:480px;margin-bottom:10px;}
+.price-row{display:flex;align-items:baseline;gap:12px;margin:20px 0;color:#fff;}
+.price-row .now{font-family:'Cairo';font-weight:900;font-size:34px;}
+.price-row .old{font-size:16px;text-decoration:line-through;opacity:.6;}
+.badge-discount{background:var(--accent);color:#141215;font-weight:800;font-size:12px;padding:5px 12px;border-radius:20px;}
+.trust-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px;}
+.trust{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:8px 14px;border-radius:24px;font-size:12px;font-weight:700;}
+.hero-visual{position:relative;display:flex;justify-content:center;align-items:center;}
+.hero-visual img{width:82%;border-radius:24px;animation:floaty 5s ease-in-out infinite;filter:drop-shadow(0 25px 35px rgba(0,0,0,.4));}
+@keyframes floaty{0%,100%{transform:translateY(0);}50%{transform:translateY(-14px);}}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+.card{background:var(--surface);border-radius:18px;padding:24px;border:1px solid rgba(255,255,255,.06);}
+.card .ic{font-size:28px;margin-bottom:10px;display:block;}
+.card h3{font-size:16px;margin-bottom:8px;}
+.card p{color:var(--muted);font-size:13px;}
+.section-title{font-size:clamp(22px,4vw,32px);margin-bottom:10px;}
+.section-sub{color:var(--muted);margin-bottom:34px;font-size:15px;}
+.gallery{display:grid;grid-template-columns:1fr;gap:14px;}
+.gallery-main{border-radius:18px;overflow:hidden;aspect-ratio:4/3;background:#0002;}
+.gallery-main img{width:100%;height:100%;object-fit:cover;}
+.gallery-thumbs{display:flex;gap:10px;}
+.thumb{width:70px;height:70px;object-fit:cover;border-radius:10px;cursor:pointer;opacity:.55;border:2px solid transparent;}
+.thumb.active{opacity:1;border-color:var(--primary);}
+.review-card{background:var(--surface);border-radius:16px;padding:20px;border:1px solid rgba(255,255,255,.06);}
+.stars{color:var(--accent);margin-bottom:8px;font-size:14px;}
+.review-name{font-family:'Cairo';font-weight:800;margin-top:10px;font-size:13px;}
+.faq-item{background:var(--surface);border-radius:14px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(255,255,255,.06);}
+.faq-q{padding:18px 20px;font-family:'Cairo';font-weight:700;cursor:pointer;display:flex;justify-content:space-between;font-size:14px;}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .3s ease;padding:0 20px;color:var(--muted);font-size:13px;}
+.faq-item.open .faq-a{max-height:200px;padding-bottom:18px;}
+.offer{background:linear-gradient(135deg,var(--primary-deep),var(--primary));border-radius:24px;padding:44px 28px;text-align:center;color:#fff;}
+.countdown{display:flex;justify-content:center;gap:12px;margin:24px 0;}
+.cd-box{background:rgba(0,0,0,.25);border-radius:12px;padding:12px 16px;min-width:60px;}
+.cd-box .num{font-family:'Cairo';font-weight:900;font-size:22px;}
+.cd-box .lbl{font-size:11px;opacity:.8;}
+.order-wrap{display:grid;grid-template-columns:1fr 1fr;gap:36px;}
+.order-form{background:var(--surface);border-radius:20px;padding:28px;border:1px solid rgba(255,255,255,.08);}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:700;}
+.field input,.field select{width:100%;padding:13px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.04);color:var(--text);font-size:14px;}
+.order-success{display:none;text-align:center;padding:30px 10px;}
+.order-success.show{display:block;}
+.sticky-cta{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid rgba(255,255,255,.1);padding:12px 18px;display:flex;justify-content:space-between;align-items:center;transform:translateY(100%);transition:transform .3s;z-index:200;}
+.sticky-cta.show{transform:translateY(0);}
+.sticky-cta .price{font-family:'Cairo';font-weight:800;font-size:14px;}
+.sticky-cta .price small{display:block;color:var(--muted);font-size:10px;font-weight:400;}
+.floating-btns{position:fixed;bottom:80px;left:16px;display:flex;flex-direction:column;gap:10px;z-index:200;}
+.fab{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(0,0,0,.4);}
+.fab.whatsapp{background:#25D366;}
+.fab.call{background:var(--primary);}
+footer{padding:36px 0;text-align:center;color:var(--muted);font-size:12px;border-top:1px solid rgba(255,255,255,.06);}
+@media(max-width:760px){.hero-grid,.order-wrap,.grid3{grid-template-columns:1fr;}}
+</style>
 </head>
-<body class="bg-gray-950 text-gray-100 min-h-screen">
-  <div class="bg-indigo-600 text-white text-center py-2 text-xs font-bold">
-    🚚 شحن سريع وتوصيل مباشر إلى ${country.name} الدفع عند الاستلام
+<body>
+
+<section class="hero" id="top">
+  <div class="container hero-grid">
+    <div class="reveal in">
+      <span class="eyebrow">🚚 توصيل إلى ${country.name} — الدفع عند الاستلام</span>
+      <h1>${form.name}</h1>
+      <p>${desc}</p>
+      <div class="price-row">
+        <span class="now">${form.price} ${country.symbol}</span>
+        ${form.originalPrice ? `<span class="old">${form.originalPrice} ${country.symbol}</span>` : ""}
+        ${discount ? `<span class="badge-discount">خصم ${discount}%</span>` : ""}
+      </div>
+      <div class="trust-row">
+        <span class="trust">✔ توصيل سريع</span>
+        <span class="trust">✔ دفع عند الاستلام</span>
+        <span class="trust">✔ ضمان الجودة</span>
+      </div>
+      <div style="margin-top:26px;">
+        <a href="#order" class="btn">🔥 اطلب الآن</a>
+      </div>
+    </div>
+    <div class="hero-visual reveal in">
+      <img src="${img(0)}" alt="${form.name}">
+    </div>
   </div>
-  <main class="max-w-3xl mx-auto px-4 py-8 space-y-6">
-    <div class="text-center space-y-2">
-      <span class="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-xs px-3 py-1 rounded-full font-bold">
-        عرض خاص لفترة محدودة ${discount ? `(خصم ${discount}%)` : ''}
-      </span>
-      <h1 class="text-3xl font-black text-white">${form.name}</h1>
-      <p class="text-gray-400 text-sm">${form.description || 'أفضل خيار بمتطلبات عالية وجودة فائقة'}</p>
-    </div>
+</section>
 
-    <div class="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden p-4 space-y-4">
-      <img src="${img1}" class="w-full h-80 object-cover rounded-xl" alt="${form.name}" />
-      
-      <div class="flex items-center justify-between border-t border-gray-800 pt-4">
-        <div>
-          <span class="text-2xl font-black text-indigo-400">${form.price} ${country.symbol}</span>
-          ${form.originalPrice ? `<span class="text-sm text-gray-500 line-through mr-2">${form.originalPrice} ${country.symbol}</span>` : ''}
+<section class="section">
+  <div class="container">
+    <span class="eyebrow">لماذا هذا المنتج</span>
+    <h2 class="section-title">مميزات تستحق الثقة</h2>
+    <p class="section-sub">كل ما تحتاج معرفته قبل اتخاذ القرار</p>
+    <div class="grid3 reveal">
+      <div class="card"><span class="ic">⚡</span><h3>جودة عالية</h3><p>مصنوع بعناية ليعطيك أداءً موثوقاً على المدى الطويل.</p></div>
+      <div class="card"><span class="ic">🚚</span><h3>توصيل سريع</h3><p>يصلك أينما كنت خلال أيام قليلة مع تتبع الطلب.</p></div>
+      <div class="card"><span class="ic">💳</span><h3>دفع آمن</h3><p>ادفع عند استلام المنتج بعد التأكد منه بنفسك.</p></div>
+    </div>
+  </div>
+</section>
+
+${images.length ? `
+<section class="section" style="background:var(--surface);">
+  <div class="container">
+    <span class="eyebrow">صور المنتج</span>
+    <h2 class="section-title">شاهد المنتج عن قرب</h2>
+    <div class="gallery reveal">
+      <div class="gallery-main"><img id="mainGalleryImg" src="${img(0)}" alt=""></div>
+      <div class="gallery-thumbs">${thumbs}</div>
+    </div>
+  </div>
+</section>` : ""}
+
+<section class="section">
+  <div class="container">
+    <span class="eyebrow">آراء العملاء</span>
+    <h2 class="section-title">تجارب حقيقية</h2>
+    <div class="grid3 reveal">
+      <div class="review-card"><div class="stars">★★★★★</div><p>منتج ممتاز والتوصيل كان أسرع مما توقعت.</p><div class="review-name">— سارة أحمد</div></div>
+      <div class="review-card"><div class="stars">★★★★★</div><p>جودة رائعة وسعر مناسب جداً، أنصح فيه.</p><div class="review-name">— محمد العلي</div></div>
+      <div class="review-card"><div class="stars">★★★★☆</div><p>تجربة شراء سلسة وخدمة عملاء متجاوبة.</p><div class="review-name">— ليلى حسن</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="background:var(--surface);">
+  <div class="container">
+    <span class="eyebrow">الأسئلة الشائعة</span>
+    <h2 class="section-title">عندك سؤال؟</h2>
+    <div class="reveal">
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">هل التوصيل متوفر لمنطقتي؟ <span>+</span></div><div class="faq-a">نعم، نوصل إلى جميع مناطق ${country.name}.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">هل الدفع مقدم؟ <span>+</span></div><div class="faq-a">لا، الدفع عند الاستلام فقط بعد معاينة المنتج.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">كم يستغرق التوصيل؟ <span>+</span></div><div class="faq-a">عادة بين 2 إلى 5 أيام عمل حسب منطقتك.</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="offer reveal">
+      <span class="eyebrow" style="background:rgba(255,255,255,.15);">🔥 عرض لفترة محدودة</span>
+      <h2 class="section-title">استفد من العرض قبل انتهائه</h2>
+      <div class="countdown" id="countdown">
+        <div class="cd-box"><div class="num" id="cd-hours">00</div><div class="lbl">ساعة</div></div>
+        <div class="cd-box"><div class="num" id="cd-mins">00</div><div class="lbl">دقيقة</div></div>
+        <div class="cd-box"><div class="num" id="cd-secs">00</div><div class="lbl">ثانية</div></div>
+      </div>
+      <a href="#order" class="btn">اطلب الآن</a>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="order">
+  <div class="container order-wrap">
+    <div class="reveal">
+      <h3 class="display" style="font-size:22px;margin-bottom:16px;">لماذا تطلب الآن؟</h3>
+      <p style="color:var(--muted);font-size:14px;">✔ توصيل سريع لجميع المناطق<br>✔ دفع عند الاستلام<br>✔ معاينة المنتج قبل الدفع<br>✔ خدمة عملاء جاهزة للرد</p>
+    </div>
+    <div class="reveal">
+      <div class="order-form">
+        <h3 class="display" style="font-size:18px;margin-bottom:6px;">أكمل بياناتك وسنتصل بك</h3>
+        <p style="color:var(--muted);font-size:13px;margin-bottom:22px;">لا يوجد أي دفع الآن، فقط عند الاستلام.</p>
+        <form id="orderForm" onsubmit="submitOrder(event)">
+          <div class="field"><label>الاسم الكامل</label><input type="text" required placeholder="مثال: أحمد محمد"></div>
+          <div class="field"><label>رقم الهاتف</label><input type="tel" required placeholder="${country.phoneCode} XXXXXXXXX"></div>
+          <div class="field"><label>المدينة / المنطقة</label><input type="text" required placeholder="أدخل مدينتك"></div>
+          <div class="field"><label>العنوان بالتفصيل</label><input type="text" required placeholder="الحي، الشارع، أقرب معلم"></div>
+          <button type="submit" class="btn" style="width:100%;justify-content:center;">✅ تأكيد الطلب</button>
+        </form>
+        <div class="order-success" id="orderSuccess">
+          <div style="font-size:34px;">🎉</div>
+          <h3 class="display" style="margin:10px 0 6px;">تم استلام طلبك بنجاح!</h3>
+          <p style="color:var(--muted);">سنتصل بك قريباً لتأكيد الطلب وموعد التوصيل.</p>
         </div>
-        <span class="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-lg">متوفر في المخزون</span>
       </div>
     </div>
+  </div>
+</section>
 
-    ${form.includeOrderForm ? `
-    <div class="bg-gray-900 border border-indigo-500/30 p-6 rounded-2xl space-y-4">
-      <h3 class="font-bold text-lg text-white text-center">أدخل معلوماتك للطلب المباشر</h3>
-      <div class="space-y-3">
-        <input type="text" placeholder="الاسم الكامل" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-indigo-500" />
-        <div class="flex gap-2 dir-ltr">
-          <span class="bg-gray-800 border border-gray-700 p-3 rounded-xl text-sm font-mono text-gray-300">${country.phoneCode}</span>
-          <input type="tel" placeholder="رقم الهاتف" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm text-right text-white focus:outline-none focus:border-indigo-500" />
-        </div>
-        <input type="text" placeholder="العنوان والمدينة" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-indigo-500" />
-        <button class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-4 rounded-xl shadow-lg transition-all text-base">تأكيد الطلب الآن 🛒</button>
-      </div>
-    </div>
-    ` : `
-    <button class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-4 rounded-xl shadow-lg transition-all text-base">اضغط هنا للطلب المباشر 🛒</button>
-    `}
-  </main>
+<footer>
+  <div class="container">✔ الدفع عند الاستلام &nbsp;·&nbsp; ✔ توصيل سريع &nbsp;·&nbsp; ✔ خدمة عملاء<br><br>© 2026 ${form.name} — جميع الحقوق محفوظة</div>
+</footer>
+
+<div class="sticky-cta" id="stickyCta">
+  <div class="price">${form.price} ${country.symbol}<small>توصيل سريع + دفع عند الاستلام</small></div>
+  <a href="#order" class="btn" style="padding:10px 20px;font-size:13px;">اطلب الآن</a>
+</div>
+
+<div class="floating-btns">
+  <a class="fab whatsapp" href="https://wa.me/${country.phoneCode.replace('+','')}00000000" target="_blank" rel="noopener" aria-label="واتساب">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="#fff"><path d="M20.5 3.5A11.8 11.8 0 0 0 12 0C5.4 0 0 5.4 0 12c0 2.1.6 4.1 1.6 5.9L0 24l6.3-1.6c1.7.9 3.6 1.4 5.7 1.4 6.6 0 12-5.4 12-12 0-3.2-1.3-6.2-3.5-8.3zM12 21.7c-1.8 0-3.6-.5-5.1-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A9.6 9.6 0 0 1 2.3 12c0-5.4 4.4-9.7 9.7-9.7 2.6 0 5 1 6.9 2.8A9.6 9.6 0 0 1 21.7 12c0 5.4-4.4 9.7-9.7 9.7z"/></svg>
+  </a>
+  <a class="fab call" href="tel:${country.phoneCode}00000000" aria-label="اتصال">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .3 2 .7 3a2 2 0 0 1-.5 2L8 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2-.5c1 .4 2 .6 3 .7a2 2 0 0 1 1.7 2z"/></svg>
+  </a>
+</div>
+
+<script>
+const io = new IntersectionObserver((entries)=>{entries.forEach(e=>{if(e.isIntersecting) e.target.classList.add('in');});},{threshold:0.15});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+const stickyCta = document.getElementById('stickyCta');
+window.addEventListener('scroll',()=>{
+  if(window.scrollY > window.innerHeight*0.6) stickyCta.classList.add('show');
+  else stickyCta.classList.remove('show');
+});
+
+function toggleFaq(el){
+  const item = el.parentElement;
+  document.querySelectorAll('.faq-item').forEach(i=>{ if(i!==item) i.classList.remove('open'); });
+  item.classList.toggle('open');
+}
+
+function setGallery(i){
+  const imgs = [${images.map((_,i)=>`"${img(i)}"`).join(",")}];
+  document.getElementById('mainGalleryImg').src = imgs[i];
+  document.querySelectorAll('.thumb').forEach(t=>t.classList.remove('active'));
+  document.querySelector('.thumb[data-i="'+i+'"]').classList.add('active');
+}
+
+const countdownTarget = new Date().getTime() + (1000*60*60*23);
+function updateCountdown(){
+  const diff = Math.max(0, countdownTarget - new Date().getTime());
+  document.getElementById('cd-hours').textContent = String(Math.floor(diff/3600000)).padStart(2,'0');
+  document.getElementById('cd-mins').textContent = String(Math.floor((diff%3600000)/60000)).padStart(2,'0');
+  document.getElementById('cd-secs').textContent = String(Math.floor((diff%60000)/1000)).padStart(2,'0');
+}
+updateCountdown();
+setInterval(updateCountdown,1000);
+
+function submitOrder(e){
+  e.preventDefault();
+  document.getElementById('orderForm').style.display='none';
+  document.getElementById('orderSuccess').classList.add('show');
+  document.getElementById('orderSuccess').scrollIntoView({behavior:'smooth', block:'center'});
+}
+<\/script>
 </body>
-</html>
-    `;
-  }
+</html>`;
 }
 
 /* =========================================================
@@ -298,9 +660,9 @@ function App(){
 
   const loadingMessages=[
     "جاري تحليل المنتج والصور...",
+    "جاري اختيار الهوية البصرية المناسبة للفئة...",
     "جاري ربط العملة والدولة المستهدفة أوتوماتيكياً...",
-    "جاري اختيار التنسيق المالي وكود الهاتف...",
-    "جاري بناء صفحة الهبوط وتناسق الهاتف...",
+    "جاري بناء أقسام الصفحة (Hero, معرض, تقييمات, FAQ)...",
     "جاري تجهيز المعاينة النهائية..."
   ];
 
@@ -349,7 +711,7 @@ function App(){
     setScreen("loading");
 
     try{
-      const rawHtml = await generateLandingPageAPI(form, form, country, images);
+      const rawHtml = await generateLandingPageAPI({ form, country, images });
       let html = cleanHTML(rawHtml);
       html = replaceImageTokens(html, images);
 
@@ -366,7 +728,7 @@ function App(){
     if(!instruction.trim() || regenerating) return;
     setRegenerating(true);
     try{
-      const rawHtml = await generateLandingPageAPI({ ...form, instruction }, form, country, images);
+      const rawHtml = await generateLandingPageAPI({ form, country, images, instruction, currentHtml: currentHTML });
       let html = cleanHTML(rawHtml);
       html = replaceImageTokens(html, images);
 
@@ -512,7 +874,7 @@ function Form({form, setForm, country, images, uploadImages, removeImage, error,
                   </div>
                 ))}
                 {images.length < 4 && (
-                  <label style={{aspectRatio:"1", border:"1.5px dashed #34455f", borderRadius:12, display:"flex", alignItems:"center", justifyCenter:"center", flexDirection:"column", cursor:"pointer", background:"#0a1220", color:"#77859b"}}>
+                  <label style={{aspectRatio:"1", border:"1.5px dashed #34455f", borderRadius:12, display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", cursor:"pointer", background:"#0a1220", color:"#77859b"}}>
                     <strong style={{fontSize:20}}>+</strong>
                     <span style={{fontSize:10}}>إضافة</span>
                     <input type="file" accept="image/*" multiple onChange={uploadImages} style={{display:"none"}} />
