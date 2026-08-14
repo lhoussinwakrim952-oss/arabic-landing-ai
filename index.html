@@ -236,6 +236,9 @@ const SYSTEM_PROMPT = `أنت مصمم ومطور ويب خبير متخصص ف�
 4. استخدم رموز الصور IMAGE_1_PLACEHOLDER إلى IMAGE_4_PLACEHOLDER بالضبط كقيم src حيث تحتاج صور المنتج — لا تخترع روابط صور خارجية أبداً.
 5. لا تستخدم أبداً لوحة الألوان الافتراضية المكررة (كريمي + طوبي/برتقالي محروق، أو أسود + أخضر فسفوري وحيد). التزم بلوحة الألوان المعطاة لك في بيانات المنتج، ووسّعها بذكاء (درجات، شفافية، تدرجات) بدل اختراع لوحة أخرى.
 6. صمّم هوية بصرية مرتبطة فعلياً بفئة المنتج ومزاجه، وليس قالباً عاماً.
+7. النصوص الرئيسية (العناوين، الأسعار، الأزرار، عناوين الأقسام) يجب أن تكون في المنتصف (text-align:center) داخل حاويتها على الموبايل، خاصة في Hero وقسم العرض/الإلحاح — لا تترك محتوى الصفحة مائلاً لجهة واحدة بلا سبب تصميمي واضح.
+8. الأزرار (CTA الرئيسي، والأزرار العائمة) يجب أن تبدو حيّة واحترافية: ظل واضح (box-shadow) بلون العلامة، حالة hover/active مختلفة عن الحالة العادية، أيقونة أو رمز تعبيري واضح، وحجم لمس مريح (لا تصميم "باهت" بلا تباين).
+9. أزرار واتساب والاتصال المباشر العائمة تظهر فقط إذا تم توفير رقم واتساب/هاتف فعلي في بيانات المنتج. إذا كان الرقم غير متوفر، لا تُظهر هذين الزرين نهائياً (ولا تخترع رقماً وهمياً).
 
 # البنية الإجبارية للصفحة (كل قسم مطلوب فعلياً في الكود، وليس وصفاً)
 
@@ -275,6 +278,7 @@ function buildProductBrief(form, country, palette){
 - الدولة المستهدفة: ${country.name}
 - العملة ورمزها: ${country.currency} (${country.symbol})
 - كود الهاتف الدولي: ${country.phoneCode}
+- رقم واتساب/هاتف التواصل المباشر: ${form.whatsapp ? `${country.phoneCode}${form.whatsapp}` : "غير متوفر — لا تُظهر أزرار واتساب أو اتصال هاتفي عائمة إطلاقاً في هذه الحالة"}
 - عدد صور المنتج المتوفرة فعلياً: ${form.imagesCount} (استخدم فقط IMAGE_1_PLACEHOLDER إلى IMAGE_${form.imagesCount}_PLACEHOLDER، لا تشر إلى صور غير موجودة)
 - تضمين نموذج طلب مباشر بالكامل: ${form.includeOrderForm ? "نعم، اجعله قسماً كاملاً بحقول متعددة" : "لا، اكتفِ بأزرار CTA تقود إلى واتساب/اتصال بدون نموذج تفصيلي"}
 
@@ -386,6 +390,8 @@ function buildFallbackTemplate(form, country, images, palette){
   const desc = form.description || `منتج ${form.category} عالي الجودة، مصمم ليقدم لك تجربة استخدام مريحة وموثوقة.`;
   const img = (i)=> images[i]?.dataUrl || `IMAGE_${i+1}_PLACEHOLDER`;
   const thumbs = images.map((im,i)=>`<img data-i="${i}" class="thumb ${i===0?'active':''}" src="${img(i)}" onclick="setGallery(${i})" alt="">`).join("");
+  const waNumber = form.whatsapp ? `${country.phoneCode.replace('+','')}${form.whatsapp}` : "";
+  const hasContact = !!waNumber;
 
   return `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -407,21 +413,22 @@ h1,h2,h3,.display{font-family:'Cairo',sans-serif;font-weight:800;}
 img{max-width:100%;display:block;}
 a{color:inherit;text-decoration:none;}
 .container{width:92%;max-width:1080px;margin:0 auto;}
-.section{padding:64px 0;}
+.section{padding:64px 0;text-align:center;}
 .eyebrow{display:inline-block;font-family:'Cairo';font-weight:700;font-size:12px;color:var(--accent);background:rgba(255,255,255,.08);padding:7px 16px;border-radius:30px;margin-bottom:14px;}
 .reveal{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s ease;}
 .reveal.in{opacity:1;transform:translateY(0);}
-.btn{display:inline-flex;align-items:center;gap:8px;font-family:'Cairo';font-weight:800;font-size:16px;padding:15px 30px;border-radius:14px;border:none;cursor:pointer;background:linear-gradient(135deg,var(--primary),var(--primary-deep));color:#fff;box-shadow:0 14px 30px -8px var(--primary);transition:transform .2s;}
-.btn:hover{transform:translateY(-2px);}
-.hero{min-height:92vh;display:flex;align-items:center;background:radial-gradient(circle at 25% 15%,var(--primary) 0%,var(--bg) 60%);position:relative;padding-top:30px;}
-.hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;}
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:'Cairo';font-weight:800;font-size:16px;padding:16px 32px;border-radius:14px;border:none;cursor:pointer;background:linear-gradient(135deg,var(--primary),var(--primary-deep));color:#fff;box-shadow:0 16px 34px -10px var(--primary);transition:transform .2s ease, box-shadow .2s ease, filter .2s ease;}
+.btn:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 20px 40px -8px var(--primary);filter:brightness(1.05);}
+.btn:active{transform:translateY(0) scale(.98);}
+.hero{min-height:92vh;display:flex;align-items:center;background:radial-gradient(circle at 25% 15%,var(--primary) 0%,var(--bg) 60%);position:relative;padding-top:30px;text-align:center;}
+.hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;text-align:center;}
 .hero h1{font-size:clamp(28px,5vw,46px);margin-bottom:16px;color:#fff;line-height:1.25;}
-.hero p{color:rgba(255,255,255,.85);font-size:17px;max-width:480px;margin-bottom:10px;}
-.price-row{display:flex;align-items:baseline;gap:12px;margin:20px 0;color:#fff;}
+.hero p{color:rgba(255,255,255,.85);font-size:17px;max-width:480px;margin:0 auto 10px;}
+.price-row{display:flex;align-items:baseline;justify-content:center;gap:12px;margin:20px 0;color:#fff;}
 .price-row .now{font-family:'Cairo';font-weight:900;font-size:34px;}
 .price-row .old{font-size:16px;text-decoration:line-through;opacity:.6;}
 .badge-discount{background:var(--accent);color:#141215;font-weight:800;font-size:12px;padding:5px 12px;border-radius:20px;}
-.trust-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px;}
+.trust-row{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:22px;}
 .trust{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:8px 14px;border-radius:24px;font-size:12px;font-weight:700;}
 .hero-visual{position:relative;display:flex;justify-content:center;align-items:center;}
 .hero-visual img{width:82%;border-radius:24px;animation:floaty 5s ease-in-out infinite;filter:drop-shadow(0 25px 35px rgba(0,0,0,.4));}
@@ -462,10 +469,11 @@ a{color:inherit;text-decoration:none;}
 .sticky-cta.show{transform:translateY(0);}
 .sticky-cta .price{font-family:'Cairo';font-weight:800;font-size:14px;}
 .sticky-cta .price small{display:block;color:var(--muted);font-size:10px;font-weight:400;}
-.floating-btns{position:fixed;bottom:80px;left:16px;display:flex;flex-direction:column;gap:10px;z-index:200;}
-.fab{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(0,0,0,.4);}
-.fab.whatsapp{background:#25D366;}
-.fab.call{background:var(--primary);}
+.floating-btns{position:fixed;bottom:80px;left:16px;display:flex;flex-direction:column;gap:12px;z-index:200;}
+.fab{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 26px rgba(0,0,0,.45);transition:transform .2s ease;}
+.fab:hover{transform:translateY(-3px) scale(1.06);}
+.fab.whatsapp{background:linear-gradient(135deg,#2FE070,#1DAA53);}
+.fab.call{background:linear-gradient(135deg,var(--primary),var(--primary-deep));}
 footer{padding:36px 0;text-align:center;color:var(--muted);font-size:12px;border-top:1px solid rgba(255,255,255,.06);}
 @media(max-width:760px){.hero-grid,.order-wrap,.grid3{grid-template-columns:1fr;}}
 </style>
@@ -599,12 +607,12 @@ ${images.length ? `
 </div>
 
 <div class="floating-btns">
-  <a class="fab whatsapp" href="https://wa.me/${country.phoneCode.replace('+','')}00000000" target="_blank" rel="noopener" aria-label="واتساب">
+  ${hasContact ? `<a class="fab whatsapp" href="https://wa.me/${waNumber}" target="_blank" rel="noopener" aria-label="واتساب">
     <svg width="24" height="24" viewBox="0 0 24 24" fill="#fff"><path d="M20.5 3.5A11.8 11.8 0 0 0 12 0C5.4 0 0 5.4 0 12c0 2.1.6 4.1 1.6 5.9L0 24l6.3-1.6c1.7.9 3.6 1.4 5.7 1.4 6.6 0 12-5.4 12-12 0-3.2-1.3-6.2-3.5-8.3zM12 21.7c-1.8 0-3.6-.5-5.1-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A9.6 9.6 0 0 1 2.3 12c0-5.4 4.4-9.7 9.7-9.7 2.6 0 5 1 6.9 2.8A9.6 9.6 0 0 1 21.7 12c0 5.4-4.4 9.7-9.7 9.7z"/></svg>
   </a>
-  <a class="fab call" href="tel:${country.phoneCode}00000000" aria-label="اتصال">
+  <a class="fab call" href="tel:+${waNumber}" aria-label="اتصال">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .3 2 .7 3a2 2 0 0 1-.5 2L8 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2-.5c1 .4 2 .6 3 .7a2 2 0 0 1 1.7 2z"/></svg>
-  </a>
+  </a>` : ""}
 </div>
 
 <script>
@@ -665,6 +673,7 @@ function App(){
     description:"",
     country:"SA",
     dialect:"auto",
+    whatsapp:"",
     includeOrderForm:true
   });
 
@@ -908,6 +917,14 @@ function Form({form, setForm, country, images, uploadImages, removeImage, error,
                   </label>
                 )}
               </div>
+            </Field>
+
+            <Field label="رقم الواتساب / الهاتف للتواصل المباشر (اختياري)">
+              <div style={{display:"flex", gap:8}}>
+                <span style={{...inputStyle, width:"auto", display:"flex", alignItems:"center", color:"#8da0bd", fontWeight:800}}>{country.phoneCode}</span>
+                <input value={form.whatsapp} onChange={e=>update("whatsapp", e.target.value.replace(/[^0-9]/g,""))} placeholder="5xxxxxxxx" style={{...inputStyle, flex:1}} dir="ltr" />
+              </div>
+              <span style={{color:"#6b7a94", fontSize:11}}>إلا خليتيه فارغ، أزرار الواتساب/الاتصال فالصفحة ما غاديش تظهر.</span>
             </Field>
 
             <Field label="وصف المنتج">
