@@ -204,6 +204,21 @@ function replaceImageTokens(html,images){
 }
 
 /* =========================================================
+   VALIDATION: يمنع عرض صفحة ناقصة/مقطوعة (بلا محتوى ظاهر)
+   هاد الفحص هو اللي كيحل مشكلة "المعاينة كتبان فارغة"
+========================================================= */
+
+function isCompleteLandingPageHTML(html){
+  if(!html || typeof html!=="string") return false;
+  const text = html.trim();
+  if(text.length < 1500) return false;                       // صفحة كاملة ديماً أطول من هادشي
+  if(!/<\/html>\s*$/i.test(text)) return false;               // لازم تكون كاملة، ماشي مقطوعة
+  if(!/<body[\s>]/i.test(text)) return false;
+  if(!/id=["']order["']/i.test(text)) return false;           // قسم الطلب لازم يكون موجود
+  return true;
+}
+
+/* =========================================================
    PROMPT ENGINEERING LAYER
    هادي هي القلب ديال الجودة. كل صفحة كتخرج بهاد المستوى
    لازم توصل للمعايير التالية باش تكون احترافية بحال الأمثلة.
@@ -339,11 +354,23 @@ async function generateLandingPageAPI({ form, country, images, instruction, curr
     if(!response.ok) throw new Error("السيرفر لم يستجب بالشكل المطلوب.");
     const data = await response.json();
     // يدعم شكل استجابة Anthropic (content: [{type:"text", text}]) وأشكال مبسطة بديلة
+    let rawHtml = "";
     if(Array.isArray(data.content)){
       const textBlock = data.content.find(b=>b.type==="text");
-      if(textBlock) return textBlock.text;
+      if(textBlock) rawHtml = textBlock.text;
     }
-    return data.text || data.html || data.content;
+    if(!rawHtml) rawHtml = data.text || data.html || data.content || "";
+
+    const cleaned = cleanHTML(rawHtml);
+
+    // إلا كانت الصفحة راجعة ناقصة (توقف التوليد قبل ما يكمل)، ما نعرضوهاش فارغة —
+    // نستعملو القالب الاحتياطي الكامل بدلها بدل ما يشوف المستخدم مربع فارغ.
+    if(!isCompleteLandingPageHTML(cleaned)){
+      console.warn("الصفحة المولّدة ناقصة أو فارغة — تم الرجوع للقالب الاحتياطي. تحقق من max_tokens فالسيرفر.");
+      return buildFallbackTemplate(form, country, images, palette);
+    }
+
+    return cleaned;
   }catch(e){
     return buildFallbackTemplate(form, country, images, palette);
   }
@@ -973,3 +1000,4 @@ root.render(<App/>);
 </script>
 </body>
 </html>
+
