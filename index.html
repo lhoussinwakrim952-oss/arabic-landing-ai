@@ -1,1020 +1,792 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<title>Arabic Landing AI PRO - النفَس الذكي</title>
-
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Arabic Landing AI — مولّد صفحات الهبوط</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
-
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
 <style>
-*{
-  box-sizing:border-box;
-}
-
-html,body{
-  margin:0;
-  padding:0;
-  background:#070b12;
-}
-
-body{
-  font-family:Cairo,sans-serif;
-  color:#f8fafc;
-  -webkit-font-smoothing:antialiased;
-}
-
-button,input,textarea,select{
-  font-family:Cairo,sans-serif;
-}
-
-button{
-  -webkit-tap-highlight-color:transparent;
-}
-
-input::placeholder,
-textarea::placeholder{
-  color:#5d6a80;
-}
-
-::-webkit-scrollbar{
-  width:7px;
-  height:7px;
-}
-
-::-webkit-scrollbar-thumb{
-  background:#26344c;
-  border-radius:20px;
-}
-
-.fade{
-  animation:fade .35s ease both;
-}
-
-@keyframes fade{
-  from{
-    opacity:0;
-    transform:translateY(10px);
-  }
-  to{
-    opacity:1;
-    transform:translateY(0);
-  }
-}
-
-@keyframes spin{
-  to{
-    transform:rotate(360deg);
-  }
-}
-
-@media(max-width:700px){
-  .desktopOnly{
-    display:none!important;
-  }
-
-  .twoCols{
-    grid-template-columns:1fr!important;
-  }
-
-  .toolbar{
-    overflow-x:auto;
-  }
-
-  .toolbar>*{
-    flex-shrink:0;
-  }
-}
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #0B0F19; }
+  body { font-family: 'Cairo', sans-serif; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: #2A3346; border-radius: 8px; }
+  .fade-in { animation: fadeIn .4s ease both; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px);} to { opacity: 1; transform: translateY(0);} }
+  .shimmer { background: linear-gradient(90deg, rgba(255,255,255,.04) 25%, rgba(255,255,255,.10) 37%, rgba(255,255,255,.04) 63%); background-size: 400% 100%; animation: shimmer 1.6s ease infinite; }
+  @keyframes shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes drift { 0%,100%{ transform:translate(0,0) scale(1); } 50%{ transform:translate(18px,-22px) scale(1.08); } }
+  @keyframes pulseDot { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.35;transform:scale(1.5);} }
+  input, select, textarea { font-family: 'Cairo', sans-serif; }
+  input::placeholder, textarea::placeholder { color: #5B6478; }
+  input:focus, select:focus, textarea:focus { box-shadow: 0 0 0 3px rgba(34,211,238,.28); outline: none; }
+  a:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid #22D3EE; outline-offset: 2px; }
+  .glass { background: rgba(19,26,42,.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(148,180,220,.14); }
+  .orb { position: absolute; border-radius: 50%; filter: blur(60px); pointer-events: none; z-index: 0; }
+  #api-warning { display:none; }
 </style>
 </head>
-
 <body>
-
 <div id="root"></div>
 
-<script type="text/babel">
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef } = React;
 
-const {
-  useState,
-  useEffect,
-  useRef
-}=React;
+/* ============================== DATA ============================== */
 
-/* =========================================================
-   COUNTRIES MATRIX (مع العملات، الأكواد والمفاتيح)
-========================================================= */
-
-const COUNTRIES=[
-  {code:"SA",name:"🇸🇦 السعودية",dialect:"السعودية",currency:"ريال سعودي",symbol:"ر.س",phoneCode:"+966"},
-  {code:"MA",name:"🇲🇦 المغرب",dialect:"المغربية",currency:"درهم مغربي",symbol:"د.م",phoneCode:"+212"},
-  {code:"AE",name:"🇦🇪 الإمارات",dialect:"الإماراتية",currency:"درهم إماراتي",symbol:"د.إ",phoneCode:"+971"},
-  {code:"KW",name:"🇰🇼 الكويت",dialect:"الكويتية",currency:"دينار كويتي",symbol:"د.ك",phoneCode:"+965"},
-  {code:"QA",name:"🇶🇦 قطر",dialect:"القطرية",currency:"ريال قطري",symbol:"ر.ق",phoneCode:"+974"},
-  {code:"BH",name:"🇧🇭 البحرين",dialect:"البحرينية",currency:"دينار بحريني",symbol:"د.ب",phoneCode:"+973"},
-  {code:"OM",name:"🇴🇲 عُمان",dialect:"العُمانية",currency:"ريال عُماني",symbol:"ر.ع",phoneCode:"+968"},
-  {code:"EG",name:"🇪🇬 مصر",dialect:"المصرية",currency:"جنيه مصري",symbol:"ج.م",phoneCode:"+20"},
-  {code:"IQ",name:"🇮🇶 العراق",dialect:"العراقية",currency:"دينار عراقي",symbol:"د.ع",phoneCode:"+964"},
-  {code:"JO",name:"🇯🇴 الأردن",dialect:"الأردنية",currency:"دينار أردني",symbol:"د.أ",phoneCode:"+962"},
-  {code:"DZ",name:"🇩🇿 الجزائر",dialect:"الجزائرية",currency:"دينار جزائري",symbol:"دج",phoneCode:"+213"},
-  {code:"TN",name:"🇹🇳 تونس",dialect:"التونسية",currency:"دينار تونسي",symbol:"د.ت",phoneCode:"+216"},
-  {code:"LY",name:"🇱🇾 ليبيا",dialect:"الليبية",currency:"دينار ليبي",symbol:"د.ل",phoneCode:"+218"},
-  {code:"YE",name:"🇾🇪 اليمن",dialect:"اليمنية",currency:"ريال يمني",symbol:"ر.ي",phoneCode:"+967"}
+const COUNTRIES = [
+  { code: "SA", name: "السعودية", dialect: "السعودية", currency: "ريال سعودي", phoneCode: "+966" },
+  { code: "AE", name: "الإمارات", dialect: "الإماراتية", currency: "درهم إماراتي", phoneCode: "+971" },
+  { code: "KW", name: "الكويت", dialect: "الكويتية", currency: "دينار كويتي", phoneCode: "+965" },
+  { code: "QA", name: "قطر", dialect: "القطرية", currency: "ريال قطري", phoneCode: "+974" },
+  { code: "BH", name: "البحرين", dialect: "البحرينية", currency: "دينار بحريني", phoneCode: "+973" },
+  { code: "OM", name: "عُمان", dialect: "العُمانية", currency: "ريال عُماني", phoneCode: "+968" },
+  { code: "IQ", name: "العراق", dialect: "العراقية", currency: "دينار عراقي", phoneCode: "+964" },
+  { code: "JO", name: "الأردن", dialect: "الأردنية", currency: "دينار أردني", phoneCode: "+962" },
+  { code: "PS", name: "فلسطين", dialect: "الفلسطينية", currency: "شيكل", phoneCode: "+970" },
+  { code: "LB", name: "لبنان", dialect: "اللبنانية", currency: "ليرة لبنانية", phoneCode: "+961" },
+  { code: "SY", name: "سوريا", dialect: "السورية", currency: "ليرة سورية", phoneCode: "+963" },
+  { code: "EG", name: "مصر", dialect: "المصرية", currency: "جنيه مصري", phoneCode: "+20" },
+  { code: "SD", name: "السودان", dialect: "السودانية", currency: "جنيه سوداني", phoneCode: "+249" },
+  { code: "LY", name: "ليبيا", dialect: "الليبية", currency: "دينار ليبي", phoneCode: "+218" },
+  { code: "TN", name: "تونس", dialect: "التونسية", currency: "دينار تونسي", phoneCode: "+216" },
+  { code: "DZ", name: "الجزائر", dialect: "الجزائرية", currency: "دينار جزائري", phoneCode: "+213" },
+  { code: "MA", name: "المغرب", dialect: "المغربية", currency: "درهم مغربي", phoneCode: "+212" },
+  { code: "MR", name: "موريتانيا", dialect: "الموريتانية", currency: "أوقية موريتانية", phoneCode: "+222" },
+  { code: "YE", name: "اليمن", dialect: "اليمنية", currency: "ريال يمني", phoneCode: "+967" },
+  { code: "DJ", name: "جيبوتي", dialect: "المحلية", currency: "فرنك جيبوتي", phoneCode: "+253" },
+  { code: "SO", name: "الصومال", dialect: "الصومالية", currency: "شلن صومالي", phoneCode: "+252" },
+  { code: "KM", name: "جزر القمر", dialect: "القمرية", currency: "فرنك قمري", phoneCode: "+269" },
 ];
 
-const PRODUCT_CATEGORIES=[
-  "إلكترونيات",
-  "جمال وعناية",
-  "منزل ومطبخ",
-  "أزياء",
-  "إكسسوارات",
-  "رياضة",
-  "سيارات",
-  "أطفال",
-  "منتجات طبيعية",
-  "منتج عام"
-];
-
-/* =========================================================
-   PALETTE SEEDS PER CATEGORY
-   هدفها كسر النمط الافتراضي لأي AI (كريمي+طوبي، أو أسود+أخضر فسفوري)
-   وإعطاء كل فئة منتج هوية لونية خاصة بها فعلاً.
-========================================================= */
-
-const PALETTES={
-  "إلكترونيات":{name:"تقني ليلي", bg:"#0B1220", surface:"#111a2b", primary:"#2563EB", primaryDeep:"#1D4ED8", accent:"#38BDF8", text:"#F4F7FB", muted:"#94A3B8"},
-  "جمال وعناية":{name:"وردي دافئ", bg:"#FFF7F5", surface:"#FFFFFF", primary:"#D8536B", primaryDeep:"#B23A52", accent:"#F2B872", text:"#3A2230", muted:"#8A6B72"},
-  "منزل ومطبخ":{name:"تراكوتا دافئ", bg:"#FBF6EF", surface:"#FFFFFF", primary:"#C2703D", primaryDeep:"#9C5628", accent:"#3E7C6B", text:"#3B2A1E", muted:"#8A7A6A"},
-  "أزياء":{name:"أنيق داكن", bg:"#141215", surface:"#1D1A1E", primary:"#B08D57", primaryDeep:"#8A6C3F", accent:"#E8C77E", text:"#F5F1EA", muted:"#9C9298"},
-  "إكسسوارات":{name:"ذهبي فاخر", bg:"#0E0D0B", surface:"#18150F", primary:"#C9A227", primaryDeep:"#9E7E1B", accent:"#EADFB4", text:"#F7F3E8", muted:"#a89f86"},
-  "رياضة":{name:"طاقة حمراء", bg:"#0F1113", surface:"#1A1D21", primary:"#E63946", primaryDeep:"#B22B37", accent:"#F4A62A", text:"#F5F6F7", muted:"#9AA1A8"},
-  "سيارات":{name:"غرافيت رياضي", bg:"#101214", surface:"#1B1E22", primary:"#C1121F", primaryDeep:"#8C0E17", accent:"#9CA3AF", text:"#F2F3F5", muted:"#8B929B"},
-  "أطفال":{name:"مرح ناعم", bg:"#FFFDF7", surface:"#FFFFFF", primary:"#4FB0A8", primaryDeep:"#37897F", accent:"#F6B93B", text:"#2E3A3D", muted:"#8B9DA0"},
-  "منتجات طبيعية":{name:"عشبي هادئ", bg:"#F6F5EE", surface:"#FFFFFF", primary:"#5F7A54", primaryDeep:"#48603F", accent:"#C89B5C", text:"#2E3327", muted:"#8B9282"},
-  "منتج عام":{name:"نيلي متوازن", bg:"#0E1424", surface:"#171E33", primary:"#4C6FE7", primaryDeep:"#3A56C0", accent:"#22D3AE", text:"#F3F5FA", muted:"#96A0C0"}
+// أنظمة تصميم غنية بالتباين، مبنية على ألوان حقيقية جريئة (وليس درجات باهتة)
+const DESIGN_SYSTEMS = {
+  Tech: { bg: "#0B0F19", surface: "#131A2A", card: "#161E33", primary: "#3B82F6", primaryDeep: "#1D4ED8", accent: "#22D3EE", accent2: "#FBBF24", text: "#F1F5F9", muted: "#8B96AC", radius: "10px", mood: "dark" },
+  Beauty: { bg: "#FDF6F2", surface: "#FFFFFF", card: "#FFF9F6", primary: "#C2703D", primaryDeep: "#9C5628", accent: "#E7A6A0", accent2: "#F2B872", text: "#3A2A26", muted: "#8C7871", radius: "22px", mood: "light" },
+  Health: { bg: "#F0FBF6", surface: "#FFFFFF", card: "#F6FDFA", primary: "#0E9D77", primaryDeep: "#0B7D5F", accent: "#6FD3B4", accent2: "#FFD166", text: "#0F3A2E", muted: "#5C8578", radius: "16px", mood: "light" },
+  Home: { bg: "#FBF4EA", surface: "#FFFFFF", card: "#FFFCF7", primary: "#B5602B", primaryDeep: "#8C4620", accent: "#7C8C5E", accent2: "#F2A93B", text: "#3A2C20", muted: "#8B7A69", radius: "14px", mood: "light" },
+  Fashion: { bg: "#0A0A0A", surface: "#161616", card: "#1D1D1D", primary: "#D4AF37", primaryDeep: "#A6851F", accent: "#FFFFFF", accent2: "#8B5CF6", text: "#F4F4F4", muted: "#9C9C9C", radius: "2px", mood: "dark" },
+  Kids: { bg: "#FFFAEA", surface: "#FFFFFF", card: "#FFF4D6", primary: "#FF6B6B", primaryDeep: "#E44F4F", accent: "#3FBFB3", accent2: "#FFD93D", text: "#332F3D", muted: "#7A7688", radius: "26px", mood: "light" },
+  Car: { bg: "#111214", surface: "#1A1C1F", card: "#212327", primary: "#E63946", primaryDeep: "#B22B37", accent: "#F2A93B", accent2: "#9CA3AF", text: "#F2F2F2", muted: "#9A9CA3", radius: "6px", mood: "dark" },
+  Gadgets: { bg: "#0E0A20", surface: "#181031", card: "#1F1640", primary: "#8B5CF6", primaryDeep: "#5B32C7", accent: "#00E5C7", accent2: "#F472B6", text: "#F3F0FF", muted: "#A79DCB", radius: "16px", mood: "dark" },
+  Tools: { bg: "#F3F3F1", surface: "#FFFFFF", card: "#FAFAF9", primary: "#374151", primaryDeep: "#1F2933", accent: "#F59E0B", accent2: "#60A5FA", text: "#1F2933", muted: "#6B7280", radius: "8px", mood: "light" },
+  Lifestyle: { bg: "#FAF6EF", surface: "#FFFFFF", card: "#FFFDF9", primary: "#A8763E", primaryDeep: "#7C5527", accent: "#6B8E7F", accent2: "#E8C77E", text: "#372F27", muted: "#8B8178", radius: "18px", mood: "light" },
 };
 
-/* =========================================================
-   HELPERS
-========================================================= */
+const EMOJI = {
+  check: "✅", star: "⭐", truck: "🚚", shield: "🛡️", clock: "⏰", heart: "❤️", zap: "⚡",
+  gift: "🎁", phone: "📞", battery: "🔋", drop: "💧", award: "🏆", package: "📦",
+  refresh: "🔄", sparkle: "✨", cross: "✖️",
+};
 
-function fileToDataURL(file){
-  return new Promise((resolve,reject)=>{
-    const reader=new FileReader();
-    reader.onload=()=>resolve(reader.result);
-    reader.onerror=reject;
-    reader.readAsDataURL(file);
+// أسماء ومدن واقعية لكل دولة — تُستخدم لإشعار "طلب جديد" الاجتماعي (لا تعتمد على الموديل)
+const SOCIAL_PROOF = {
+  SA: [["سلطان","الرياض"],["نورة","جدة"],["فهد","الدمام"],["ريم","مكة"],["عبدالله","المدينة"]],
+  MA: [["يوسف","الدار البيضاء"],["مريم","الرباط"],["أمين","مراكش"],["سلمى","فاس"],["كريم","طنجة"]],
+  AE: [["راشد","دبي"],["فاطمة","أبوظبي"],["حمدان","الشارقة"],["مها","العين"]],
+  EG: [["أحمد","القاهرة"],["سارة","الإسكندرية"],["محمد","الجيزة"],["منى","المنصورة"]],
+  IQ: [["حيدر","بغداد"],["زينب","النجف"],["يوسف","الموصل"],["سارة","كربلاء"]],
+  DZ: [["كريم","الجزائر"],["أمينة","وهران"],["رياض","قسنطينة"]],
+  TN: [["وليد","تونس"],["إيمان","صفاقس"],["نبيل","سوسة"]],
+  KW: [["مشعل","الكويت"],["دانة","حولي"]],
+  QA: [["جاسم","الدوحة"],["موزة","الريان"]],
+  JO: [["خالد","عمّان"],["رنا","إربد"]],
+};
+function socialProofPool(code) { return SOCIAL_PROOF[code] || [["أحمد","المدينة"],["سارة","المدينة"],["محمد","المدينة"]]; }
+
+function Ico({ children, size, color, style }) {
+  return <span style={Object.assign({ fontSize: size || 16, lineHeight: 1, display: "inline-flex", color: color || "inherit" }, style || {})}>{children}</span>;
+}
+function ContentIcon({ name, size, color, style }) {
+  return <Ico size={size} color={color} style={style}>{EMOJI[name] || "✨"}</Ico>;
+}
+
+const GEN_STEPS = [
+  "جاري تحليل صور المنتج…", "جاري تحديد الفئة والجمهور المستهدف…", "جاري اختيار نظام التصميم المناسب…",
+  "جاري كتابة المحتوى التسويقي باللهجة المحلية…", "جاري بناء أقسام الصفحة…", "جاري إضافة عناصر الثقة والإلحاح…", "اللمسات الأخيرة…",
+];
+
+/* ============================== HELPERS ============================== */
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = reject;
+    r.readAsDataURL(file);
   });
 }
-
-function splitDataURL(dataURL){
-  const match=/^data:(.+?);base64,(.+)$/.exec(dataURL||"");
-  return match ? { mediaType:match[1], base64:match[2] } : null;
+function dataUrlParts(dataUrl) {
+  const m = /^data:(.+?);base64,(.+)$/.exec(dataUrl || "");
+  return m ? { mediaType: m[1], base64: m[2] } : null;
 }
-
-function discountPercent(oldPrice,newPrice){
-  const oldValue=Number(oldPrice);
-  const newValue=Number(newPrice);
-  if(!oldValue || !newValue || oldValue<=newValue) return 0;
-  return Math.round(((oldValue-newValue)/oldValue)*100);
+function formatPrice(value, country) {
+  const n = Number(value);
+  if (Number.isNaN(n)) return value + " " + country.currency;
+  return n.toLocaleString("en-US") + " " + country.currency;
 }
-
-function cleanHTML(text){
-  let result=(text||"").trim();
-  result=result.replace(/^```html/i,"").replace(/^```/,"").replace(/```\s*$/i,"").trim();
-  const start=result.search(/<!doctype html>|<html/i);
-  if(start>0) result=result.slice(start);
-  const end=result.toLowerCase().lastIndexOf("</html>");
-  if(end!==-1) result=result.slice(0,end+7);
-  return result.trim();
+function stripToJSON(text) {
+  let t = (text || "").trim();
+  t = t.replace(/^```json/i, "").replace(/^```/, "").replace(/```$/, "").trim();
+  const s = t.indexOf("{"), e = t.lastIndexOf("}");
+  if (s !== -1 && e !== -1) t = t.slice(s, e + 1);
+  return JSON.parse(t);
 }
-
-function replaceImageTokens(html,images){
-  let result=html;
-  for(let i=0;i<4;i++){
-    result=result.split(`IMAGE_${i+1}_PLACEHOLDER`).join(images[i]?.dataUrl||"");
-  }
-  return result;
+function validateGeneratedData(data) {
+  if (!data || typeof data !== "object") throw new Error("رد غير صالح من محرك الذكاء الاصطناعي.");
+  if (!data.hero || !data.hero.headline) throw new Error("الصفحة الناتجة ناقصة (لا يوجد عنوان رئيسي). حاول مرة أخرى.");
+  if (!DESIGN_SYSTEMS[data.designSystem]) data.designSystem = "Lifestyle";
+  if (!Array.isArray(data.sections)) data.sections = [];
+  return data;
 }
-
-/* =========================================================
-   VALIDATION: يمنع عرض صفحة ناقصة/مقطوعة (بلا محتوى ظاهر)
-   هاد الفحص هو اللي كيحل مشكلة "المعاينة كتبان فارغة"
-========================================================= */
-
-function isCompleteLandingPageHTML(html){
-  if(!html || typeof html!=="string") return false;
-  const text = html.trim();
-  if(text.length < 1500) return false;                       // صفحة كاملة ديماً أطول من هادشي
-  if(!/<\/html>\s*$/i.test(text)) return false;               // لازم تكون كاملة، ماشي مقطوعة
-  if(!/<body[\s>]/i.test(text)) return false;
-  if(!/id=["']order["']/i.test(text)) return false;           // قسم الطلب لازم يكون موجود
-  return true;
-}
-
-/* =========================================================
-   PROMPT ENGINEERING LAYER
-   هادي هي القلب ديال الجودة. كل صفحة كتخرج بهاد المستوى
-   لازم توصل للمعايير التالية باش تكون احترافية بحال الأمثلة.
-========================================================= */
-
-const SYSTEM_PROMPT = `أنت مصمم ومطور ويب خبير متخصص في صفحات الهبوط العربية للتجارة الإلكترونية (COD - الدفع عند الاستلام) في السوق العربي. لديك خبرة 10 سنوات في تصميم صفحات حققت معدلات تحويل عالية جداً في السعودية، الإمارات، المغرب، مصر والعراق.
-
-مهمتك: إخراج ملف HTML واحد كامل، جاهز للنشر مباشرة، لا يحتاج أي ملفات خارجية غير Google Fonts وTailwind CDN إذا احتجت.
-
-# قواعد صارمة يجب اتباعها دائماً
-
-1. أخرج كود HTML فقط بين <!DOCTYPE html> و </html>. بدون أي شرح، بدون Markdown، بدون تعليقات خارج الكود.
-2. اللغة عربية بالكامل، lang="ar" dir="rtl"، وكل الـCSS يجب أن يكون متوافقاً مع RTL (padding/margin/position بالاتجاه الصحيح).
-3. الخطوط: Cairo للعناوين الثقيلة، Tajawal لنص القراءة. حمّلهما عبر Google Fonts.
-4. استخدم رموز الصور IMAGE_1_PLACEHOLDER إلى IMAGE_4_PLACEHOLDER بالضبط كقيم src حيث تحتاج صور المنتج — لا تخترع روابط صور خارجية أبداً.
-5. لا تستخدم أبداً لوحة الألوان الافتراضية المكررة (كريمي + طوبي/برتقالي محروق، أو أسود + أخضر فسفوري وحيد). التزم بلوحة الألوان المعطاة لك في بيانات المنتج، ووسّعها بذكاء (درجات، شفافية، تدرجات) بدل اختراع لوحة أخرى.
-6. صمّم هوية بصرية مرتبطة فعلياً بفئة المنتج ومزاجه، وليس قالباً عاماً.
-7. النصوص الرئيسية (العناوين، الأسعار، الأزرار، عناوين الأقسام) يجب أن تكون في المنتصف (text-align:center) داخل حاويتها على الموبايل، خاصة في Hero وقسم العرض/الإلحاح — لا تترك محتوى الصفحة مائلاً لجهة واحدة بلا سبب تصميمي واضح.
-8. الأزرار (CTA الرئيسي، والأزرار العائمة) يجب أن تبدو حيّة واحترافية: ظل واضح (box-shadow) بلون العلامة، حالة hover/active مختلفة عن الحالة العادية، أيقونة أو رمز تعبيري واضح، وحجم لمس مريح (لا تصميم "باهت" بلا تباين).
-9. أزرار واتساب والاتصال المباشر العائمة تظهر فقط إذا تم توفير رقم واتساب/هاتف فعلي في بيانات المنتج. إذا كان الرقم غير متوفر، لا تُظهر هذين الزرين نهائياً (ولا تخترع رقماً وهمياً).
-
-# البنية الإجبارية للصفحة (كل قسم مطلوب فعلياً في الكود، وليس وصفاً)
-
-1. **Header/Hero**: خلفية متدرجة أو مشهد بصري يعكس المنتج، عنوان قوي (H1) يبيع الفائدة الأساسية وليس مجرد اسم المنتج، سطر فرعي، السعر الحالي بارز + السعر القديم بخط مشطوب + نسبة الخصم كـbadge، شارات ثقة (توصيل مجاني/دفع عند الاستلام/ضمان)، زر CTA أساسي يقود لقسم الطلب (#order)، وصورة المنتج الأولى (IMAGE_1_PLACEHOLDER) بحركة عائمة خفيفة (CSS animation) داخل عنصر بصري (دائرة زجاجية/إطار متوهج).
-2. **لماذا هذا المنتج / نقاط القوة**: شبكة من 3-4 بطاقات، كل بطاقة أيقونة (emoji مناسب) + عنوان قصير + جملة شرح واحدة.
-3. **معرض الصور**: صورة رئيسية كبيرة + صور مصغرة (thumbnails) قابلة للنقر لتبديل الصورة الرئيسية، باستخدام IMAGE_1..IMAGE_4_PLACEHOLDER. أضف JS بسيط للتبديل.
-4. **الفوائد التفصيلية**: 3-5 فقرات أو بطاقات تشرح كل فائدة بعمق أكبر من القسم الأول (استخدم وصف المنتج المُعطى كمصدر حقيقي للمحتوى، ووسّعه باحترافية، لا تخترع مواصفات تقنية دقيقة غير معطاة).
-5. **آراء العملاء**: 3 بطاقات تقييم بأسماء عربية واقعية، نجوم ★★★★★، وجملة رأي قصيرة مقنعة وواقعية (بدون أرقام أو ادعاءات طبية/علمية كاذبة).
-6. **الأسئلة الشائعة (FAQ)**: 4-5 أسئلة بنظام Accordion قابل للطي/الفتح عبر JS، تغطي: التوصيل، الدفع، الضمان، طريقة الاستخدام.
-7. **قسم العرض/الإلحاح**: عرض السعر مع عداد تنازلي حقيقي (JS setInterval) لخلق شعور بالندرة، وزر CTA.
-8. **نموذج الطلب المباشر (#order)**: عنوان الاسم الكامل، رقم الهاتف (مع كود الدولة المعطى ثابتاً قبل الحقل)، المدينة/المحافظة (قائمة اختيار إن أمكن أو حقل نص)، العنوان بالتفصيل، زر "تأكيد الطلب". عند الإرسال (JS، onsubmit، preventDefault) أخفِ النموذج واعرض رسالة نجاح (شكر + تأكيد أن فريق المبيعات سيتصل).
-9. **Sticky CTA سفلي**: شريط ثابت أسفل الشاشة على الموبايل يظهر بعد تمرير الهيرو، فيه السعر وزر طلب سريع يقود لـ#order.
-10. **أزرار عائمة**: واتساب واتصال هاتفي (استخدم SVG بسيط inline، وأرقام placeholder منطقية بكود الدولة المعطى).
-11. **Footer**: شارات ثقة مختصرة + حقوق النشر.
-
-# جودة الكود المطلوبة
-
-- CSS منظم بمتغيرات :root (--primary, --primary-deep, --accent, --bg, --surface, --text, --muted) مبنية على اللوحة المعطاة.
-- تصميم Mobile-first، متجاوب بالكامل حتى 375px، مع تكيّف سلس للشاشات الأكبر.
-- حركات دخول عند التمرير (scroll reveal) عبر IntersectionObserver — عنصر واحد كافٍ لكل الأقسام، أضف كلاس .in عند الظهور.
-- لا تستخدم أرقام تسلسلية (01/02/03) كزخرفة إلا إذا كان المحتوى فعلاً خطوات متسلسلة.
-- النص التسويقي بلهجة/فصحى عربية مقنعة، جمل قصيرة وواضحة، بدون ادعاءات طبية أو مبالغات كاذبة (مثل "علاج نهائي" أو نسب شفاء).
-- الأسعار والعملة وكود الهاتف يجب أن تُستخدم بالضبط كما وردت في بيانات المنتج المعطاة (لا تحول العملة ولا تخترع رقماً آخر).
-- لا تكرر نفس بنية القسم بصرياً مرتين متتاليتين (نوّع بين خلفيات فاتحة وداكنة، بين شبكات وقوائم).
-
-أعد فقط الكود الكامل للصفحة، من <!DOCTYPE html> إلى </html>، بدون أي نص إضافي قبله أو بعده.`;
-
-function buildProductBrief(form, country, palette){
-  const discount = discountPercent(form.originalPrice, form.price);
-  return `# بيانات المنتج
-- الاسم: ${form.name}
-- الفئة: ${form.category}
-- الوصف المُدخل من التاجر: ${form.description || "غير مُحدد — استنتج وصفاً تسويقياً مناسباً من اسم المنتج وفئته فقط، بدون اختراع مواصفات تقنية دقيقة."}
-- السعر الحالي: ${form.price} ${country.symbol}
-- السعر قبل الخصم: ${form.originalPrice || "لا يوجد"} ${form.originalPrice ? country.symbol : ""}
-- نسبة الخصم المحسوبة: ${discount ? discount+"%" : "لا يوجد خصم، لا تعرض شارة خصم"}
-- الدولة المستهدفة: ${country.name}
-- العملة ورمزها: ${country.currency} (${country.symbol})
-- كود الهاتف الدولي: ${country.phoneCode}
-- رقم واتساب/هاتف التواصل المباشر: ${form.whatsapp ? `${country.phoneCode}${form.whatsapp}` : "غير متوفر — لا تُظهر أزرار واتساب أو اتصال هاتفي عائمة إطلاقاً في هذه الحالة"}
-- عدد صور المنتج المتوفرة فعلياً: ${form.imagesCount} (استخدم فقط IMAGE_1_PLACEHOLDER إلى IMAGE_${form.imagesCount}_PLACEHOLDER، لا تشر إلى صور غير موجودة)
-- تضمين نموذج طلب مباشر بالكامل: ${form.includeOrderForm ? "نعم، اجعله قسماً كاملاً بحقول متعددة" : "لا، اكتفِ بأزرار CTA تقود إلى واتساب/اتصال بدون نموذج تفصيلي"}
-
-# لوحة الألوان الإجبارية (${palette.name})
-- خلفية أساسية: ${palette.bg}
-- خلفية سطح/بطاقات: ${palette.surface}
-- لون أساسي: ${palette.primary}
-- لون أساسي غامق (hover/تدرج): ${palette.primaryDeep}
-- لون ثانوي/تمييز: ${palette.accent}
-- لون النص الأساسي: ${palette.text}
-- لون النص الثانوي: ${palette.muted}
-
-ابنِ الصفحة الآن بالكامل وفق هذه البيانات وقواعد النظام.`;
-}
-
-function buildEditInstruction(instruction){
-  return `# طلب تعديل على الصفحة الحالية
-هذا هو تعديل على صفحة موجودة بالفعل، وليس إنشاءً من الصفر. لديك كود HTML الحالي بالكامل في الرسالة أعلاه.
-
-طلب التاجر: "${instruction}"
-
-نفّذ هذا التعديل بدقة مع الحفاظ على:
-- كل البنية والأقسام الموجودة التي لم يُطلب تغييرها.
-- رموز الصور IMAGE_1_PLACEHOLDER إلى IMAGE_4_PLACEHOLDER كما هي في أماكنها (لا تحذفها ولا تستبدلها بروابط).
-- جودة الكود ومعايير النظام نفسها.
-
-أعد الكود الكامل المعدّل بالكامل من <!DOCTYPE html> إلى </html>، وليس فقط الجزء المعدّل.`;
-}
-
-function imageContentBlocks(images){
-  return images.filter(img=>img && img.base64).map(img=>({
-    type:"image",
-    source:{ type:"base64", media_type: img.mediaType || "image/jpeg", data: img.base64 }
-  }));
-}
-
-/* =========================================================
-   CLAUDE GENERATION & FALLBACK
-========================================================= */
-
-async function generateLandingPageAPI({ form, country, images, instruction, currentHtml }){
-  const palette = PALETTES[form.category] || PALETTES["منتج عام"];
-  const briefForm = { ...form, imagesCount: images.length };
-  const brief = buildProductBrief(briefForm, country, palette);
-
-  const userContent = [];
-
-  if(currentHtml){
-    userContent.push({ type:"text", text:`# كود HTML الحالي\n\n${currentHtml}` });
-  }
-
-  userContent.push({ type:"text", text: brief });
-  userContent.push(...imageContentBlocks(images));
-
-  if(instruction){
-    userContent.push({ type:"text", text: buildEditInstruction(instruction) });
-  }
-
-  const payload = {
-    // النموذج: claude-sonnet-5 يعطي توازناً جيداً بين الجودة والسرعة/التكلفة.
-    // للحصول على أعلى جودة تصميم استعمل claude-opus-4-8.
-    model:"claude-sonnet-5",
-    max_tokens:8000,
-    system: SYSTEM_PROMPT,
-    messages:[
-      { role:"user", content:userContent }
-    ]
-  };
-
-  try{
-    const response = await fetch("/api/generate", {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify(payload)
-    });
-
-    if(!response.ok) throw new Error("السيرفر لم يستجب بالشكل المطلوب.");
-    const data = await response.json();
-    // يدعم شكل استجابة Anthropic (content: [{type:"text", text}]) وأشكال مبسطة بديلة
-    let rawHtml = "";
-    if(Array.isArray(data.content)){
-      const textBlock = data.content.find(b=>b.type==="text");
-      if(textBlock) rawHtml = textBlock.text;
-    }
-    if(!rawHtml) rawHtml = data.text || data.html || data.content || "";
-
-    const cleaned = cleanHTML(rawHtml);
-
-    // إلا كانت الصفحة راجعة ناقصة (توقف التوليد قبل ما يكمل)، ما نعرضوهاش فارغة —
-    // نستعملو القالب الاحتياطي الكامل بدلها بدل ما يشوف المستخدم مربع فارغ.
-    if(!isCompleteLandingPageHTML(cleaned)){
-      console.warn("الصفحة المولّدة ناقصة أو فارغة — تم الرجوع للقالب الاحتياطي. تحقق من max_tokens فالسيرفر.");
-      return buildFallbackTemplate(form, country, images, palette);
-    }
-
-    return cleaned;
-  }catch(e){
-    return buildFallbackTemplate(form, country, images, palette);
-  }
-}
-
-/* ---------------------------------------------------------
-   FALLBACK: قالب احترافي كامل الأقسام يُستخدم فقط إذا فشل
-   الاتصال بالـ API، حتى لا يخرج المستخدم بصفحة فارغة القيمة.
---------------------------------------------------------- */
-
-function buildFallbackTemplate(form, country, images, palette){
-  const discount = discountPercent(form.originalPrice, form.price);
-  const desc = form.description || `منتج ${form.category} عالي الجودة، مصمم ليقدم لك تجربة استخدام مريحة وموثوقة.`;
-  const img = (i)=> images[i]?.dataUrl || `IMAGE_${i+1}_PLACEHOLDER`;
-  const thumbs = images.map((im,i)=>`<img data-i="${i}" class="thumb ${i===0?'active':''}" src="${img(i)}" onclick="setGallery(${i})" alt="">`).join("");
-  const waNumber = form.whatsapp ? `${country.phoneCode.replace('+','')}${form.whatsapp}` : "";
-  const hasContact = !!waNumber;
-
-  return `<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${form.name}</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
-<style>
-:root{
-  --bg:${palette.bg}; --surface:${palette.surface}; --primary:${palette.primary};
-  --primary-deep:${palette.primaryDeep}; --accent:${palette.accent}; --text:${palette.text}; --muted:${palette.muted};
-}
-*{margin:0;padding:0;box-sizing:border-box;}
-html{scroll-behavior:smooth;}
-body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden;}
-h1,h2,h3,.display{font-family:'Cairo',sans-serif;font-weight:800;}
-img{max-width:100%;display:block;}
-a{color:inherit;text-decoration:none;}
-.container{width:92%;max-width:1080px;margin:0 auto;}
-.section{padding:64px 0;text-align:center;}
-.eyebrow{display:inline-block;font-family:'Cairo';font-weight:700;font-size:12px;color:var(--accent);background:rgba(255,255,255,.08);padding:7px 16px;border-radius:30px;margin-bottom:14px;}
-.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s ease;}
-.reveal.in{opacity:1;transform:translateY(0);}
-.btn{display:inline-flex;align-items:center;gap:8px;font-family:'Cairo';font-weight:800;font-size:16px;padding:16px 32px;border-radius:14px;border:none;cursor:pointer;background:linear-gradient(135deg,var(--primary),var(--primary-deep));color:#fff;box-shadow:0 16px 34px -10px var(--primary);transition:transform .2s ease, box-shadow .2s ease, filter .2s ease;}
-.btn:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 20px 40px -8px var(--primary);filter:brightness(1.05);}
-.btn:active{transform:translateY(0) scale(.98);}
-.hero{min-height:92vh;display:flex;align-items:center;background:radial-gradient(circle at 25% 15%,var(--primary) 0%,var(--bg) 60%);position:relative;padding-top:30px;text-align:center;}
-.hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;text-align:center;}
-.hero h1{font-size:clamp(28px,5vw,46px);margin-bottom:16px;color:#fff;line-height:1.25;}
-.hero p{color:rgba(255,255,255,.85);font-size:17px;max-width:480px;margin:0 auto 10px;}
-.price-row{display:flex;align-items:baseline;justify-content:center;gap:12px;margin:20px 0;color:#fff;}
-.price-row .now{font-family:'Cairo';font-weight:900;font-size:34px;}
-.price-row .old{font-size:16px;text-decoration:line-through;opacity:.6;}
-.badge-discount{background:var(--accent);color:#141215;font-weight:800;font-size:12px;padding:5px 12px;border-radius:20px;}
-.trust-row{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:22px;}
-.trust{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:8px 14px;border-radius:24px;font-size:12px;font-weight:700;}
-.hero-visual{position:relative;display:flex;justify-content:center;align-items:center;}
-.hero-visual img{width:82%;border-radius:24px;animation:floaty 5s ease-in-out infinite;filter:drop-shadow(0 25px 35px rgba(0,0,0,.4));}
-@keyframes floaty{0%,100%{transform:translateY(0);}50%{transform:translateY(-14px);}}
-.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
-.card{background:var(--surface);border-radius:18px;padding:24px;border:1px solid rgba(255,255,255,.06);}
-.card .ic{font-size:28px;margin-bottom:10px;display:block;}
-.card h3{font-size:16px;margin-bottom:8px;}
-.card p{color:var(--muted);font-size:13px;}
-.section-title{font-size:clamp(22px,4vw,32px);margin-bottom:10px;}
-.section-sub{color:var(--muted);margin-bottom:34px;font-size:15px;}
-.gallery{display:grid;grid-template-columns:1fr;gap:14px;}
-.gallery-main{border-radius:18px;overflow:hidden;aspect-ratio:4/3;background:#0002;}
-.gallery-main img{width:100%;height:100%;object-fit:cover;}
-.gallery-thumbs{display:flex;gap:10px;}
-.thumb{width:70px;height:70px;object-fit:cover;border-radius:10px;cursor:pointer;opacity:.55;border:2px solid transparent;}
-.thumb.active{opacity:1;border-color:var(--primary);}
-.review-card{background:var(--surface);border-radius:16px;padding:20px;border:1px solid rgba(255,255,255,.06);}
-.stars{color:var(--accent);margin-bottom:8px;font-size:14px;}
-.review-name{font-family:'Cairo';font-weight:800;margin-top:10px;font-size:13px;}
-.faq-item{background:var(--surface);border-radius:14px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(255,255,255,.06);}
-.faq-q{padding:18px 20px;font-family:'Cairo';font-weight:700;cursor:pointer;display:flex;justify-content:space-between;font-size:14px;}
-.faq-a{max-height:0;overflow:hidden;transition:max-height .3s ease;padding:0 20px;color:var(--muted);font-size:13px;}
-.faq-item.open .faq-a{max-height:200px;padding-bottom:18px;}
-.offer{background:linear-gradient(135deg,var(--primary-deep),var(--primary));border-radius:24px;padding:44px 28px;text-align:center;color:#fff;}
-.countdown{display:flex;justify-content:center;gap:12px;margin:24px 0;}
-.cd-box{background:rgba(0,0,0,.25);border-radius:12px;padding:12px 16px;min-width:60px;}
-.cd-box .num{font-family:'Cairo';font-weight:900;font-size:22px;}
-.cd-box .lbl{font-size:11px;opacity:.8;}
-.order-wrap{display:grid;grid-template-columns:1fr 1fr;gap:36px;}
-.order-form{background:var(--surface);border-radius:20px;padding:28px;border:1px solid rgba(255,255,255,.08);}
-.field{margin-bottom:14px;}
-.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:700;}
-.field input,.field select{width:100%;padding:13px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.04);color:var(--text);font-size:14px;}
-.order-success{display:none;text-align:center;padding:30px 10px;}
-.order-success.show{display:block;}
-.sticky-cta{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid rgba(255,255,255,.1);padding:12px 18px;display:flex;justify-content:space-between;align-items:center;transform:translateY(100%);transition:transform .3s;z-index:200;}
-.sticky-cta.show{transform:translateY(0);}
-.sticky-cta .price{font-family:'Cairo';font-weight:800;font-size:14px;}
-.sticky-cta .price small{display:block;color:var(--muted);font-size:10px;font-weight:400;}
-.floating-btns{position:fixed;bottom:80px;left:16px;display:flex;flex-direction:column;gap:12px;z-index:200;}
-.fab{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 26px rgba(0,0,0,.45);transition:transform .2s ease;}
-.fab:hover{transform:translateY(-3px) scale(1.06);}
-.fab.whatsapp{background:linear-gradient(135deg,#2FE070,#1DAA53);}
-.fab.call{background:linear-gradient(135deg,var(--primary),var(--primary-deep));}
-footer{padding:36px 0;text-align:center;color:var(--muted);font-size:12px;border-top:1px solid rgba(255,255,255,.06);}
-@media(max-width:760px){.hero-grid,.order-wrap,.grid3{grid-template-columns:1fr;}}
-</style>
-</head>
-<body>
-
-<section class="hero" id="top">
-  <div class="container hero-grid">
-    <div class="reveal in">
-      <span class="eyebrow">🚚 توصيل إلى ${country.name} — الدفع عند الاستلام</span>
-      <h1>${form.name}</h1>
-      <p>${desc}</p>
-      <div class="price-row">
-        <span class="now">${form.price} ${country.symbol}</span>
-        ${form.originalPrice ? `<span class="old">${form.originalPrice} ${country.symbol}</span>` : ""}
-        ${discount ? `<span class="badge-discount">خصم ${discount}%</span>` : ""}
-      </div>
-      <div class="trust-row">
-        <span class="trust">✔ توصيل سريع</span>
-        <span class="trust">✔ دفع عند الاستلام</span>
-        <span class="trust">✔ ضمان الجودة</span>
-      </div>
-      <div style="margin-top:26px;">
-        <a href="#order" class="btn">🔥 اطلب الآن</a>
-      </div>
-    </div>
-    <div class="hero-visual reveal in">
-      <img src="${img(0)}" alt="${form.name}">
-    </div>
-  </div>
-</section>
-
-<section class="section">
-  <div class="container">
-    <span class="eyebrow">لماذا هذا المنتج</span>
-    <h2 class="section-title">مميزات تستحق الثقة</h2>
-    <p class="section-sub">كل ما تحتاج معرفته قبل اتخاذ القرار</p>
-    <div class="grid3 reveal">
-      <div class="card"><span class="ic">⚡</span><h3>جودة عالية</h3><p>مصنوع بعناية ليعطيك أداءً موثوقاً على المدى الطويل.</p></div>
-      <div class="card"><span class="ic">🚚</span><h3>توصيل سريع</h3><p>يصلك أينما كنت خلال أيام قليلة مع تتبع الطلب.</p></div>
-      <div class="card"><span class="ic">💳</span><h3>دفع آمن</h3><p>ادفع عند استلام المنتج بعد التأكد منه بنفسك.</p></div>
-    </div>
-  </div>
-</section>
-
-${images.length ? `
-<section class="section" style="background:var(--surface);">
-  <div class="container">
-    <span class="eyebrow">صور المنتج</span>
-    <h2 class="section-title">شاهد المنتج عن قرب</h2>
-    <div class="gallery reveal">
-      <div class="gallery-main"><img id="mainGalleryImg" src="${img(0)}" alt=""></div>
-      <div class="gallery-thumbs">${thumbs}</div>
-    </div>
-  </div>
-</section>` : ""}
-
-<section class="section">
-  <div class="container">
-    <span class="eyebrow">آراء العملاء</span>
-    <h2 class="section-title">تجارب حقيقية</h2>
-    <div class="grid3 reveal">
-      <div class="review-card"><div class="stars">★★★★★</div><p>منتج ممتاز والتوصيل كان أسرع مما توقعت.</p><div class="review-name">— سارة أحمد</div></div>
-      <div class="review-card"><div class="stars">★★★★★</div><p>جودة رائعة وسعر مناسب جداً، أنصح فيه.</p><div class="review-name">— محمد العلي</div></div>
-      <div class="review-card"><div class="stars">★★★★☆</div><p>تجربة شراء سلسة وخدمة عملاء متجاوبة.</p><div class="review-name">— ليلى حسن</div></div>
-    </div>
-  </div>
-</section>
-
-<section class="section" style="background:var(--surface);">
-  <div class="container">
-    <span class="eyebrow">الأسئلة الشائعة</span>
-    <h2 class="section-title">عندك سؤال؟</h2>
-    <div class="reveal">
-      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">هل التوصيل متوفر لمنطقتي؟ <span>+</span></div><div class="faq-a">نعم، نوصل إلى جميع مناطق ${country.name}.</div></div>
-      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">هل الدفع مقدم؟ <span>+</span></div><div class="faq-a">لا، الدفع عند الاستلام فقط بعد معاينة المنتج.</div></div>
-      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">كم يستغرق التوصيل؟ <span>+</span></div><div class="faq-a">عادة بين 2 إلى 5 أيام عمل حسب منطقتك.</div></div>
-    </div>
-  </div>
-</section>
-
-<section class="section">
-  <div class="container">
-    <div class="offer reveal">
-      <span class="eyebrow" style="background:rgba(255,255,255,.15);">🔥 عرض لفترة محدودة</span>
-      <h2 class="section-title">استفد من العرض قبل انتهائه</h2>
-      <div class="countdown" id="countdown">
-        <div class="cd-box"><div class="num" id="cd-hours">00</div><div class="lbl">ساعة</div></div>
-        <div class="cd-box"><div class="num" id="cd-mins">00</div><div class="lbl">دقيقة</div></div>
-        <div class="cd-box"><div class="num" id="cd-secs">00</div><div class="lbl">ثانية</div></div>
-      </div>
-      <a href="#order" class="btn">اطلب الآن</a>
-    </div>
-  </div>
-</section>
-
-<section class="section" id="order">
-  <div class="container order-wrap">
-    <div class="reveal">
-      <h3 class="display" style="font-size:22px;margin-bottom:16px;">لماذا تطلب الآن؟</h3>
-      <p style="color:var(--muted);font-size:14px;">✔ توصيل سريع لجميع المناطق<br>✔ دفع عند الاستلام<br>✔ معاينة المنتج قبل الدفع<br>✔ خدمة عملاء جاهزة للرد</p>
-    </div>
-    <div class="reveal">
-      <div class="order-form">
-        <h3 class="display" style="font-size:18px;margin-bottom:6px;">أكمل بياناتك وسنتصل بك</h3>
-        <p style="color:var(--muted);font-size:13px;margin-bottom:22px;">لا يوجد أي دفع الآن، فقط عند الاستلام.</p>
-        <form id="orderForm" onsubmit="submitOrder(event)">
-          <div class="field"><label>الاسم الكامل</label><input type="text" required placeholder="مثال: أحمد محمد"></div>
-          <div class="field"><label>رقم الهاتف</label><input type="tel" required placeholder="${country.phoneCode} XXXXXXXXX"></div>
-          <div class="field"><label>المدينة / المنطقة</label><input type="text" required placeholder="أدخل مدينتك"></div>
-          <div class="field"><label>العنوان بالتفصيل</label><input type="text" required placeholder="الحي، الشارع، أقرب معلم"></div>
-          <button type="submit" class="btn" style="width:100%;justify-content:center;">✅ تأكيد الطلب</button>
-        </form>
-        <div class="order-success" id="orderSuccess">
-          <div style="font-size:34px;">🎉</div>
-          <h3 class="display" style="margin:10px 0 6px;">تم استلام طلبك بنجاح!</h3>
-          <p style="color:var(--muted);">سنتصل بك قريباً لتأكيد الطلب وموعد التوصيل.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<footer>
-  <div class="container">✔ الدفع عند الاستلام &nbsp;·&nbsp; ✔ توصيل سريع &nbsp;·&nbsp; ✔ خدمة عملاء<br><br>© 2026 ${form.name} — جميع الحقوق محفوظة</div>
-</footer>
-
-<div class="sticky-cta" id="stickyCta">
-  <div class="price">${form.price} ${country.symbol}<small>توصيل سريع + دفع عند الاستلام</small></div>
-  <a href="#order" class="btn" style="padding:10px 20px;font-size:13px;">اطلب الآن</a>
-</div>
-
-<div class="floating-btns">
-  ${hasContact ? `<a class="fab whatsapp" href="https://wa.me/${waNumber}" target="_blank" rel="noopener" aria-label="واتساب">
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="#fff"><path d="M20.5 3.5A11.8 11.8 0 0 0 12 0C5.4 0 0 5.4 0 12c0 2.1.6 4.1 1.6 5.9L0 24l6.3-1.6c1.7.9 3.6 1.4 5.7 1.4 6.6 0 12-5.4 12-12 0-3.2-1.3-6.2-3.5-8.3zM12 21.7c-1.8 0-3.6-.5-5.1-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A9.6 9.6 0 0 1 2.3 12c0-5.4 4.4-9.7 9.7-9.7 2.6 0 5 1 6.9 2.8A9.6 9.6 0 0 1 21.7 12c0 5.4-4.4 9.7-9.7 9.7z"/></svg>
-  </a>
-  <a class="fab call" href="tel:+${waNumber}" aria-label="اتصال">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .3 2 .7 3a2 2 0 0 1-.5 2L8 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2-.5c1 .4 2 .6 3 .7a2 2 0 0 1 1.7 2z"/></svg>
-  </a>` : ""}
-</div>
-
-<script>
-const io = new IntersectionObserver((entries)=>{entries.forEach(e=>{if(e.isIntersecting) e.target.classList.add('in');});},{threshold:0.15});
-document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
-
-const stickyCta = document.getElementById('stickyCta');
-window.addEventListener('scroll',()=>{
-  if(window.scrollY > window.innerHeight*0.6) stickyCta.classList.add('show');
-  else stickyCta.classList.remove('show');
-});
-
-function toggleFaq(el){
-  const item = el.parentElement;
-  document.querySelectorAll('.faq-item').forEach(i=>{ if(i!==item) i.classList.remove('open'); });
-  item.classList.toggle('open');
-}
-
-function setGallery(i){
-  const imgs = [${images.map((_,i)=>`"${img(i)}"`).join(",")}];
-  document.getElementById('mainGalleryImg').src = imgs[i];
-  document.querySelectorAll('.thumb').forEach(t=>t.classList.remove('active'));
-  document.querySelector('.thumb[data-i="'+i+'"]').classList.add('active');
-}
-
-const countdownTarget = new Date().getTime() + (1000*60*60*23);
-function updateCountdown(){
-  const diff = Math.max(0, countdownTarget - new Date().getTime());
-  document.getElementById('cd-hours').textContent = String(Math.floor(diff/3600000)).padStart(2,'0');
-  document.getElementById('cd-mins').textContent = String(Math.floor((diff%3600000)/60000)).padStart(2,'0');
-  document.getElementById('cd-secs').textContent = String(Math.floor((diff%60000)/1000)).padStart(2,'0');
-}
-updateCountdown();
-setInterval(updateCountdown,1000);
-
-function submitOrder(e){
-  e.preventDefault();
-  document.getElementById('orderForm').style.display='none';
-  document.getElementById('orderSuccess').classList.add('show');
-  document.getElementById('orderSuccess').scrollIntoView({behavior:'smooth', block:'center'});
-}
-<\/script>
-</body>
-</html>`;
-}
-
-/* =========================================================
-   MAIN APP COMPONENT
-========================================================= */
-
-function App(){
-  const [screen,setScreen]=useState("form");
-  const [form,setForm]=useState({
-    name:"",
-    category:"منتج عام",
-    originalPrice:"",
-    price:"",
-    description:"",
-    country:"SA",
-    dialect:"auto",
-    whatsapp:"",
-    includeOrderForm:true
+async function callClaude(content) {
+  // يتصل بالـ Backend الخاص بنا (api/generate.js) بدل الاتصال المباشر بـ Anthropic.
+  // مفتاح الـ API مخبّأ فالسيرفر (Environment Variable) وما ظاهرش هنا فالفرونت-إند.
+  const response = await fetch("/api/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content }),
   });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || "تعذّر الاتصال بمحرك الذكاء الاصطناعي.");
+  if (!data.text) throw new Error("لم يصل رد نصي من المحرك");
+  return validateGeneratedData(stripToJSON(data.text));
+}
 
-  const [images,setImages]=useState([]);
-  const [history,setHistory]=useState([]);
-  const [historyIndex,setHistoryIndex]=useState(-1);
-  const [error,setError]=useState("");
-  const [loadingIndex,setLoadingIndex]=useState(0);
-  const [instruction,setInstruction]=useState("");
-  const [regenerating,setRegenerating]=useState(false);
-  const [preview,setPreview]=useState("mobile");
-  const [copyMessage,setCopyMessage]=useState("");
-  const [jpgLoading,setJpgLoading]=useState(false);
+const SCHEMA_INSTRUCTIONS = `
+أنت محرك توليد صفحات هبوط (Landing Pages) للتجارة الإلكترونية في العالم العربي، بمستوى احترافي مطابق لأفضل الوكالات المتخصصة في صفحات الدفع عند الاستلام (COD).
+أعد ردك بصيغة JSON صِرفة فقط، بدون أي نص قبله أو بعده، وبدون Markdown fences.
 
-  const iframeRef=useRef(null);
-  const [iframeHeight,setIframeHeight]=useState(700);
+الشكل المطلوب بالضبط:
+{
+  "designSystem": "one of: Tech|Beauty|Health|Home|Fashion|Kids|Car|Gadgets|Tools|Lifestyle",
+  "sections": ["array subset/order from: features,benefits,howToUse,specs,compare,testimonials,faq,urgency"],
+  "hero": { "eyebrow": "...", "headline": "...", "subheadline": "...", "priceOld": "...", "discountPercent": "...", "ctaText": "...", "badges": ["..."] },
+  "features": { "title": "...", "items": [ { "icon": "check|star|truck|shield|clock|heart|zap|gift|phone|battery|drop|award|package|refresh|sparkle", "title": "...", "desc": "..." } ] },
+  "benefits": { "title": "...", "items": [ { "icon": "...", "title": "...", "desc": "..." } ] },
+  "howToUse": { "title": "...", "steps": ["...", "..."] },
+  "specs": { "title": "...", "items": [ { "label": "...", "value": "..." } ] },
+  "compare": { "title": "...", "productLabel": "اسم قصير للمنتج", "us": ["ميزة 1", "ميزة 2", "ميزة 3", "ميزة 4"], "them": ["عيب تقليدي 1", "عيب تقليدي 2", "عيب تقليدي 3", "عيب تقليدي 4"] },
+  "testimonials": { "title": "...", "note": "هذه آراء تجريبية Placeholder للمعاينة", "items": [ { "name": "...", "text": "...", "rating": 5 } ] },
+  "faq": { "title": "...", "items": [ { "q": "...", "a": "..." } ] },
+  "urgency": { "countdownLabel": "...", "stockLabel": "..." },
+  "orderForm": { "title": "...", "buttonText": "...", "successHeadline": "...", "successText": "..." },
+  "finalCta": { "headline": "...", "buttonText": "..." },
+  "seo": { "title": "...", "description": "..." }
+}
 
-  const currentHTML = historyIndex >= 0 ? history[historyIndex] : "";
-  const country = COUNTRIES.find(x=>x.code===form.country) || COUNTRIES[0];
+قواعد مهمة:
+- اختر فقط الأقسام المناسبة فعلاً لطبيعة هذا المنتج تحديدا، لا تُدرج قسماً لا داعي له. قسم "compare" أدرجه فقط إن كان للمنتج بديل تقليدي واضح يمكن المقارنة معه بإنصاف (بدون ذكر أسماء علامات تجارية حقيقية في "them").
+- اكتب محتوى محدداً بخصائص المنتج الظاهرة في الصور، لا تستخدم عبارات عامة مثل "منتج رائع وعالي الجودة".
+- التزم بلهجة الدولة المطلوبة في كل نصوص الأزرار والعناوين المخاطبة للعميل، بشكل طبيعي غير متكلف.
+- لا تخترع مراجعات عملاء على أنها حقيقية؛ استخدمها كمحتوى Placeholder واضح عبر حقل note.
+- لا تُدرج ادعاءات طبية أو علاجية غير مثبتة إن كان المنتج تجميلياً أو صحياً.
+- priceOld و discountPercent اجعلهما فارغين "" إن لم يكن هناك خصم واضح من السياق.
+- successHeadline وsuccessText يجب أن يطمئنا العميل بأن الطلب وصل وسيتم التواصل معه قريباً.
+`.trim();
 
-  const loadingMessages=[
-    "جاري تحليل المنتج والصور...",
-    "جاري اختيار الهوية البصرية المناسبة للفئة...",
-    "جاري ربط العملة والدولة المستهدفة أوتوماتيكياً...",
-    "جاري بناء أقسام الصفحة (Hero, معرض, تقييمات, FAQ)...",
-    "جاري تجهيز المعاينة النهائية..."
-  ];
+function buildGeneratePrompt(form, country) {
+  return SCHEMA_INSTRUCTIONS + "\n\nبيانات المنتج:\n- اسم المنتج: " + form.name +
+    "\n- السعر الحالي: " + form.price + " " + country.currency +
+    "\n- الدولة المستهدفة: " + country.name +
+    "\n- اللهجة المطلوبة: " + (form.dialect === "auto" ? country.dialect + " (تلقائي حسب الدولة)" : form.dialect) +
+    "\n- وصف من المستخدم (قد يكون فارغاً، إن كان فارغاً استنتج الوصف من الصور): " + (form.description || "(لا يوجد، استنتج من الصور)") +
+    "\n\nحلّل الصور المرفقة جيداً (النوع، الشكل، اللون، الاستخدام، الجمهور المحتمل) وابنِ عليها كامل المحتوى.";
+}
+function buildEditPrompt(currentData, instruction, country) {
+  return "أنت تُعدّل صفحة هبوط موجودة بناءً على طلب المستخدم. البيانات الحالية للصفحة بصيغة JSON:\n\n" +
+    JSON.stringify(currentData) + "\n\nطلب التعديل من المستخدم: \"" + instruction + "\"\n\nالدولة: " + country.name +
+    "، العملة: " + country.currency + ".\n\nعدّل فقط ما يطلبه المستخدم، وأعد كامل كائن JSON بنفس الشكل والحقول بالضبط " +
+    "(بما فيها designSystem وsections وhero وseo) بعد تطبيق التعديل، بدون أي نص خارج JSON وبدون Markdown fences.";
+}
 
-  useEffect(()=>{
-    let timer;
-    if(screen==="loading"){
-      setLoadingIndex(0);
-      timer=setInterval(()=>{
-        setLoadingIndex(current => Math.min(current+1, loadingMessages.length-1));
-      }, 1000);
+/* ============================== APP ============================== */
+
+function App() {
+  const [step, setStep] = useState("form");
+  const [form, setForm] = useState({ name: "", price: "", description: "", countryCode: "SA", dialect: "auto", whatsapp: "" });
+  const [images, setImages] = useState([]);
+  const [error, setError] = useState("");
+  const [genStepIdx, setGenStepIdx] = useState(0);
+
+  const [history, setHistory] = useState([]);
+  const [historyIdx, setHistoryIdx] = useState(-1);
+  const data = historyIdx >= 0 ? history[historyIdx] : null;
+
+  const [previewMode, setPreviewMode] = useState("mobile");
+  const [editCmd, setEditCmd] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [copyStatus, setCopyStatus] = useState("");
+
+  const country = COUNTRIES.find((c) => c.code === form.countryCode) || COUNTRIES[0];
+  const tokens = data ? (DESIGN_SYSTEMS[data.designSystem] || DESIGN_SYSTEMS.Lifestyle) : DESIGN_SYSTEMS.Tech;
+
+  const genTimer = useRef(null);
+  useEffect(() => {
+    if (step === "loading") {
+      setGenStepIdx(0);
+      genTimer.current = setInterval(() => setGenStepIdx((i) => (i < GEN_STEPS.length - 1 ? i + 1 : i)), 4500);
+    } else if (genTimer.current) clearInterval(genTimer.current);
+    return () => genTimer.current && clearInterval(genTimer.current);
+  }, [step]);
+
+  async function handleImageUpload(e) {
+    const files = Array.from(e.target.files || []).slice(0, 4 - images.length);
+    const next = [];
+    for (const f of files) {
+      try {
+        const dataUrl = await fileToDataUrl(f);
+        const parts = dataUrlParts(dataUrl);
+        if (parts) next.push({ dataUrl, mediaType: parts.mediaType, base64: parts.base64 });
+      } catch (e2) {}
     }
-    return ()=>{ if(timer) clearInterval(timer); };
-  },[screen]);
-
-  async function uploadImages(event){
-    const files=Array.from(event.target.files||[]).slice(0, 4 - images.length);
-    const newImages=[];
-    for(const file of files){
-      try{
-        const dataURL = await fileToDataURL(file);
-        const parts = splitDataURL(dataURL);
-        if(parts){
-          newImages.push({
-            dataUrl:dataURL,
-            mediaType:parts.mediaType,
-            base64:parts.base64,
-            name:file.name
-          });
-        }
-      }catch(e){}
-    }
-    setImages(old=>[...old,...newImages].slice(0,4));
-    event.target.value="";
+    setImages((prev) => [...prev, ...next].slice(0, 4));
+    e.target.value = "";
   }
+  function removeImage(i) { setImages((prev) => prev.filter((_, idx) => idx !== i)); }
 
-  function removeImage(index){
-    setImages(old=>old.filter((_,i)=>i!==index));
-  }
-
-  async function startGeneration(){
+  async function handleGenerate() {
     setError("");
-    if(!form.name.trim()){ setError("أدخل اسم المنتج أولاً."); return; }
-    if(!form.price){ setError("أدخل سعر البيع."); return; }
-    if(images.length===0){ setError("ارفع صورة واحدة للمنتج على الأقل."); return; }
-
-    setScreen("loading");
-
-    try{
-      const rawHtml = await generateLandingPageAPI({ form, country, images });
-      let html = cleanHTML(rawHtml);
-      html = replaceImageTokens(html, images);
-
-      setHistory([html]);
-      setHistoryIndex(0);
-      setScreen("preview");
-    }catch(err){
-      setError(err.message || "حدث خطأ أثناء إنشاء الصفحة.");
-      setScreen("form");
+    if (!form.name.trim()) return setError("أدخل اسم المنتج أولاً.");
+    if (!form.price) return setError("أدخل سعر المنتج أولاً.");
+    if (images.length === 0) return setError("ارفع صورة واحدة على الأقل للمنتج.");
+    setStep("loading");
+    try {
+      const content = [
+        { type: "text", text: buildGeneratePrompt(form, country) },
+        ...images.map((img) => ({ type: "image", source: { type: "base64", media_type: img.mediaType, data: img.base64 } })),
+      ];
+      const result = await callClaude(content);
+      setHistory([result]); setHistoryIdx(0); setStep("preview");
+    } catch (err) {
+      setError(err.message || "حدث خطأ أثناء التوليد، حاول مرة أخرى.");
+      setStep("form");
     }
   }
 
-  async function regenerate(){
-    if(!instruction.trim() || regenerating) return;
-    setRegenerating(true);
-    try{
-      const rawHtml = await generateLandingPageAPI({ form, country, images, instruction, currentHtml: currentHTML });
-      let html = cleanHTML(rawHtml);
-      html = replaceImageTokens(html, images);
-
-      const base = history.slice(0, historyIndex+1);
-      const next = [...base, html];
-      setHistory(next);
-      setHistoryIndex(next.length-1);
-      setInstruction("");
-    }catch(err){
-      setError("تعذر تحديث التصميم.");
-    }finally{
-      setRegenerating(false);
-    }
+  async function handleApplyEdit() {
+    if (!editCmd.trim() || !data) return;
+    setEditing(true); setError("");
+    try {
+      const content = [{ type: "text", text: buildEditPrompt(data, editCmd.trim(), country) }];
+      const result = await callClaude(content);
+      const truncated = history.slice(0, historyIdx + 1);
+      const nextHistory = [...truncated, result];
+      setHistory(nextHistory); setHistoryIdx(nextHistory.length - 1); setEditCmd("");
+    } catch (err) {
+      setError(err.message || "تعذّر تنفيذ التعديل.");
+    } finally { setEditing(false); }
   }
 
-  function undo(){ if(historyIndex>0) setHistoryIndex(historyIndex-1); }
-  function redo(){ if(historyIndex < history.length-1) setHistoryIndex(historyIndex+1); }
+  function undo() { if (historyIdx > 0) setHistoryIdx(historyIdx - 1); }
+  function redo() { if (historyIdx < history.length - 1) setHistoryIdx(historyIdx + 1); }
 
-  async function copyHTML(){
-    if(!currentHTML) return;
-    try{
-      await navigator.clipboard.writeText(currentHTML);
-      setCopyMessage("تم نسخ كود HTML بنجاح ✓");
-    }catch{ setCopyMessage("تعذر النسخ."); }
-    setTimeout(()=>setCopyMessage(""), 2000);
+  const htmlString = data ? buildStandaloneHTML(data, tokens, images, form, country) : "";
+
+  async function copyHTML() {
+    try { await navigator.clipboard.writeText(htmlString); setCopyStatus("تم نسخ الكود ✓"); }
+    catch { setCopyStatus("تعذّر النسخ التلقائي، استخدم زر التحميل"); }
+    setTimeout(() => setCopyStatus(""), 2500);
   }
-
-  function downloadHTML(){
-    if(!currentHTML) return;
-    const blob = new Blob([currentHTML], {type:"text/html;charset=utf-8"});
+  function downloadHTML() {
+    const blob = new Blob([htmlString], { type: "text/html;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url;
-    a.download = `${form.name || 'landing-page'}.html`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    a.href = url; a.download = (form.name || "landing-page").trim().replace(/\s+/g, "-") + ".html";
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
   }
 
-  function iframeLoaded(){
-    try{
-      const doc = iframeRef.current.contentDocument;
-      const h = Math.max(doc.body.scrollHeight, doc.documentElement.scrollHeight);
-      setIframeHeight(Math.max(500, h+20));
-    }catch(e){}
-  }
-
-  async function exportJPG(){
-    if(!iframeRef.current || !window.html2canvas) return;
-    setJpgLoading(true);
-    try{
-      const doc = iframeRef.current.contentDocument;
-      const canvas = await window.html2canvas(doc.body, { scale:2, backgroundColor:"#ffffff" });
-      const a = document.createElement("a");
-      a.href = canvas.toDataURL("image/jpeg", 0.95);
-      a.download = `${form.name || 'landing-page'}.jpg`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    }catch(e){ setError("تعذر تصدير الصورة."); }
-    finally{ setJpgLoading(false); }
-  }
-
-  if(screen==="form") return <Form form={form} setForm={setForm} country={country} images={images} uploadImages={uploadImages} removeImage={removeImage} error={error} generate={startGeneration} />;
-  if(screen==="loading") return <Loading index={loadingIndex} messages={loadingMessages} />;
-
   return (
-    <Preview 
-      html={currentHTML} iframeRef={iframeRef} iframeHeight={iframeHeight} iframeLoaded={iframeLoaded}
-      preview={preview} setPreview={setPreview} instruction={instruction} setInstruction={setInstruction}
-      regenerate={regenerate} regenerating={regenerating} undo={undo} redo={redo}
-      canUndo={historyIndex>0} canRedo={historyIndex < history.length-1}
-      copyHTML={copyHTML} downloadHTML={downloadHTML} exportJPG={exportJPG} jpgLoading={jpgLoading}
-      copyMessage={copyMessage} error={error} newProject={()=>{ setScreen("form"); setError(""); }}
-    />
-  );
-}
-
-/* =========================================================
-   SUB-COMPONENTS (FORM, LOADING, PREVIEW, FIELD)
-========================================================= */
-
-function Form({form, setForm, country, images, uploadImages, removeImage, error, generate}){
-  const discount = discountPercent(form.originalPrice, form.price);
-  const update = (key, val) => setForm(old => ({...old, [key]: val}));
-
-  return (
-    <main className="fade" style={{minHeight:"100vh", padding:"30px 16px 80px", background:"radial-gradient(circle at 50% 0%,#11243b 0%,#070b12 50%)"}}>
-      <div style={{maxWidth:740, margin:"auto"}}>
-        <header style={{textAlign:"center", marginBottom:24}}>
-          <div style={{display:"inline-flex", padding:"6px 14px", borderRadius:30, border:"1px solid #23415b", background:"#0d1b2c", color:"#38bdf8", fontSize:12, fontWeight:800, marginBottom:12}}>
-            ⚡ NAFAS AI PRO - مولد صفحات الهبوط
-          </div>
-          <h1 style={{margin:"0 0 8px", fontSize:"clamp(24px,5vw,36px)", fontWeight:900}}>
-            إنشاء صفحة بيع متوافقة <span style={{color:"#22d3ee"}}>مع كل الدول العربية</span>
-          </h1>
-        </header>
-
-        <section style={{background:"rgba(15,23,42,.9)", border:"1px solid #22304a", borderRadius:20, padding:"24px", boxShadow:"0 20px 60px rgba(0,0,0,.4)"}}>
-          <div style={{display:"grid", gap:16}}>
-            <Field label="اسم المنتج / الخدمة *">
-              <input value={form.name} onChange={e=>update("name",e.target.value)} placeholder="مثال: ساعة ذكية مقاومة للماء" style={inputStyle} />
-            </Field>
-
-            <div className="twoCols" style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:12}}>
-              <Field label="الدولة المستهدفة (تغير تلقائي للعملة والكود)">
-                <select value={form.country} onChange={e=>update("country",e.target.value)} style={inputStyle}>
-                  {COUNTRIES.map(c=><option key={c.code} value={c.code}>{c.name} ({c.symbol} / {c.phoneCode})</option>)}
-                </select>
-              </Field>
-
-              <Field label="فئة المنتج">
-                <select value={form.category} onChange={e=>update("category",e.target.value)} style={inputStyle}>
-                  {PRODUCT_CATEGORIES.map(cat=><option key={cat} value={cat}>{cat}</option>)}
-                </select>
-              </Field>
-            </div>
-
-            <div className="twoCols" style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:12}}>
-              <Field label={`سعر البيع المباشر (${country.symbol}) *`}>
-                <input type="number" value={form.price} onChange={e=>update("price",e.target.value)} placeholder="199" style={{...inputStyle, borderColor:"#22d3ee"}} />
-              </Field>
-
-              <Field label={`السعر قبل الخصم (${country.symbol})`}>
-                <input type="number" value={form.originalPrice} onChange={e=>update("originalPrice",e.target.value)} placeholder="399" style={inputStyle} />
-              </Field>
-            </div>
-
-            {discount > 0 && (
-              <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", background:"#09201d", border:"1px solid #124a40", padding:"10px 14px", borderRadius:12}}>
-                <span style={{color:"#8da09c", fontSize:12}}>نسبة التخفيض للعميل:</span>
-                <strong style={{color:"#6ee7b7", background:"#103b32", borderRadius:8, padding:"4px 10px", fontSize:12}}>خصم {discount}%</strong>
-              </div>
-            )}
-
-            <Field label="صور المنتج (حتى 4 صور)">
-              <div style={{display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8}}>
-                {images.map((img, idx)=>(
-                  <div key={idx} style={{position:"relative", aspectRatio:"1", borderRadius:12, overflow:"hidden", border:"1px solid #30405a"}}>
-                    <img src={img.dataUrl} style={{width:"100%", height:"100%", objectFit:"cover"}} alt="" />
-                    <button type="button" onClick={()=>removeImage(idx)} style={{position:"absolute", top:4, left:4, width:22, height:22, borderRadius:6, background:"rgba(0,0,0,.8)", color:"#fff", border:0, cursor:"pointer"}}>×</button>
-                  </div>
-                ))}
-                {images.length < 4 && (
-                  <label style={{aspectRatio:"1", border:"1.5px dashed #34455f", borderRadius:12, display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", cursor:"pointer", background:"#0a1220", color:"#77859b"}}>
-                    <strong style={{fontSize:20}}>+</strong>
-                    <span style={{fontSize:10}}>إضافة</span>
-                    <input type="file" accept="image/*" multiple onChange={uploadImages} style={{display:"none"}} />
-                  </label>
-                )}
-              </div>
-            </Field>
-
-            <Field label="رقم الواتساب / الهاتف للتواصل المباشر (اختياري)">
-              <div style={{display:"flex", gap:8}}>
-                <span style={{...inputStyle, width:"auto", display:"flex", alignItems:"center", color:"#8da0bd", fontWeight:800}}>{country.phoneCode}</span>
-                <input value={form.whatsapp} onChange={e=>update("whatsapp", e.target.value.replace(/[^0-9]/g,""))} placeholder="5xxxxxxxx" style={{...inputStyle, flex:1}} dir="ltr" />
-              </div>
-              <span style={{color:"#6b7a94", fontSize:11}}>إلا خليتيه فارغ، أزرار الواتساب/الاتصال فالصفحة ما غاديش تظهر.</span>
-            </Field>
-
-            <Field label="وصف المنتج">
-              <textarea value={form.description} onChange={e=>update("description",e.target.value)} rows="3" placeholder="أدخل تفاصيل ومميزات المنتج الرئيسية..." style={{...inputStyle, resize:"none"}} />
-            </Field>
-
-            <Field label="تضمين نموذج الطلب المباشر">
-              <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:8}}>
-                <button type="button" onClick={()=>update("includeOrderForm", true)} style={{...toggleStyle, background: form.includeOrderForm ? "#22d3ee" : "#0b1423", color: form.includeOrderForm ? "#031018" : "#b5c0d0"}}>نعم (+ نموذج طلب)</button>
-                <button type="button" onClick={()=>update("includeOrderForm", false)} style={{...toggleStyle, background: !form.includeOrderForm ? "#22d3ee" : "#0b1423", color: !form.includeOrderForm ? "#031018" : "#b5c0d0"}}>لا (أزرار فقط)</button>
-              </div>
-            </Field>
-
-            {error && <div style={{background:"#281419", border:"1px solid #54232d", color:"#fb7185", borderRadius:10, padding:"10px", fontSize:12}}>⚠️ {error}</div>}
-
-            <button type="button" onClick={generate} style={{border:0, borderRadius:12, padding:"15px", cursor:"pointer", fontSize:15, fontWeight:900, color:"#031019", background:"linear-gradient(100deg,#3b82f6,#22d3ee)"}}>
-              🚀 توليد صفحة الهبوط الآن
-            </button>
-          </div>
-        </section>
-      </div>
-    </main>
-  );
-}
-
-function Field({label, children}){
-  return (
-    <label style={{display:"grid", gap:6}}>
-      <span style={{color:"#c1cada", fontSize:12, fontWeight:700}}>{label}</span>
-      {children}
-    </label>
-  );
-}
-
-function Loading({index, messages}){
-  return (
-    <div className="fade" style={{minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", padding:20}}>
-      <div style={{width:32, height:32, borderRadius:"50%", border:"3px solid #20324b", borderTopColor:"#22d3ee", animation:"spin .8s linear infinite", marginBottom:16}} />
-      <h2 style={{fontSize:16, margin:"0 0 8px"}}>{messages[index]}</h2>
+    <div dir="rtl" style={{ fontFamily: "'Cairo', sans-serif", minHeight: "100vh", background: "#0B0F19" }}>
+      {step === "form" && <FormScreen form={form} setForm={setForm} images={images} onUpload={handleImageUpload} onRemoveImage={removeImage} error={error} onGenerate={handleGenerate} />}
+      {step === "loading" && <LoadingScreen stepIdx={genStepIdx} />}
+      {step === "preview" && data && (
+        <PreviewScreen data={data} tokens={tokens} images={images} form={form} country={country}
+          previewMode={previewMode} setPreviewMode={setPreviewMode}
+          editCmd={editCmd} setEditCmd={setEditCmd} onApplyEdit={handleApplyEdit} editing={editing}
+          canUndo={historyIdx > 0} canRedo={historyIdx < history.length - 1} onUndo={undo} onRedo={redo}
+          onCopy={copyHTML} onDownload={downloadHTML} copyStatus={copyStatus} error={error}
+          onBack={() => setStep("form")} />
+      )}
     </div>
   );
 }
 
-function Preview(props){
-  const { html, iframeRef, iframeHeight, iframeLoaded, preview, setPreview, instruction, setInstruction, regenerate, regenerating, undo, redo, canUndo, canRedo, copyHTML, downloadHTML, exportJPG, jpgLoading, copyMessage, error, newProject } = props;
+/* ============================== SCREENS ============================== */
 
+function FormScreen({ form, setForm, images, onUpload, onRemoveImage, error, onGenerate }) {
+  const country = COUNTRIES.find((c) => c.code === form.countryCode) || COUNTRIES[0];
   return (
-    <div style={{minHeight:"100vh", background:"#05070c"}}>
-      <div className="toolbar" style={{position:"sticky", top:0, zIndex:100, display:"flex", alignItems:"center", gap:6, padding:"8px 12px", background:"#0b1220", borderBottom:"1px solid #202d43"}}>
-        <button onClick={newProject} style={toolbarButton}>← مشروع جديد</button>
-        <div style={{flex:1}} />
-        <button onClick={undo} disabled={!canUndo} style={{...toolbarButton, opacity:canUndo?1:.3}}>↶</button>
-        <button onClick={redo} disabled={!canRedo} style={{...toolbarButton, opacity:canRedo?1:.3}}>↷</button>
-        <button onClick={()=>setPreview("mobile")} style={{...toolbarButton, background: preview==="mobile"?"#22d3ee":"#111a29", color: preview==="mobile"?"#000":"#fff"}}>📱 هاتف</button>
-        <button onClick={()=>setPreview("desktop")} style={{...toolbarButton, background: preview==="desktop"?"#22d3ee":"#111a29", color: preview==="desktop"?"#000":"#fff"}}>🖥 حاسوب</button>
-        <button onClick={copyHTML} style={toolbarButton}>📋 نسخ</button>
-        <button onClick={exportJPG} disabled={jpgLoading} style={toolbarButton}>{jpgLoading?"...":"🖼 JPG"}</button>
-        <button onClick={downloadHTML} style={{...toolbarButton, background:"#22d3ee", color:"#000", fontWeight:900}}>⬇ تحميل HTML</button>
+    <div style={{ maxWidth: 640, margin: "0 auto", padding: "48px 20px 80px", position: "relative", overflow: "hidden" }} className="fade-in">
+      <div className="orb" style={{ width: 260, height: 260, top: -40, right: -40, background: "#2563eb55", animation: "drift 9s ease-in-out infinite" }} />
+      <div className="orb" style={{ width: 200, height: 200, bottom: 60, left: -50, background: "#06b6d455", animation: "drift 11s ease-in-out infinite reverse" }} />
+      <div style={{ textAlign: "center", marginBottom: 40, position: "relative" }}>
+        <div className="glass" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 14px", borderRadius: 999, color: "#5eead4", fontSize: 13, fontWeight: 600, marginBottom: 18 }}>
+          <Ico size={14}>✨</Ico> Arabic Landing AI
+        </div>
+        <h1 style={{ color: "#F1F5F9", fontSize: 30, fontWeight: 800, lineHeight: 1.4, margin: 0 }}>أنشئ صفحة هبوط احترافية لمنتجك بالذكاء الاصطناعي</h1>
+        <p style={{ color: "#8B96AC", fontSize: 15, marginTop: 10 }}>منتج + سعر + صور + دولة = صفحة هبوط جاهزة</p>
       </div>
+      <div className="glass" style={{ borderRadius: 20, padding: 22, display: "grid", gap: 16, position: "relative", boxShadow: "0 30px 70px rgba(0,0,0,.45)" }}>
+        <Field label="اسم المنتج"><input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="مثال: سماعة بلوتوث لاسلكية" style={inputStyle} /></Field>
+        <Field label="سعر المنتج"><input type="number" value={form.price} onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))} placeholder="مثال: 149" style={inputStyle} /></Field>
+        <Field label="صور المنتج (حتى 4 صور)">
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+            {images.map((img, i) => (
+              <div key={i} style={{ position: "relative", width: 76, height: 76, borderRadius: 12, overflow: "hidden", border: "1px solid #202A42" }}>
+                <img src={img.dataUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                <button onClick={() => onRemoveImage(i)} style={{ position: "absolute", top: 3, left: 3, background: "rgba(0,0,0,.6)", border: "none", borderRadius: 6, color: "#fff", padding: 2, cursor: "pointer", display: "flex" }}><Ico size={12}>✕</Ico></button>
+              </div>
+            ))}
+            {images.length < 4 && (
+              <label style={{ width: 76, height: 76, borderRadius: 12, border: "1.5px dashed #2A3654", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#5B6478", gap: 4 }}>
+                <Ico size={18}>🖼️</Ico><span style={{ fontSize: 10 }}>رفع</span>
+                <input type="file" accept="image/*" multiple onChange={onUpload} style={{ display: "none" }} />
+              </label>
+            )}
+          </div>
+        </Field>
+        <Field label="وصف المنتج (اختياري)"><textarea value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder="اتركه فارغاً وسيقوم الذكاء الاصطناعي بكتابة وصف من الصور" rows={3} style={Object.assign({}, inputStyle, { resize: "vertical" })} /></Field>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <Field label="الدولة المستهدفة"><select value={form.countryCode} onChange={(e) => setForm((f) => ({ ...f, countryCode: e.target.value }))} style={inputStyle}>{COUNTRIES.map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}</select></Field>
+          <Field label="اللهجة"><select value={form.dialect} onChange={(e) => setForm((f) => ({ ...f, dialect: e.target.value }))} style={inputStyle}><option value="auto">تلقائي حسب الدولة</option>{COUNTRIES.map((c) => <option key={c.code} value={c.dialect}>{c.dialect}</option>)}</select></Field>
+        </div>
+        <Field label="رقم واتساب/هاتف للتواصل المباشر (اختياري)">
+          <div style={{ display: "flex", gap: 8 }}>
+            <span style={Object.assign({}, inputStyle, { width: "auto", display: "flex", alignItems: "center", color: "#8da0bd", fontWeight: 800 })}>{country.phoneCode}</span>
+            <input value={form.whatsapp} onChange={(e) => setForm((f) => ({ ...f, whatsapp: e.target.value.replace(/[^0-9]/g, "") }))} placeholder="5xxxxxxxx" dir="ltr" style={Object.assign({}, inputStyle, { flex: 1 })} />
+          </div>
+          <span style={{ color: "#5B6478", fontSize: 11 }}>إلا خليتيه فارغ، أزرار الواتساب/الاتصال ما غاديش تظهر فالصفحة.</span>
+        </Field>
+        {error && <div style={{ color: "#F87171", fontSize: 13, background: "#2A1519", padding: "8px 12px", borderRadius: 8 }}>{error}</div>}
+        <button onClick={onGenerate} style={{ marginTop: 6, background: "linear-gradient(90deg,#3B82F6,#22D3EE,#5eead4)", border: "none", borderRadius: 12, color: "#04101C", fontWeight: 800, fontSize: 16, padding: "15px 20px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: "0 16px 34px -10px #22D3EE88" }}>
+          أنشئ صفحة الهبوط <span style={{ fontSize: 18 }}>🚀</span>
+        </button>
+        <p style={{ textAlign: "center", color: "#5c6b85", fontSize: 11, margin: 0 }}>يستغرق التوليد عادة من 30 ثانية إلى دقيقة للحصول على صفحة احترافية كاملة</p>
+      </div>
+    </div>
+  );
+}
+function Field({ label, children }) { return <label style={{ display: "grid", gap: 6 }}><span style={{ color: "#B7C0D4", fontSize: 13, fontWeight: 600 }}>{label}</span>{children}</label>; }
+const inputStyle = { background: "#0E1526", border: "1px solid #202A42", borderRadius: 10, color: "#F1F5F9", padding: "11px 13px", fontSize: 14.5, outline: "none", width: "100%" };
 
-      {copyMessage && <div style={{textAlign:"center", padding:4, background:"#0b241f", color:"#6ee7b7", fontSize:11}}>{copyMessage}</div>}
+function LoadingScreen({ stepIdx }) {
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 22, padding: 20, position: "relative", overflow: "hidden" }} className="fade-in">
+      <div className="orb" style={{ width: 240, height: 240, top: "20%", right: -50, background: "#2563eb55", animation: "drift 7s ease-in-out infinite" }} />
+      <div style={{ width: 64, height: 64, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: "#131A2A", border: "1px solid #202A42" }}>
+        <Ico size={28} color="#22D3EE" style={{ animation: "spin 1s linear infinite" }}>⟳</Ico>
+      </div>
+      <div style={{ color: "#F1F5F9", fontWeight: 700, fontSize: 16, textAlign: "center", maxWidth: 280 }}>{GEN_STEPS[stepIdx]}</div>
+      <div style={{ width: 220, height: 6, borderRadius: 4, overflow: "hidden", background: "#131A2A" }}>
+        <div className="shimmer" style={{ width: ((stepIdx + 1) / GEN_STEPS.length) * 100 + "%", height: "100%", background: "linear-gradient(90deg,#3B82F6,#22D3EE)", transition: "width .5s ease" }} />
+      </div>
+      <p style={{ color: "#5c6b85", fontSize: 11 }}>قد يستغرق هذا حتى دقيقة كاملة للحصول على أفضل نتيجة، لا تغلق الصفحة</p>
+    </div>
+  );
+}
 
-      <div style={{display:"flex", gap:8, padding:10, background:"#0b1220", borderBottom:"1px solid #202d43"}}>
-        <input value={instruction} disabled={regenerating} onChange={e=>setInstruction(e.target.value)} placeholder="اطلب تعديلاً بالذكاء الاصطناعي (مثال: غير اللون الرئيسي إلى الأخضر)..." style={{...inputStyle, flex:1}} />
-        <button onClick={regenerate} disabled={regenerating || !instruction.trim()} style={{...toolbarButton, background:"#2563eb", color:"#fff"}}>
-          {regenerating ? "جاري التعديل..." : "🪄 تطبيق التعديل"}
+function PreviewScreen(props) {
+  const { data, tokens, images, form, country, previewMode, setPreviewMode, editCmd, setEditCmd, onApplyEdit, editing, canUndo, canRedo, onUndo, onRedo, onCopy, onDownload, copyStatus, error, onBack } = props;
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+      <div style={{ position: "sticky", top: 0, zIndex: 20, background: "#0E1526", borderBottom: "1px solid #1D2740", padding: "10px 16px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <button onClick={onBack} style={toolBtn}>← مشروع جديد</button>
+        <div style={{ flex: 1 }} />
+        <button onClick={onUndo} disabled={!canUndo} style={Object.assign({}, toolBtn, { opacity: canUndo ? 1 : 0.4 })}><Ico size={14}>↶</Ico></button>
+        <button onClick={onRedo} disabled={!canRedo} style={Object.assign({}, toolBtn, { opacity: canRedo ? 1 : 0.4 })}><Ico size={14}>↷</Ico></button>
+        <div style={{ display: "flex", background: "#131A2A", borderRadius: 8, padding: 3, gap: 2 }}>
+          <button onClick={() => setPreviewMode("mobile")} style={Object.assign({}, segBtn, { background: previewMode === "mobile" ? "#22D3EE" : "transparent", color: previewMode === "mobile" ? "#04101C" : "#B7C0D4" })}><Ico size={14}>📱</Ico></button>
+          <button onClick={() => setPreviewMode("desktop")} style={Object.assign({}, segBtn, { background: previewMode === "desktop" ? "#22D3EE" : "transparent", color: previewMode === "desktop" ? "#04101C" : "#B7C0D4" })}><Ico size={14}>🖥️</Ico></button>
+        </div>
+        <button onClick={onCopy} style={toolBtn}><Ico size={14}>📋</Ico> نسخ HTML</button>
+        <button onClick={onDownload} style={Object.assign({}, toolBtn, { background: "#22D3EE", color: "#04101C", borderColor: "#22D3EE" })}><Ico size={14}>⬇️</Ico> تحميل HTML</button>
+      </div>
+      {copyStatus && <div style={{ textAlign: "center", color: "#6EE7B7", fontSize: 12, padding: "6px 0", background: "#0E1526" }}>{copyStatus}</div>}
+      <div style={{ background: "#0E1526", borderBottom: "1px solid #1D2740", padding: "10px 16px", display: "flex", gap: 8 }}>
+        <div style={{ flex: 1, position: "relative" }}>
+          <span style={{ position: "absolute", top: "50%", right: 12, transform: "translateY(-50%)" }}><Ico size={15} color="#5B6478">🪄</Ico></span>
+          <input value={editCmd} onChange={(e) => setEditCmd(e.target.value)} onKeyDown={(e) => e.key === "Enter" && onApplyEdit()} placeholder='مثال: "غيّر العنوان ليكون أكثر إقناعاً" أو "احذف آراء العملاء"' style={Object.assign({}, inputStyle, { paddingRight: 34 })} disabled={editing} />
+        </div>
+        <button onClick={onApplyEdit} disabled={editing || !editCmd.trim()} style={Object.assign({}, toolBtn, { background: "#3B82F6", color: "#fff", borderColor: "#3B82F6", opacity: editing || !editCmd.trim() ? 0.5 : 1 })}>
+          <Ico size={14} style={editing ? { animation: "spin 1s linear infinite" } : {}}>{editing ? "⟳" : "➤"}</Ico>
         </button>
       </div>
-
-      <div style={{padding:"20px 10px", display:"flex", justifyContent:"center"}}>
-        <div style={{width: preview==="mobile"?375:"100%", maxWidth: preview==="mobile"?375:1100, background:"#fff", borderRadius: preview==="mobile"?24:8, overflow:"hidden", border:"4px solid #1c2432"}}>
-          <iframe ref={iframeRef} srcDoc={html} title="Preview" onLoad={iframeLoaded} style={{width:"100%", height:iframeHeight, border:0, display:"block"}} />
+      {error && <div style={{ color: "#F87171", fontSize: 12, textAlign: "center", padding: "6px 0", background: "#0E1526" }}>{error}</div>}
+      <div style={{ flex: 1, background: "#05070C", padding: "28px 16px", display: "flex", justifyContent: "center" }}>
+        <div style={{ width: previewMode === "mobile" ? 390 : "100%", maxWidth: previewMode === "mobile" ? 390 : 1100, borderRadius: previewMode === "mobile" ? 30 : 16, overflow: "hidden", border: previewMode === "mobile" ? "8px solid #1B1F2B" : "1px solid #1D2740", boxShadow: "0 30px 60px rgba(0,0,0,.5)", height: "fit-content" }}>
+          <LandingPage data={data} tokens={tokens} images={images} form={form} country={country} />
         </div>
       </div>
     </div>
   );
 }
+const toolBtn = { display: "flex", alignItems: "center", gap: 6, background: "#131A2A", border: "1px solid #202A42", color: "#E2E8F5", fontSize: 12.5, fontWeight: 600, padding: "8px 12px", borderRadius: 8, cursor: "pointer" };
+const segBtn = { border: "none", borderRadius: 6, padding: "6px 9px", cursor: "pointer", display: "flex" };
 
-/* =========================================================
-   STYLES
-========================================================= */
+/* ============================== LANDING PAGE RENDER (live preview) ============================== */
 
-const inputStyle={width:"100%", border:"1px solid #2a3952", background:"#09111e", color:"#f8fafc", borderRadius:10, padding:"10px 12px", outline:"none", fontSize:13};
-const toggleStyle={border:"1px solid #2a3952", borderRadius:10, padding:"10px", cursor:"pointer", fontSize:12, fontWeight:800};
-const toolbarButton={display:"flex", alignItems:"center", gap:4, border:"1px solid #29374d", borderRadius:8, background:"#111a29", color:"#e2e8f0", padding:"6px 10px", cursor:"pointer", fontSize:11, fontWeight:800};
+function LandingPage({ data, tokens, images, form, country }) {
+  const sections = data.sections || [];
+  const [activeImg, setActiveImg] = useState(0);
+  const [orderState, setOrderState] = useState({ name: "", phone: "", city: "", address: "" });
+  const [orderSent, setOrderSent] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [exitShown, setExitShown] = useState(false);
+
+  // عداد محفوظ فـ localStorage — لا يعيد نفسه عند تحديث الصفحة
+  const [secondsLeft, setSecondsLeft] = useState(0);
+  useEffect(() => {
+    const key = "deadline_" + (form.name || "p").replace(/[^a-zA-Z0-9]/g, "").slice(0, 24);
+    let deadline = localStorage.getItem(key);
+    if (!deadline || new Date(deadline) < new Date()) {
+      deadline = new Date(Date.now() + 1000 * 60 * 60 * 36).toISOString();
+      localStorage.setItem(key, deadline);
+    }
+    const tick = () => setSecondsLeft(Math.max(0, Math.round((new Date(deadline) - new Date()) / 1000)));
+    tick();
+    const t = setInterval(tick, 1000);
+    return () => clearInterval(t);
+  }, [form.name]);
+  const hh = String(Math.floor(secondsLeft / 3600)).padStart(2, "0");
+  const mm = String(Math.floor((secondsLeft % 3600) / 60)).padStart(2, "0");
+  const ss = String(secondsLeft % 60).padStart(2, "0");
+
+  // إشعار طلبات حية
+  useEffect(() => {
+    const pool = socialProofPool(form.countryCode);
+    function show() {
+      const r = pool[Math.floor(Math.random() * pool.length)];
+      setToast(r[0] + " من " + r[1] + " طلب المنتج للتو");
+      setTimeout(() => setToast(null), 4500);
+    }
+    const t1 = setTimeout(show, 4000);
+    const t2 = setInterval(show, 15000);
+    return () => { clearTimeout(t1); clearInterval(t2); };
+  }, [form.countryCode]);
+
+  const hasContact = !!form.whatsapp;
+  const waLink = hasContact ? "https://wa.me/" + country.phoneCode.replace("+", "") + form.whatsapp : "";
+  const callLink = hasContact ? "tel:" + country.phoneCode + form.whatsapp : "";
+
+  return (
+    <div dir="rtl" style={{ background: tokens.bg, color: tokens.text, fontFamily: "'Cairo', sans-serif", position: "relative" }}>
+      <div style={{ position: "sticky", top: 0, zIndex: 30, background: "linear-gradient(90deg," + tokens.primaryDeep + "," + tokens.primary + ")", color: "#fff", textAlign: "center", fontWeight: 700, fontSize: 11, padding: "7px 8px", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+        <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#fff", animation: "pulseDot 1.4s ease-in-out infinite" }} />
+        العرض ينتهي خلال {hh}:{mm}:{ss}
+      </div>
+
+      <section style={{ padding: "24px 20px 20px" }}>
+        {data.hero && data.hero.eyebrow && <span style={{ display: "inline-block", fontSize: 12, fontWeight: 700, color: tokens.accent, background: tokens.surface, padding: "4px 12px", borderRadius: 999, marginBottom: 12 }}>{data.hero.eyebrow}</span>}
+        <h1 style={{ fontSize: 25, fontWeight: 900, marginBottom: 10 }}>{data.hero && data.hero.headline}</h1>
+        <p style={{ fontSize: 14.5, color: tokens.muted, marginBottom: 16 }}>{data.hero && data.hero.subheadline}</p>
+
+        {images.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <img src={images[activeImg].dataUrl} alt={form.name} style={{ width: "100%", maxHeight: 320, objectFit: "cover", borderRadius: tokens.radius, display: "block" }} />
+            {images.length > 1 && (
+              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                {images.map((img, i) => (
+                  <img key={i} src={img.dataUrl} onClick={() => setActiveImg(i)} style={{ width: 52, height: 52, objectFit: "cover", borderRadius: 8, cursor: "pointer", opacity: activeImg === i ? 1 : .5, border: activeImg === i ? "2px solid " + tokens.primary : "2px solid transparent" }} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 10 }}>
+          <span style={{ fontSize: 26, fontWeight: 900, color: tokens.primary }}>{formatPrice(form.price, country)}</span>
+          {data.hero && data.hero.priceOld && <span style={{ fontSize: 15, color: tokens.muted, textDecoration: "line-through" }}>{formatPrice(data.hero.priceOld, country)}</span>}
+          {data.hero && data.hero.discountPercent && <span style={{ fontSize: 12, fontWeight: 800, color: "#fff", background: "#E63946", padding: "3px 9px", borderRadius: 999 }}>خصم {data.hero.discountPercent}%</span>}
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 18 }}>
+          {(data.hero && data.hero.badges || []).map((b, i) => <span key={i} style={{ fontSize: 11.5, fontWeight: 600, color: tokens.muted, background: tokens.surface, padding: "5px 10px", borderRadius: 999 }}>{b}</span>)}
+        </div>
+        <a href="#order" style={{ display: "block", textAlign: "center", background: tokens.primary, color: tokens.mood === "dark" ? tokens.bg : "#fff", fontWeight: 800, fontSize: 15.5, padding: 15, borderRadius: tokens.radius, textDecoration: "none" }}>{(data.hero && data.hero.ctaText) || "اطلب الآن"}</a>
+      </section>
+
+      {sections.includes("urgency") && data.urgency && (
+        <section style={{ padding: "0 20px 20px" }}>
+          <div style={{ background: tokens.card, borderRadius: tokens.radius, padding: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontWeight: 700, fontSize: 13 }}>{data.urgency.stockLabel}</span>
+            <span style={{ color: tokens.accent, fontWeight: 800, fontSize: 13 }}>{data.urgency.countdownLabel}</span>
+          </div>
+        </section>
+      )}
+
+      {sections.includes("features") && data.features && (
+        <Section title={data.features.title} tokens={tokens}>
+          <div style={{ display: "grid", gap: 12 }}>
+            {(data.features.items || []).map((it, i) => (
+              <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                <ContentIcon name={it.icon} size={20} color={tokens.primary} style={{ flexShrink: 0, marginTop: 2 }} />
+                <div><div style={{ fontWeight: 700, fontSize: 14 }}>{it.title}</div><div style={{ fontSize: 12.5, color: tokens.muted, marginTop: 3, lineHeight: 1.7 }}>{it.desc}</div></div>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {sections.includes("benefits") && data.benefits && (
+        <Section title={data.benefits.title} tokens={tokens}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            {(data.benefits.items || []).map((it, i) => (
+              <div key={i} style={{ background: tokens.card, borderRadius: tokens.radius, padding: 14, textAlign: "center" }}>
+                <ContentIcon name={it.icon} size={20} color={tokens.accent} style={{ margin: "0 auto 8px" }} />
+                <div style={{ fontWeight: 700, fontSize: 13 }}>{it.title}</div>
+                <div style={{ fontSize: 11.5, color: tokens.muted, marginTop: 4, lineHeight: 1.6 }}>{it.desc}</div>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {sections.includes("howToUse") && data.howToUse && (
+        <Section title={data.howToUse.title} tokens={tokens}>
+          <div style={{ display: "grid", gap: 10 }}>
+            {(data.howToUse.steps || []).map((s, i) => (
+              <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                <div style={{ width: 24, height: 24, borderRadius: "50%", background: tokens.primary, color: "#fff", fontSize: 12, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{i + 1}</div>
+                <div style={{ fontSize: 13, lineHeight: 1.8, paddingTop: 2 }}>{s}</div>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {sections.includes("specs") && data.specs && (
+        <Section title={data.specs.title} tokens={tokens}>
+          <div style={{ background: tokens.card, borderRadius: tokens.radius, overflow: "hidden" }}>
+            {(data.specs.items || []).map((it, i) => (
+              <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "10px 14px", borderBottom: i < data.specs.items.length - 1 ? "1px solid " + tokens.bg : "none", fontSize: 12.5 }}>
+                <span style={{ color: tokens.muted }}>{it.label}</span><span style={{ fontWeight: 700 }}>{it.value}</span>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {sections.includes("compare") && data.compare && (
+        <Section title={data.compare.title} tokens={tokens}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div style={{ background: tokens.bg, border: "1px solid " + tokens.muted + "33", borderRadius: tokens.radius, padding: 12 }}>
+              <div style={{ fontWeight: 800, fontSize: 12, marginBottom: 8, color: tokens.muted }}>✗ الطريقة التقليدية</div>
+              <div style={{ display: "grid", gap: 6 }}>{(data.compare.them || []).map((t, i) => <div key={i} style={{ fontSize: 11.5, color: tokens.muted }}>✗ {t}</div>)}</div>
+            </div>
+            <div style={{ background: tokens.card, border: "1px solid " + tokens.primary, borderRadius: tokens.radius, padding: 12 }}>
+              <div style={{ fontWeight: 800, fontSize: 12, marginBottom: 8 }}>✓ {data.compare.productLabel || form.name}</div>
+              <div style={{ display: "grid", gap: 6 }}>{(data.compare.us || []).map((t, i) => <div key={i} style={{ fontSize: 11.5 }}>✓ {t}</div>)}</div>
+            </div>
+          </div>
+        </Section>
+      )}
+
+      {sections.includes("testimonials") && data.testimonials && (
+        <Section title={data.testimonials.title} tokens={tokens} note={data.testimonials.note}>
+          <div style={{ display: "grid", gap: 10 }}>
+            {(data.testimonials.items || []).map((it, i) => (
+              <div key={i} style={{ background: tokens.card, borderRadius: tokens.radius, padding: 14 }}>
+                <div style={{ display: "flex", gap: 2, marginBottom: 6 }}>{Array.from({ length: it.rating || 5 }).map((_, s) => <Ico key={s} size={12} color={tokens.accent}>⭐</Ico>)}</div>
+                <div style={{ fontSize: 12.5, lineHeight: 1.7, color: tokens.text }}>{it.text}</div>
+                <div style={{ fontSize: 11, color: tokens.muted, marginTop: 6, fontWeight: 700 }}>{it.name}</div>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {sections.includes("faq") && data.faq && (
+        <Section title={data.faq.title} tokens={tokens}>
+          <div style={{ display: "grid", gap: 8 }}>{(data.faq.items || []).map((it, i) => <FaqItem key={i} q={it.q} a={it.a} tokens={tokens} />)}</div>
+        </Section>
+      )}
+
+      <section id="order" style={{ padding: "24px 20px" }}>
+        <div style={{ background: tokens.card, borderRadius: tokens.radius, padding: 18 }}>
+          {!orderSent ? (
+            <React.Fragment>
+              <h3 style={{ fontSize: 16, fontWeight: 800, margin: "0 0 14px" }}>{(data.orderForm && data.orderForm.title) || "أكمل طلبك الآن"}</h3>
+              <div style={{ display: "grid", gap: 10 }}>
+                <input placeholder="الاسم الكامل" value={orderState.name} onChange={(e) => setOrderState((s) => ({ ...s, name: e.target.value }))} style={orderInputStyle(tokens)} />
+                <input placeholder="رقم الهاتف" value={orderState.phone} onChange={(e) => setOrderState((s) => ({ ...s, phone: e.target.value }))} style={orderInputStyle(tokens)} />
+                <input placeholder="المدينة" value={orderState.city} onChange={(e) => setOrderState((s) => ({ ...s, city: e.target.value }))} style={orderInputStyle(tokens)} />
+                <input placeholder="العنوان بالتفصيل" value={orderState.address} onChange={(e) => setOrderState((s) => ({ ...s, address: e.target.value }))} style={orderInputStyle(tokens)} />
+                <button onClick={() => { if (orderState.name && orderState.phone) setOrderSent(true); }} style={{ background: tokens.primary, color: tokens.mood === "dark" ? tokens.bg : "#fff", fontWeight: 800, fontSize: 15, padding: 14, borderRadius: tokens.radius, border: "none", marginTop: 4, cursor: "pointer" }}>{(data.orderForm && data.orderForm.buttonText) || "اطلب الآن"}</button>
+              </div>
+            </React.Fragment>
+          ) : (
+            <div style={{ textAlign: "center", padding: "10px 0" }}>
+              <div style={{ fontSize: 32 }}>🎉</div>
+              <h3 style={{ fontSize: 16, fontWeight: 800, margin: "10px 0 6px" }}>{(data.orderForm && data.orderForm.successHeadline) || "تم استلام طلبك بنجاح!"}</h3>
+              <p style={{ fontSize: 12.5, color: tokens.muted }}>{(data.orderForm && data.orderForm.successText) || "سنتصل بك قريباً لتأكيد الطلب وموعد التوصيل."}</p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {data.finalCta && (
+        <section style={{ padding: "10px 20px 90px", textAlign: "center" }}>
+          <h3 style={{ fontSize: 17, fontWeight: 800, marginBottom: 14 }}>{data.finalCta.headline}</h3>
+          <a href="#order" style={{ display: "inline-block", background: tokens.accent, color: tokens.bg, fontWeight: 800, padding: "13px 26px", borderRadius: tokens.radius, textDecoration: "none", fontSize: 14 }}>{data.finalCta.buttonText}</a>
+        </section>
+      )}
+
+      <div style={{ position: "sticky", bottom: 0, background: tokens.surface, borderTop: "1px solid " + tokens.muted + "33", padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, zIndex: 20 }}>
+        <div><div style={{ fontSize: 15, fontWeight: 900, color: tokens.primary }}>{formatPrice(form.price, country)}</div></div>
+        <a href="#order" style={{ background: tokens.primary, color: tokens.mood === "dark" ? tokens.bg : "#fff", fontWeight: 800, fontSize: 13, padding: "10px 20px", borderRadius: 999, textDecoration: "none" }}>{(data.hero && data.hero.ctaText) || "اطلب الآن"}</a>
+      </div>
+
+      {hasContact && (
+        <div style={{ position: "absolute", bottom: 70, left: 12, display: "flex", flexDirection: "column", gap: 10, zIndex: 25 }}>
+          <a href={waLink} target="_blank" rel="noopener" style={{ width: 46, height: 46, borderRadius: "50%", background: "linear-gradient(135deg,#2FE070,#1DAA53)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 20px rgba(0,0,0,.4)" }}><Ico size={20} color="#fff">💬</Ico></a>
+          <a href={callLink} style={{ width: 46, height: 46, borderRadius: "50%", background: "linear-gradient(135deg," + tokens.primary + "," + tokens.primaryDeep + ")", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 20px rgba(0,0,0,.4)" }}><Ico size={18} color="#fff">📞</Ico></a>
+        </div>
+      )}
+
+      {toast && (
+        <div style={{ position: "absolute", bottom: 70, right: 12, zIndex: 25, background: tokens.surface, border: "1px solid " + tokens.muted + "33", borderRadius: 12, padding: "10px 14px", display: "flex", gap: 8, alignItems: "center", maxWidth: 200, boxShadow: "0 12px 26px rgba(0,0,0,.3)" }} className="fade-in">
+          <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", flexShrink: 0 }} />
+          <span style={{ fontSize: 11, fontWeight: 700 }}>{toast}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+function orderInputStyle(tokens) { return { width: "100%", background: tokens.bg, border: "1px solid " + tokens.muted + "44", borderRadius: 8, padding: "11px 12px", color: tokens.text, fontSize: 13, fontFamily: "inherit" }; }
+
+function Section({ title, tokens, note, children }) {
+  return (
+    <section style={{ padding: "10px 20px 24px" }}>
+      {title && <h2 style={{ fontSize: 17, fontWeight: 800, margin: "0 0 4px" }}>{title}</h2>}
+      {note && <p style={{ fontSize: 10.5, color: tokens.muted, margin: "0 0 12px" }}>{note}</p>}
+      <div style={{ marginTop: note ? 0 : 12 }}>{children}</div>
+    </section>
+  );
+}
+function FaqItem({ q, a, tokens }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ background: tokens.card, borderRadius: tokens.radius, overflow: "hidden" }}>
+      <button onClick={() => setOpen((o) => !o)} style={{ width: "100%", background: "none", border: "none", padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", color: tokens.text, fontFamily: "inherit" }}>
+        <span style={{ fontSize: 13, fontWeight: 700, textAlign: "right" }}>{q}</span>
+        <Ico size={16} color={tokens.muted} style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform .2s", flexShrink: 0 }}>▾</Ico>
+      </button>
+      {open && <div style={{ padding: "0 14px 14px", fontSize: 12.5, color: tokens.muted, lineHeight: 1.7 }}>{a}</div>}
+    </div>
+  );
+}
+
+/* ============================== STANDALONE HTML EXPORT ============================== */
+/* هذا الملف هو ما يُنزَّله المستخدم فعلياً — يجب أن يطابق المعاينة الحية بكل ميزاتها التفاعلية */
+
+function buildStandaloneHTML(data, tokens, images, form, country) {
+  const esc = (s) => String(s == null ? "" : s).replace(/</g, "&lt;");
+  const sections = data.sections || [];
+  const hasContact = !!form.whatsapp;
+  const waNumber = hasContact ? country.phoneCode.replace("+", "") + form.whatsapp : "";
+  const pool = socialProofPool(form.countryCode);
+
+  const galleryImgs = images.map((im) => im.dataUrl);
+  const heroGalleryHtml = galleryImgs.length ? (
+    '<img id="mainImg" src="' + galleryImgs[0] + '" alt="' + esc(form.name) + '" />' +
+    (galleryImgs.length > 1 ? '<div class="thumbs">' + galleryImgs.map((src, i) => '<img class="thumb' + (i === 0 ? ' active' : '') + '" data-i="' + i + '" src="' + src + '" onclick="setImg(' + i + ')" />').join("") + '</div>' : "")
+  ) : "";
+
+  const badgesHtml = (data.hero && data.hero.badges || []).map((b) => '<span class="badge">' + esc(b) + '</span>').join("");
+  const urgencyHtml = sections.includes("urgency") && data.urgency ? '<section class="sec"><div class="card row spread"><span class="bold">' + esc(data.urgency.stockLabel) + '</span><span class="accent">' + esc(data.urgency.countdownLabel) + '</span></div></section>' : "";
+  const featuresHtml = sections.includes("features") && data.features ? '<section class="sec"><h2>' + esc(data.features.title) + '</h2><div class="grid1">' + (data.features.items || []).map((it) => '<div class="card row"><div><div class="t">' + esc(it.title) + '</div><div class="d">' + esc(it.desc) + '</div></div></div>').join("") + '</div></section>' : "";
+  const benefitsHtml = sections.includes("benefits") && data.benefits ? '<section class="sec"><h2>' + esc(data.benefits.title) + '</h2><div class="grid2">' + (data.benefits.items || []).map((it) => '<div class="card center"><div class="t">' + esc(it.title) + '</div><div class="d">' + esc(it.desc) + '</div></div>').join("") + '</div></section>' : "";
+  const howToHtml = sections.includes("howToUse") && data.howToUse ? '<section class="sec"><h2>' + esc(data.howToUse.title) + '</h2>' + (data.howToUse.steps || []).map((s, i) => '<div class="step"><span class="num">' + (i + 1) + '</span><span>' + esc(s) + '</span></div>').join("") + '</section>' : "";
+  const specsHtml = sections.includes("specs") && data.specs ? '<section class="sec"><h2>' + esc(data.specs.title) + '</h2><div class="card">' + (data.specs.items || []).map((it) => '<div class="spec-row"><span class="muted">' + esc(it.label) + '</span><span class="bold">' + esc(it.value) + '</span></div>').join("") + '</div></section>' : "";
+  const compareHtml = sections.includes("compare") && data.compare ? '<section class="sec"><h2>' + esc(data.compare.title) + '</h2><div class="grid2 compare"><div class="card compare-bad"><div class="ct">✗ الطريقة التقليدية</div>' + (data.compare.them || []).map((t) => '<div class="ci muted">✗ ' + esc(t) + '</div>').join("") + '</div><div class="card compare-good"><div class="ct">✓ ' + esc(data.compare.productLabel || form.name) + '</div>' + (data.compare.us || []).map((t) => '<div class="ci">✓ ' + esc(t) + '</div>').join("") + '</div></div></section>' : "";
+  const testimonialsHtml = sections.includes("testimonials") && data.testimonials ? '<section class="sec"><h2>' + esc(data.testimonials.title) + '</h2><p class="note">' + esc(data.testimonials.note) + '</p>' + (data.testimonials.items || []).map((it) => '<div class="card"><div class="d">' + esc(it.text) + '</div><div class="name">' + esc(it.name) + '</div></div>').join("") + '</section>' : "";
+  const faqHtml = sections.includes("faq") && data.faq ? '<section class="sec"><h2>' + esc(data.faq.title) + '</h2>' + (data.faq.items || []).map((it) => '<details class="card"><summary>' + esc(it.q) + '</summary><p class="d">' + esc(it.a) + '</p></details>').join("") + '</section>' : "";
+  const ctaText = esc((data.hero && data.hero.ctaText) || "اطلب الآن");
+  const successHeadline = esc((data.orderForm && data.orderForm.successHeadline) || "تم استلام طلبك بنجاح!");
+  const successText = esc((data.orderForm && data.orderForm.successText) || "سنتصل بك قريباً لتأكيد الطلب وموعد التوصيل.");
+
+  const floatingBtnsHtml = hasContact ?
+    '<div class="floating-btns">' +
+    '<a class="fab wa" href="https://wa.me/' + waNumber + '" target="_blank" rel="noopener">💬</a>' +
+    '<a class="fab call" href="tel:+' + waNumber + '">📞</a>' +
+    '</div>' : "";
+
+  return '<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />' +
+    '<title>' + esc((data.seo && data.seo.title) || form.name) + '</title>' +
+    '<meta name="description" content="' + esc((data.seo && data.seo.description) || "") + '" />' +
+    '<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">' +
+    '<style>:root{--bg:' + tokens.bg + ';--surface:' + tokens.surface + ';--card:' + tokens.card + ';--primary:' + tokens.primary + ';--primary-deep:' + tokens.primaryDeep + ';--accent:' + tokens.accent + ';--accent2:' + tokens.accent2 + ';--text:' + tokens.text + ';--muted:' + tokens.muted + ';--radius:' + tokens.radius + ';}' +
+    '*{box-sizing:border-box;margin:0;padding:0;}html{scroll-behavior:smooth;}body{background:var(--bg);color:var(--text);font-family:"Cairo",sans-serif;line-height:1.5;padding-top:32px;}.wrap{max-width:480px;margin:0 auto;}.hero{padding:28px 20px 24px;}' +
+    '.skip-link{position:absolute;right:-9999px;background:#fff;color:#000;padding:10px 16px;border-radius:10px;z-index:500;}.skip-link:focus{right:14px;top:40px;}' +
+    'a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px;}' +
+    '.scarcity{position:fixed;top:0;left:0;right:0;z-index:300;background:linear-gradient(90deg,var(--primary-deep),var(--primary));color:#fff;text-align:center;font-weight:700;font-size:11.5px;padding:8px;display:flex;align-items:center;justify-content:center;gap:6px;}' +
+    '.scarcity .dot{width:7px;height:7px;border-radius:50%;background:#fff;animation:pd 1.4s ease-in-out infinite;}@keyframes pd{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.35;transform:scale(1.5);}}' +
+    '.eyebrow{display:inline-block;font-size:12px;font-weight:700;color:var(--accent);background:var(--surface);padding:4px 12px;border-radius:999px;margin-bottom:12px;}h1{font-size:25px;font-weight:900;margin-bottom:10px;}' +
+    '.sub{font-size:14.5px;color:var(--muted);margin-bottom:18px;}.hero img#mainImg{width:100%;border-radius:var(--radius);margin-bottom:8px;display:block;max-height:320px;object-fit:cover;}' +
+    '.thumbs{display:flex;gap:8px;margin-bottom:18px;}.thumb{width:52px;height:52px;object-fit:cover;border-radius:8px;cursor:pointer;opacity:.5;border:2px solid transparent;}.thumb.active{opacity:1;border-color:var(--primary);}' +
+    '.price-row{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;}.price{font-size:26px;font-weight:900;color:var(--primary);}.old{font-size:15px;color:var(--muted);text-decoration:line-through;}' +
+    '.discount{font-size:12px;font-weight:800;color:#fff;background:#E63946;padding:3px 9px;border-radius:999px;}.badges{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;}' +
+    '.badge{font-size:11.5px;font-weight:600;color:var(--muted);background:var(--surface);padding:5px 10px;border-radius:999px;}.cta{display:block;text-align:center;background:var(--primary);color:' + (tokens.mood === "dark" ? tokens.bg : "#fff") + ';font-weight:800;font-size:15.5px;padding:15px;border-radius:var(--radius);text-decoration:none;}' +
+    '.sec{padding:10px 20px 24px;}.sec h2{font-size:17px;font-weight:800;margin-bottom:12px;}.grid1{display:grid;gap:12px;}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}' +
+    '.card{background:var(--card);border-radius:var(--radius);padding:14px;margin-bottom:10px;}.row{display:flex;gap:12px;}.spread{display:flex;justify-content:space-between;align-items:center;}.center{text-align:center;}' +
+    '.compare-bad{background:var(--bg);border:1px solid rgba(140,140,140,.3);}.compare-good{border:1px solid var(--primary);}.ct{font-weight:800;font-size:12px;margin-bottom:8px;}.ci{font-size:11.5px;margin-bottom:6px;}' +
+    '.t{font-weight:700;font-size:14px;}.d{font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.7;}.step{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;}' +
+    '.num{width:24px;height:24px;border-radius:50%;background:var(--primary);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}' +
+    '.spec-row{display:flex;justify-content:space-between;padding:8px 0;font-size:12.5px;border-bottom:1px solid var(--bg);}.bold{font-weight:700;}.muted{color:var(--muted);}.accent{color:var(--accent);font-weight:800;}' +
+    '.note{font-size:10.5px;color:var(--muted);margin-bottom:12px;}.name{font-size:11px;color:var(--muted);margin-top:6px;font-weight:700;}summary{cursor:pointer;font-size:13px;font-weight:700;}' +
+    '.order{padding:24px 20px;}.order .card input{width:100%;background:var(--bg);border:1px solid rgba(140,140,140,.3);border-radius:8px;padding:11px 12px;color:var(--text);font-size:13px;margin-bottom:10px;font-family:inherit;}' +
+    '.order button{width:100%;background:var(--primary);color:' + (tokens.mood === "dark" ? tokens.bg : "#fff") + ';font-weight:800;font-size:15px;padding:14px;border-radius:var(--radius);border:none;cursor:pointer;font-family:inherit;}' +
+    '.order-success{display:none;text-align:center;padding:10px 0;}.order-success.show{display:block;}.order-success .emoji{font-size:32px;}' +
+    '.final{padding:10px 20px 90px;text-align:center;}.final h3{font-size:17px;font-weight:800;margin-bottom:14px;}.final a{display:inline-block;background:var(--accent);color:var(--bg);font-weight:800;padding:13px 26px;border-radius:var(--radius);text-decoration:none;font-size:14px;}' +
+    '.sticky{position:sticky;bottom:0;background:var(--surface);border-top:1px solid rgba(140,140,140,.3);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;z-index:20;}.sticky .price{font-size:15px;}' +
+    '.sticky a{background:var(--primary);color:' + (tokens.mood === "dark" ? tokens.bg : "#fff") + ';font-weight:800;font-size:13px;padding:10px 20px;border-radius:999px;text-decoration:none;}' +
+    '.floating-btns{position:fixed;bottom:76px;left:14px;display:flex;flex-direction:column;gap:10px;z-index:250;}.fab{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;text-decoration:none;box-shadow:0 10px 24px rgba(0,0,0,.4);}' +
+    '.fab.wa{background:linear-gradient(135deg,#2FE070,#1DAA53);}.fab.call{background:linear-gradient(135deg,var(--primary),var(--primary-deep));}' +
+    '.toast{position:fixed;bottom:76px;right:14px;background:var(--surface);border:1px solid rgba(140,140,140,.3);border-radius:12px;padding:10px 14px;display:flex;gap:8px;align-items:center;max-width:210px;z-index:250;box-shadow:0 12px 26px rgba(0,0,0,.3);transform:translateY(16px);opacity:0;pointer-events:none;transition:transform .3s ease,opacity .3s ease;}' +
+    '.toast.show{transform:translateY(0);opacity:1;}.toast .d1{width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0;}.toast .tx{font-size:11px;font-weight:700;}' +
+    '.exit-ov{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:400;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .3s;}.exit-ov.show{opacity:1;pointer-events:auto;}' +
+    '.exit-modal{background:var(--surface);border-radius:20px;padding:30px 24px;max-width:340px;width:100%;text-align:center;position:relative;transform:scale(.9);transition:transform .3s;}.exit-ov.show .exit-modal{transform:scale(1);}' +
+    '.exit-close{position:absolute;top:10px;left:10px;width:28px;height:28px;border-radius:50%;background:rgba(140,140,140,.2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:900;}' +
+    '.exit-price{font-size:24px;font-weight:900;color:var(--accent);margin:12px 0;}</style></head><body>' +
+    '<a href="#order" class="skip-link">انتقل إلى نموذج الطلب</a>' +
+    '<div class="scarcity"><span class="dot"></span><span>العرض ينتهي خلال <span id="cd">36:00:00</span></span></div>' +
+    '<div class="wrap">' +
+    '<section class="hero">' + (data.hero && data.hero.eyebrow ? '<span class="eyebrow">' + esc(data.hero.eyebrow) + '</span>' : "") +
+    '<h1>' + esc(data.hero && data.hero.headline) + '</h1><p class="sub">' + esc(data.hero && data.hero.subheadline) + '</p>' +
+    heroGalleryHtml +
+    '<div class="price-row"><span class="price">' + esc(formatPrice(form.price, country)) + '</span>' +
+    (data.hero && data.hero.priceOld ? '<span class="old">' + esc(formatPrice(data.hero.priceOld, country)) + '</span>' : "") +
+    (data.hero && data.hero.discountPercent ? '<span class="discount">خصم ' + esc(data.hero.discountPercent) + '%</span>' : "") + '</div>' +
+    '<div class="badges">' + badgesHtml + '</div><a class="cta" href="#order">' + ctaText + '</a></section>' +
+    urgencyHtml + featuresHtml + benefitsHtml + howToHtml + specsHtml + compareHtml + testimonialsHtml + faqHtml +
+    '<section class="order" id="order"><div class="card">' +
+    '<div id="orderFormWrap"><h3 style="font-size:16px;font-weight:800;margin-bottom:14px;">' + esc((data.orderForm && data.orderForm.title) || "أكمل طلبك الآن") + '</h3>' +
+    '<input id="ofName" placeholder="الاسم الكامل" /><input id="ofPhone" placeholder="رقم الهاتف" /><input id="ofCity" placeholder="المدينة" /><input id="ofAddr" placeholder="العنوان بالتفصيل" />' +
+    '<button type="button" onclick="submitOrder()">' + esc((data.orderForm && data.orderForm.buttonText) || "اطلب الآن") + '</button></div>' +
+    '<div class="order-success" id="orderSuccess"><div class="emoji">🎉</div><h3 style="font-size:16px;font-weight:800;margin:10px 0 6px;">' + successHeadline + '</h3><p style="font-size:12.5px;color:var(--muted);">' + successText + '</p></div>' +
+    '</div></section>' +
+    (data.finalCta ? '<section class="final"><h3>' + esc(data.finalCta.headline) + '</h3><a href="#order">' + esc(data.finalCta.buttonText) + '</a></section>' : "") +
+    '<div class="sticky"><span class="price">' + esc(formatPrice(form.price, country)) + '</span><a href="#order">' + ctaText + '</a></div></div>' +
+    floatingBtnsHtml +
+    '<div class="toast" id="toast"><span class="d1"></span><span class="tx" id="toastTx"></span></div>' +
+    '<div class="exit-ov" id="exitOv"><div class="exit-modal"><div class="exit-close" id="exitClose">✕</div><div style="font-size:28px;">🎁</div><h3 style="margin:10px 0;">قبل ما تسالي...</h3><p style="color:var(--muted);font-size:13px;">خصم إضافي إذا أكملتِ طلبك الآن</p><div class="exit-price">' + esc(formatPrice(form.price, country)) + '</div><a href="#order" class="cta" id="exitCta">أكمل طلبي الآن</a></div></div>' +
+    '<script>' +
+    'var galleryImgs=' + JSON.stringify(galleryImgs) + ';' +
+    'function setImg(i){var el=document.getElementById("mainImg");if(el&&galleryImgs[i])el.src=galleryImgs[i];document.querySelectorAll(".thumb").forEach(function(t,idx){t.classList.toggle("active",idx===i);});}' +
+    '(function(){var KEY="deadline_' + (form.name || "p").replace(/[^a-zA-Z0-9]/g, "").slice(0, 24) + '";var d=localStorage.getItem(KEY);if(!d||new Date(d)<new Date()){d=new Date(Date.now()+1000*60*60*36).toISOString();localStorage.setItem(KEY,d);}function tick(){var diff=Math.max(0,new Date(d)-new Date());var h=String(Math.floor(diff/3600000)).padStart(2,"0");var m=String(Math.floor((diff%3600000)/60000)).padStart(2,"0");var s=String(Math.floor((diff%60000)/1000)).padStart(2,"0");var el=document.getElementById("cd");if(el)el.textContent=h+":"+m+":"+s;}tick();setInterval(tick,1000);})();' +
+    '(function(){var names=' + JSON.stringify(pool) + ';var toast=document.getElementById("toast");var tx=document.getElementById("toastTx");function show(){var r=names[Math.floor(Math.random()*names.length)];tx.textContent=r[0]+" من "+r[1]+" طلب المنتج للتو";toast.classList.add("show");setTimeout(function(){toast.classList.remove("show");},4500);}setTimeout(show,4000);setInterval(show,15000);})();' +
+    '(function(){var ov=document.getElementById("exitOv");var shown=sessionStorage.getItem("exitShown");document.addEventListener("mouseleave",function(e){if(e.clientY<10&&!shown){ov.classList.add("show");shown=true;sessionStorage.setItem("exitShown","1");}});document.getElementById("exitClose").addEventListener("click",function(){ov.classList.remove("show");});document.getElementById("exitCta").addEventListener("click",function(){ov.classList.remove("show");});ov.addEventListener("click",function(e){if(e.target===ov)ov.classList.remove("show");});})();' +
+    'function submitOrder(){var n=document.getElementById("ofName").value;var p=document.getElementById("ofPhone").value;if(!n||!p){alert("الرجاء إدخال الاسم ورقم الهاتف على الأقل");return;}document.getElementById("orderFormWrap").style.display="none";document.getElementById("orderSuccess").classList.add("show");document.getElementById("orderSuccess").scrollIntoView({behavior:"smooth",block:"center"});}' +
+    '<\/script></body></html>';
+}
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(<App/>);
-
+root.render(<App />);
 </script>
 </body>
 </html>
-
