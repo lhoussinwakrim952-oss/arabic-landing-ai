@@ -15,7 +15,9 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: "claude-sonnet-5",
-        max_tokens: 4000,
+        // 4000 توكن ما كافيش لصفحة كاملة (hero+features+benefits+testimonials+faq+specs...)
+        // فكان كيتقطع الرد فالنص ويبقى JSON غير مكتمل = صفحة فارغة. 8000 كافية لصفحة غنية بالمحتوى.
+        max_tokens: 8000,
         messages: [{ role: "user", content }],
       }),
     });
@@ -25,6 +27,14 @@ export default async function handler(req, res) {
     if (!response.ok) {
       return res.status(response.status).json({
         error: (data.error && data.error.message) || "خطأ من Anthropic API",
+      });
+    }
+
+    // إذا توقف التوليد بسبب حد التوكنز (stop_reason === "max_tokens")، الرد ناقص أكيد.
+    // نرجع خطأ واضح بدل ما نرجع JSON مقطوع يفشل فالـ parsing على الواجهة.
+    if (data.stop_reason === "max_tokens") {
+      return res.status(422).json({
+        error: "توقف التوليد لأن المحتوى طويل جداً. جرّب تبسيط وصف المنتج أو أعد المحاولة.",
       });
     }
 
