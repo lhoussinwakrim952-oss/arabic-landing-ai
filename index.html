@@ -9,6 +9,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: #0B0F19; }
@@ -70,6 +71,8 @@ const DESIGN_SYSTEMS = {
     { bg: "#0B0F19", surface: "#131A2A", card: "#161E33", primary: "#3B82F6", primaryDeep: "#1D4ED8", accent: "#22D3EE", accent2: "#FBBF24", text: "#F1F5F9", muted: "#8B96AC", radius: "10px", mood: "dark" },
     { bg: "#0A1628", surface: "#1A2E4A", card: "#122238", primary: "#00C6FF", primaryDeep: "#0A1628", accent: "#FF6B00", accent2: "#FFD700", text: "#F0F4FF", muted: "#9AAFC9", radius: "10px", mood: "dark" },
     { bg: "#0B1220", surface: "#131D33", card: "#182644", primary: "#2563EB", primaryDeep: "#060912", accent: "#FBBF24", accent2: "#38BDF8", text: "#F4F7FB", muted: "#94A3B8", radius: "10px", mood: "dark" },
+    { bg: "#F5F7FA", surface: "#FFFFFF", card: "#EEF2F7", primary: "#2563EB", primaryDeep: "#1D4ED8", accent: "#F59E0B", accent2: "#10B981", text: "#111827", muted: "#6B7280", radius: "12px", mood: "light" },
+    { bg: "#12100B", surface: "#1E1912", card: "#241E15", primary: "#F59E0B", primaryDeep: "#B45309", accent: "#22D3EE", accent2: "#EF4444", text: "#FFF7EA", muted: "#B3A48C", radius: "10px", mood: "dark" },
   ],
   Beauty: [
     { bg: "#FDF6F2", surface: "#FFFFFF", card: "#FFF9F6", primary: "#C2703D", primaryDeep: "#9C5628", accent: "#E7A6A0", accent2: "#F2B872", text: "#3A2A26", muted: "#8C7871", radius: "22px", mood: "light" },
@@ -97,6 +100,7 @@ const DESIGN_SYSTEMS = {
     { bg: "#0E0A20", surface: "#181031", card: "#1F1640", primary: "#8B5CF6", primaryDeep: "#5B32C7", accent: "#00E5C7", accent2: "#F472B6", text: "#F3F0FF", muted: "#A79DCB", radius: "16px", mood: "dark" },
     { bg: "#0A1628", surface: "#1A2E4A", card: "#122238", primary: "#00C6FF", primaryDeep: "#0A1628", accent: "#FF6B00", accent2: "#FFD700", text: "#F0F4FF", muted: "#9AAFC9", radius: "16px", mood: "dark" },
     { bg: "#140B29", surface: "#20123F", card: "#271650", primary: "#8B5CF6", primaryDeep: "#5B32C7", accent: "#22D3EE", accent2: "#F472B6", text: "#F5F1FF", muted: "#A99BC9", radius: "16px", mood: "dark" },
+    { bg: "#05201C", surface: "#0B2E27", card: "#0f3a30", primary: "#10B981", primaryDeep: "#047857", accent: "#FBBF24", accent2: "#22D3EE", text: "#EFFFF8", muted: "#7FA99A", radius: "16px", mood: "dark" },
   ],
   Tools: [
     { bg: "#F3F3F1", surface: "#FFFFFF", card: "#FAFAF9", primary: "#374151", primaryDeep: "#1F2933", accent: "#F59E0B", accent2: "#60A5FA", text: "#1F2933", muted: "#6B7280", radius: "8px", mood: "light" },
@@ -436,6 +440,20 @@ function LoadingScreen({ stepIdx }) {
 
 function PreviewScreen(props) {
   const { data, tokens, images, form, country, previewMode, setPreviewMode, editCmd, setEditCmd, onApplyEdit, editing, canUndo, canRedo, onUndo, onRedo, onCopy, onDownload, copyStatus, error, onBack } = props;
+  const captureRef = useRef(null);
+  const [jpgLoading, setJpgLoading] = useState(false);
+  async function exportJPG() {
+    if (!captureRef.current || !window.html2canvas) return;
+    setJpgLoading(true);
+    try {
+      const canvas = await window.html2canvas(captureRef.current, { scale: 2, backgroundColor: tokens.bg, useCORS: true });
+      const a = document.createElement("a");
+      a.href = canvas.toDataURL("image/jpeg", 0.95);
+      a.download = (form.name || "landing-page").trim().replace(/\s+/g, "-") + ".jpg";
+      document.body.appendChild(a); a.click(); a.remove();
+    } catch (e) { /* silent */ }
+    setJpgLoading(false);
+  }
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <div style={{ position: "sticky", top: 0, zIndex: 20, background: "#0E1526", borderBottom: "1px solid #1D2740", padding: "10px 16px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
@@ -448,6 +466,7 @@ function PreviewScreen(props) {
           <button onClick={() => setPreviewMode("desktop")} style={Object.assign({}, segBtn, { background: previewMode === "desktop" ? "#22D3EE" : "transparent", color: previewMode === "desktop" ? "#04101C" : "#B7C0D4" })}><Ico size={14}>🖥️</Ico></button>
         </div>
         <button onClick={onCopy} style={toolBtn}><Ico size={14}>📋</Ico> نسخ HTML</button>
+        <button onClick={exportJPG} disabled={jpgLoading} style={Object.assign({}, toolBtn, { opacity: jpgLoading ? 0.6 : 1 })}><Ico size={14}>🖼️</Ico> {jpgLoading ? "..." : "تحميل JPG"}</button>
         <button onClick={onDownload} style={Object.assign({}, toolBtn, { background: "#22D3EE", color: "#04101C", borderColor: "#22D3EE" })}><Ico size={14}>⬇️</Ico> تحميل HTML</button>
       </div>
       {copyStatus && <div style={{ textAlign: "center", color: "#6EE7B7", fontSize: 12, padding: "6px 0", background: "#0E1526" }}>{copyStatus}</div>}
@@ -462,7 +481,7 @@ function PreviewScreen(props) {
       </div>
       {error && <div style={{ color: "#F87171", fontSize: 12, textAlign: "center", padding: "6px 0", background: "#0E1526" }}>{error}</div>}
       <div style={{ flex: 1, background: "#05070C", padding: "28px 16px", display: "flex", justifyContent: "center" }}>
-        <div style={{ width: previewMode === "mobile" ? 390 : "100%", maxWidth: previewMode === "mobile" ? 390 : 1100, borderRadius: previewMode === "mobile" ? 30 : 16, overflow: "hidden", border: previewMode === "mobile" ? "8px solid #1B1F2B" : "1px solid #1D2740", boxShadow: "0 30px 60px rgba(0,0,0,.5)", height: "fit-content" }}>
+        <div ref={captureRef} style={{ width: previewMode === "mobile" ? 390 : "100%", maxWidth: previewMode === "mobile" ? 390 : 1100, borderRadius: previewMode === "mobile" ? 30 : 16, overflow: "hidden", border: previewMode === "mobile" ? "8px solid #1B1F2B" : "1px solid #1D2740", boxShadow: "0 30px 60px rgba(0,0,0,.5)", height: "fit-content" }}>
           <LandingPage data={data} tokens={tokens} images={images} form={form} country={country} />
         </div>
       </div>
@@ -476,7 +495,6 @@ const segBtn = { border: "none", borderRadius: 6, padding: "6px 9px", cursor: "p
 
 function LandingPage({ data, tokens, images, form, country }) {
   const sections = data.sections || [];
-  const [activeImg, setActiveImg] = useState(0);
   const [orderState, setOrderState] = useState({ name: "", phone: "", city: "", address: "" });
   const [orderSent, setOrderSent] = useState(false);
   const [toast, setToast] = useState(null);
@@ -517,6 +535,18 @@ function LandingPage({ data, tokens, images, form, country }) {
   const waLink = hasContact ? "https://wa.me/" + country.phoneCode.replace("+", "") + form.whatsapp : "";
   const callLink = hasContact ? "tel:" + country.phoneCode + form.whatsapp : "";
 
+  // بقية الصور (غير صورة الهيرو) تتوزع على طول الصفحة بدل ما تتجمع فبلاصة وحدة
+  const secondaryImages = images.slice(1);
+  function SectionImage({ idx }) {
+    const img = secondaryImages[idx];
+    if (!img) return null;
+    return (
+      <div style={{ padding: "4px 20px 24px" }}>
+        <img src={img.dataUrl} alt={form.name} style={{ width: "100%", maxHeight: 260, objectFit: "cover", borderRadius: tokens.radius, display: "block" }} />
+      </div>
+    );
+  }
+
   return (
     <div dir="rtl" style={{ background: tokens.bg, color: tokens.text, fontFamily: "'Cairo', sans-serif", position: "relative" }}>
       <div style={{ position: "sticky", top: 0, zIndex: 30, background: "linear-gradient(90deg," + tokens.primaryDeep + "," + tokens.primary + ")", color: "#fff", textAlign: "center", fontWeight: 700, fontSize: 11, padding: "7px 8px", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
@@ -530,16 +560,7 @@ function LandingPage({ data, tokens, images, form, country }) {
         <p style={{ fontSize: 14.5, color: tokens.muted, marginBottom: 16 }}>{data.hero && data.hero.subheadline}</p>
 
         {images.length > 0 && (
-          <div style={{ marginBottom: 16 }}>
-            <img src={images[activeImg].dataUrl} alt={form.name} style={{ width: "100%", maxHeight: 320, objectFit: "cover", borderRadius: tokens.radius, display: "block" }} />
-            {images.length > 1 && (
-              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                {images.map((img, i) => (
-                  <img key={i} src={img.dataUrl} onClick={() => setActiveImg(i)} style={{ width: 52, height: 52, objectFit: "cover", borderRadius: 8, cursor: "pointer", opacity: activeImg === i ? 1 : .5, border: activeImg === i ? "2px solid " + tokens.primary : "2px solid transparent" }} />
-                ))}
-              </div>
-            )}
-          </div>
+          <img src={images[0].dataUrl} alt={form.name} style={{ width: "100%", maxHeight: 320, objectFit: "cover", borderRadius: tokens.radius, display: "block", marginBottom: 16 }} />
         )}
 
         <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 10 }}>
@@ -574,6 +595,7 @@ function LandingPage({ data, tokens, images, form, country }) {
           </div>
         </Section>
       )}
+      <SectionImage idx={0} />
 
       {sections.includes("benefits") && data.benefits && (
         <Section title={data.benefits.title} tokens={tokens}>
@@ -601,6 +623,7 @@ function LandingPage({ data, tokens, images, form, country }) {
           </div>
         </Section>
       )}
+      <SectionImage idx={1} />
 
       {sections.includes("specs") && data.specs && (
         <Section title={data.specs.title} tokens={tokens}>
@@ -628,6 +651,7 @@ function LandingPage({ data, tokens, images, form, country }) {
           </div>
         </Section>
       )}
+      <SectionImage idx={2} />
 
       {sections.includes("testimonials") && data.testimonials && (
         <Section title={data.testimonials.title} tokens={tokens} note={data.testimonials.note}>
@@ -734,19 +758,20 @@ function buildStandaloneHTML(data, tokens, images, form, country) {
   const waNumber = hasContact ? country.phoneCode.replace("+", "") + form.whatsapp : "";
   const pool = socialProofPool(form.countryCode);
 
-  const galleryImgs = images.map((im) => im.dataUrl);
-  const heroGalleryHtml = galleryImgs.length ? (
-    '<img id="mainImg" src="' + galleryImgs[0] + '" alt="' + esc(form.name) + '" />' +
-    (galleryImgs.length > 1 ? '<div class="thumbs">' + galleryImgs.map((src, i) => '<img class="thumb' + (i === 0 ? ' active' : '') + '" data-i="' + i + '" src="' + src + '" onclick="setImg(' + i + ')" />').join("") + '</div>' : "")
-  ) : "";
+  const heroImg = images[0] ? images[0].dataUrl : "";
+  const heroGalleryHtml = heroImg ? '<img id="mainImg" src="' + heroImg + '" alt="' + esc(form.name) + '" />' : "";
+
+  // بقية الصور تتوزع على طول الصفحة بدل ما تتجمع فبلاصة وحدة
+  const secondaryImages = images.slice(1).map((im) => im.dataUrl);
+  const sectionImg = (idx) => secondaryImages[idx] ? '<div class="sec-img"><img src="' + secondaryImages[idx] + '" alt="' + esc(form.name) + '" /></div>' : "";
 
   const badgesHtml = (data.hero && data.hero.badges || []).map((b) => '<span class="badge">' + esc(b) + '</span>').join("");
   const urgencyHtml = sections.includes("urgency") && data.urgency ? '<section class="sec"><div class="card row spread"><span class="bold">' + esc(data.urgency.stockLabel) + '</span><span class="accent">' + esc(data.urgency.countdownLabel) + '</span></div></section>' : "";
-  const featuresHtml = sections.includes("features") && data.features ? '<section class="sec"><h2>' + esc(data.features.title) + '</h2><div class="grid1">' + (data.features.items || []).map((it) => '<div class="card row"><div><div class="t">' + esc(it.title) + '</div><div class="d">' + esc(it.desc) + '</div></div></div>').join("") + '</div></section>' : "";
+  const featuresHtml = (sections.includes("features") && data.features ? '<section class="sec"><h2>' + esc(data.features.title) + '</h2><div class="grid1">' + (data.features.items || []).map((it) => '<div class="card row"><div><div class="t">' + esc(it.title) + '</div><div class="d">' + esc(it.desc) + '</div></div></div>').join("") + '</div></section>' : "") + sectionImg(0);
   const benefitsHtml = sections.includes("benefits") && data.benefits ? '<section class="sec"><h2>' + esc(data.benefits.title) + '</h2><div class="grid2">' + (data.benefits.items || []).map((it) => '<div class="card center"><div class="t">' + esc(it.title) + '</div><div class="d">' + esc(it.desc) + '</div></div>').join("") + '</div></section>' : "";
-  const howToHtml = sections.includes("howToUse") && data.howToUse ? '<section class="sec"><h2>' + esc(data.howToUse.title) + '</h2>' + (data.howToUse.steps || []).map((s, i) => '<div class="step"><span class="num">' + (i + 1) + '</span><span>' + esc(s) + '</span></div>').join("") + '</section>' : "";
+  const howToHtml = (sections.includes("howToUse") && data.howToUse ? '<section class="sec"><h2>' + esc(data.howToUse.title) + '</h2>' + (data.howToUse.steps || []).map((s, i) => '<div class="step"><span class="num">' + (i + 1) + '</span><span>' + esc(s) + '</span></div>').join("") + '</section>' : "") + sectionImg(1);
   const specsHtml = sections.includes("specs") && data.specs ? '<section class="sec"><h2>' + esc(data.specs.title) + '</h2><div class="card">' + (data.specs.items || []).map((it) => '<div class="spec-row"><span class="muted">' + esc(it.label) + '</span><span class="bold">' + esc(it.value) + '</span></div>').join("") + '</div></section>' : "";
-  const compareHtml = sections.includes("compare") && data.compare ? '<section class="sec"><h2>' + esc(data.compare.title) + '</h2><div class="grid2 compare"><div class="card compare-bad"><div class="ct">✗ الطريقة التقليدية</div>' + (data.compare.them || []).map((t) => '<div class="ci muted">✗ ' + esc(t) + '</div>').join("") + '</div><div class="card compare-good"><div class="ct">✓ ' + esc(data.compare.productLabel || form.name) + '</div>' + (data.compare.us || []).map((t) => '<div class="ci">✓ ' + esc(t) + '</div>').join("") + '</div></div></section>' : "";
+  const compareHtml = (sections.includes("compare") && data.compare ? '<section class="sec"><h2>' + esc(data.compare.title) + '</h2><div class="grid2 compare"><div class="card compare-bad"><div class="ct">✗ الطريقة التقليدية</div>' + (data.compare.them || []).map((t) => '<div class="ci muted">✗ ' + esc(t) + '</div>').join("") + '</div><div class="card compare-good"><div class="ct">✓ ' + esc(data.compare.productLabel || form.name) + '</div>' + (data.compare.us || []).map((t) => '<div class="ci">✓ ' + esc(t) + '</div>').join("") + '</div></div></section>' : "") + sectionImg(2);
   const testimonialsHtml = sections.includes("testimonials") && data.testimonials ? '<section class="sec"><h2>' + esc(data.testimonials.title) + '</h2><p class="note">' + esc(data.testimonials.note) + '</p>' + (data.testimonials.items || []).map((it) => '<div class="card"><div class="d">' + esc(it.text) + '</div><div class="name">' + esc(it.name) + '</div></div>').join("") + '</section>' : "";
   const faqHtml = sections.includes("faq") && data.faq ? '<section class="sec"><h2>' + esc(data.faq.title) + '</h2>' + (data.faq.items || []).map((it) => '<details class="card"><summary>' + esc(it.q) + '</summary><p class="d">' + esc(it.a) + '</p></details>').join("") + '</section>' : "";
   const ctaText = esc((data.hero && data.hero.ctaText) || "اطلب الآن");
@@ -771,7 +796,7 @@ function buildStandaloneHTML(data, tokens, images, form, country) {
     '.scarcity .dot{width:7px;height:7px;border-radius:50%;background:#fff;animation:pd 1.4s ease-in-out infinite;}@keyframes pd{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.35;transform:scale(1.5);}}' +
     '.eyebrow{display:inline-block;font-size:12px;font-weight:700;color:var(--accent);background:var(--surface);padding:4px 12px;border-radius:999px;margin-bottom:12px;}h1{font-size:25px;font-weight:900;margin-bottom:10px;}' +
     '.sub{font-size:14.5px;color:var(--muted);margin-bottom:18px;}.hero img#mainImg{width:100%;border-radius:var(--radius);margin-bottom:8px;display:block;max-height:320px;object-fit:cover;}' +
-    '.thumbs{display:flex;gap:8px;margin-bottom:18px;}.thumb{width:52px;height:52px;object-fit:cover;border-radius:8px;cursor:pointer;opacity:.5;border:2px solid transparent;}.thumb.active{opacity:1;border-color:var(--primary);}' +
+    '.sec-img{padding:0 20px 24px;}.sec-img img{width:100%;max-height:260px;object-fit:cover;border-radius:var(--radius);display:block;}' +
     '.price-row{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;}.price{font-size:26px;font-weight:900;color:var(--primary);}.old{font-size:15px;color:var(--muted);text-decoration:line-through;}' +
     '.discount{font-size:12px;font-weight:800;color:#fff;background:#E63946;padding:3px 9px;border-radius:999px;}.badges{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;}' +
     '.badge{font-size:11.5px;font-weight:600;color:var(--muted);background:var(--surface);padding:5px 10px;border-radius:999px;}.cta{display:block;text-align:center;background:var(--primary);color:' + (tokens.mood === "dark" ? tokens.bg : "#fff") + ';font-weight:800;font-size:15.5px;padding:15px;border-radius:var(--radius);text-decoration:none;}' +
@@ -819,8 +844,6 @@ function buildStandaloneHTML(data, tokens, images, form, country) {
     '<div class="toast" id="toast"><span class="d1"></span><span class="tx" id="toastTx"></span></div>' +
     '<div class="exit-ov" id="exitOv"><div class="exit-modal"><div class="exit-close" id="exitClose">✕</div><div style="font-size:28px;">🎁</div><h3 style="margin:10px 0;">قبل ما تسالي...</h3><p style="color:var(--muted);font-size:13px;">خصم إضافي إذا أكملتِ طلبك الآن</p><div class="exit-price">' + esc(formatPrice(form.price, country)) + '</div><a href="#order" class="cta" id="exitCta">أكمل طلبي الآن</a></div></div>' +
     '<script>' +
-    'var galleryImgs=' + JSON.stringify(galleryImgs) + ';' +
-    'function setImg(i){var el=document.getElementById("mainImg");if(el&&galleryImgs[i])el.src=galleryImgs[i];document.querySelectorAll(".thumb").forEach(function(t,idx){t.classList.toggle("active",idx===i);});}' +
     '(function(){var KEY="deadline_' + (form.name || "p").replace(/[^a-zA-Z0-9]/g, "").slice(0, 24) + '";var d=localStorage.getItem(KEY);if(!d||new Date(d)<new Date()){d=new Date(Date.now()+1000*60*60*36).toISOString();localStorage.setItem(KEY,d);}function tick(){var diff=Math.max(0,new Date(d)-new Date());var h=String(Math.floor(diff/3600000)).padStart(2,"0");var m=String(Math.floor((diff%3600000)/60000)).padStart(2,"0");var s=String(Math.floor((diff%60000)/1000)).padStart(2,"0");var el=document.getElementById("cd");if(el)el.textContent=h+":"+m+":"+s;}tick();setInterval(tick,1000);})();' +
     '(function(){var names=' + JSON.stringify(pool) + ';var toast=document.getElementById("toast");var tx=document.getElementById("toastTx");function show(){var r=names[Math.floor(Math.random()*names.length)];tx.textContent=r[0]+" من "+r[1]+" طلب المنتج للتو";toast.classList.add("show");setTimeout(function(){toast.classList.remove("show");},4500);}setTimeout(show,4000);setInterval(show,15000);})();' +
     '(function(){var ov=document.getElementById("exitOv");var shown=sessionStorage.getItem("exitShown");document.addEventListener("mouseleave",function(e){if(e.clientY<10&&!shown){ov.classList.add("show");shown=true;sessionStorage.setItem("exitShown","1");}});document.getElementById("exitClose").addEventListener("click",function(){ov.classList.remove("show");});document.getElementById("exitCta").addEventListener("click",function(){ov.classList.remove("show");});ov.addEventListener("click",function(e){if(e.target===ov)ov.classList.remove("show");});})();' +
