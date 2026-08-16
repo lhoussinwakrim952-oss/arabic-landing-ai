@@ -23,6 +23,7 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   @keyframes drift { 0%,100%{ transform:translate(0,0) scale(1); } 50%{ transform:translate(18px,-22px) scale(1.08); } }
   @keyframes pulseDot { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.35;transform:scale(1.5);} }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
   input, select, textarea { font-family: 'Cairo', sans-serif; }
   input::placeholder, textarea::placeholder { color: #5B6478; }
   input:focus, select:focus, textarea:focus { box-shadow: 0 0 0 3px rgba(34,211,238,.28); outline: none; }
@@ -109,6 +110,29 @@ const DESIGN_SYSTEMS = {
     { bg: "#FAF6EF", surface: "#FFFFFF", card: "#FFFDF9", primary: "#A8763E", primaryDeep: "#7C5527", accent: "#6B8E7F", accent2: "#E8C77E", text: "#372F27", muted: "#8B8178", radius: "18px", mood: "light" },
     { bg: "#0E1424", surface: "#171E33", card: "#1c2540", primary: "#4C6FE7", primaryDeep: "#3A56C0", accent: "#22D3AE", accent2: "#E8C77E", text: "#F3F5FA", muted: "#96A0C0", radius: "18px", mood: "dark" },
   ],
+  Luxury: [
+    { bg: "#111111", surface: "#1A1A1A", card: "#212121", primary: "#C8A96B", primaryDeep: "#A3854F", accent: "#F5F0E6", accent2: "#8B5CF6", text: "#F5F0E6", muted: "#9C9488", radius: "2px", mood: "dark" },
+    { bg: "#F5F0E6", surface: "#FFFFFF", card: "#FAF6EE", primary: "#8C6D2F", primaryDeep: "#6B5220", accent: "#111111", accent2: "#C8A96B", text: "#201C14", muted: "#8A8172", radius: "2px", mood: "light" },
+  ],
+  Minimal: [
+    { bg: "#FFFFFF", surface: "#FAFAFA", card: "#F4F4F4", primary: "#111827", primaryDeep: "#000000", accent: "#6B7280", accent2: "#EF4444", text: "#111827", muted: "#6B7280", radius: "6px", mood: "light" },
+  ],
+  Glass: [
+    { bg: "#0B0F1A", surface: "rgba(255,255,255,.06)", card: "rgba(255,255,255,.08)", primary: "#38BDF8", primaryDeep: "#0284C7", accent: "#A78BFA", accent2: "#F472B6", text: "#F1F5F9", muted: "#94A3B8", radius: "20px", mood: "dark" },
+    { bg: "#F0F4FF", surface: "rgba(255,255,255,.7)", card: "rgba(255,255,255,.5)", primary: "#6366F1", primaryDeep: "#4338CA", accent: "#EC4899", accent2: "#38BDF8", text: "#1E1B4B", muted: "#6366A0", radius: "20px", mood: "light" },
+  ],
+  Neon: [
+    { bg: "#08060F", surface: "#120E24", card: "#180F30", primary: "#D946EF", primaryDeep: "#A21CAF", accent: "#22D3EE", accent2: "#84CC16", text: "#F5F0FF", muted: "#9C8FC9", radius: "12px", mood: "dark" },
+    { bg: "#05070A", surface: "#0D1614", card: "#0F1D19", primary: "#39FF88", primaryDeep: "#0FB85E", accent: "#FF2E92", accent2: "#22D3EE", text: "#EAFFF2", muted: "#7FA893", radius: "12px", mood: "dark" },
+  ],
+  Corporate: [
+    { bg: "#F7F9FC", surface: "#FFFFFF", card: "#EEF2F8", primary: "#1E3A8A", primaryDeep: "#152A63", accent: "#0EA5E9", accent2: "#F59E0B", text: "#0F172A", muted: "#64748B", radius: "8px", mood: "light" },
+    { bg: "#0B1524", surface: "#111E33", card: "#16233C", primary: "#3B82F6", primaryDeep: "#1D4ED8", accent: "#0EA5E9", accent2: "#F59E0B", text: "#EEF2F8", muted: "#7E8FAE", radius: "8px", mood: "dark" },
+  ],
+  BoldSales: [
+    { bg: "#1A0505", surface: "#2A0A0A", card: "#340D0D", primary: "#EF4444", primaryDeep: "#B91C1C", accent: "#FBBF24", accent2: "#FFFFFF", text: "#FFF5F5", muted: "#D19999", radius: "8px", mood: "dark" },
+    { bg: "#FFF9E6", surface: "#FFFFFF", card: "#FFF3CC", primary: "#DC2626", primaryDeep: "#991B1B", accent: "#111827", accent2: "#FBBF24", text: "#1F1400", muted: "#8A7A50", radius: "8px", mood: "light" },
+  ],
 };
 
 // كل نظام عندو 1-3 تنويعات لونية — نختار وحدة عشوائياً كل مرة باش الصفحات ما تبقاش بلون واحد مكرر
@@ -119,16 +143,22 @@ function pickDesignTokens(systemName) {
 
 // الهوية البنيوية لكل نظام: خطوط، شكل الأزرار، الظلال، شكل الشارات — هذا ما يصنع فرقاً حقيقياً غير اللون
 const STYLE_DNA = {
-  Tech:      { heading: "Alexandria",        body: "IBM Plex Sans Arabic", button: "pill",  shadow: "glow", badge: "pill" },
-  Beauty:    { heading: "Readex Pro",         body: "Tajawal",             button: "soft",  shadow: "soft", badge: "outline" },
-  Health:    { heading: "IBM Plex Sans Arabic", body: "Tajawal",           button: "soft",  shadow: "soft", badge: "pill" },
-  Home:      { heading: "Noto Kufi Arabic",   body: "Cairo",               button: "square", shadow: "soft", badge: "ribbon" },
-  Fashion:   { heading: "Alexandria",         body: "Cairo",               button: "square", shadow: "none", badge: "outline" },
-  Kids:      { heading: "Cairo",              body: "Tajawal",             button: "pill",  shadow: "soft", badge: "pill" },
-  Car:       { heading: "Noto Kufi Arabic",   body: "Cairo",               button: "square", shadow: "glow", badge: "ribbon" },
-  Gadgets:   { heading: "Alexandria",         body: "IBM Plex Sans Arabic", button: "pill",  shadow: "glow", badge: "pill" },
-  Tools:     { heading: "Cairo",              body: "Cairo",               button: "square", shadow: "none", badge: "outline" },
-  Lifestyle: { heading: "Readex Pro",         body: "Tajawal",             button: "soft",  shadow: "soft", badge: "pill" },
+  Tech:      { heading: "Alexandria",        body: "IBM Plex Sans Arabic", button: "pill",  shadow: "glow", badge: "pill", faq: "cards" },
+  Beauty:    { heading: "Readex Pro",         body: "Tajawal",             button: "soft",  shadow: "soft", badge: "outline", faq: "minimal" },
+  Health:    { heading: "IBM Plex Sans Arabic", body: "Tajawal",           button: "soft",  shadow: "soft", badge: "pill", faq: "cards" },
+  Home:      { heading: "Noto Kufi Arabic",   body: "Cairo",               button: "square", shadow: "soft", badge: "ribbon", faq: "bordered" },
+  Fashion:   { heading: "Alexandria",         body: "Cairo",               button: "square", shadow: "none", badge: "outline", faq: "minimal" },
+  Kids:      { heading: "Cairo",              body: "Tajawal",             button: "pill",  shadow: "soft", badge: "pill", faq: "numbered" },
+  Car:       { heading: "Noto Kufi Arabic",   body: "Cairo",               button: "square", shadow: "glow", badge: "ribbon", faq: "dark" },
+  Gadgets:   { heading: "Alexandria",         body: "IBM Plex Sans Arabic", button: "pill",  shadow: "glow", badge: "pill", faq: "dark" },
+  Tools:     { heading: "Cairo",              body: "Cairo",               button: "square", shadow: "none", badge: "outline", faq: "bordered" },
+  Lifestyle: { heading: "Readex Pro",         body: "Tajawal",             button: "soft",  shadow: "soft", badge: "pill", faq: "minimal" },
+  Luxury:    { heading: "Alexandria",         body: "Tajawal",             button: "square", shadow: "none", badge: "outline", faq: "bordered" },
+  Minimal:   { heading: "IBM Plex Sans Arabic", body: "IBM Plex Sans Arabic", button: "square", shadow: "none", badge: "outline", faq: "minimal" },
+  Glass:     { heading: "Readex Pro",         body: "Cairo",               button: "pill",  shadow: "glow", badge: "pill", faq: "glass" },
+  Neon:      { heading: "Alexandria",         body: "Cairo",               button: "pill",  shadow: "glow", badge: "pill", faq: "dark" },
+  Corporate: { heading: "IBM Plex Sans Arabic", body: "IBM Plex Sans Arabic", button: "square", shadow: "soft", badge: "outline", faq: "bordered" },
+  BoldSales: { heading: "Noto Kufi Arabic",   body: "Cairo",               button: "square", shadow: "glow", badge: "ribbon", faq: "numbered" },
 };
 function styleDNA(systemName) { return STYLE_DNA[systemName] || STYLE_DNA.Lifestyle; }
 
@@ -175,9 +205,9 @@ function ContentIcon({ name, size, color, style }) {
 
 const GEN_STEPS = [
   "جاري تحليل صور المنتج…", "جاري تحديد الفئة والجمهور المستهدف…", "جاري اختيار نظام التصميم المناسب…",
-  "جاري كتابة المحتوى التسويقي باللهجة المحلية…", "جاري بناء أقسام الصفحة…", "جاري إضافة عناصر الثقة والإلحاح…", "اللمسات الأخيرة…",
+  "جاري كتابة المحتوى التسويقي باللهجة المحلية…", "جاري بناء أقسام الصفحة…", "جاري إضافة عناصر الثقة والإلحاح…",
+  "جاري مراجعة الجودة وتصحيح أي أخطاء…", "اللمسات الأخيرة…",
 ];
-
 /* ============================== HELPERS ============================== */
 
 function fileToDataUrl(file) {
@@ -209,7 +239,39 @@ function validateGeneratedData(data) {
   if (!data.hero || !data.hero.headline) throw new Error("الصفحة الناتجة ناقصة (لا يوجد عنوان رئيسي). حاول مرة أخرى.");
   if (!DESIGN_SYSTEMS[data.designSystem]) data.designSystem = "Lifestyle";
   if (!Array.isArray(data.sections)) data.sections = [];
+  // فحص بنيوي: أزل من sections أي قسم مذكور بلا بيانات فعلية مطابقة، حتى لا يظهر قسم فارغ/مكسور
+  data.sections = data.sections.filter((s) => data[s] && typeof data[s] === "object");
+  // قيم افتراضية آمنة حتى لا تنكسر الواجهة عند الوصول لحقول غير موجودة
+  if (!data.orderForm || typeof data.orderForm !== "object") data.orderForm = {};
+  if (!data.hero.badges || !Array.isArray(data.hero.badges)) data.hero.badges = [];
   return data;
+}
+
+const QC_INSTRUCTIONS = `
+أنت الآن في دور "مراقب الجودة" (QC) لصفحة هبوط تم توليدها. لديك كائن JSON كامل للصفحة. راجعه بدقة وفق هذه القائمة، وأصلح أي مشكلة تجدها مباشرة في الكائن:
+
+1. هل كل عنوان/نص محدد بخصائص المنتج الفعلية، أم عبارات عامة ("منتج رائع", "جودة عالية بدون تفاصيل")؟ استبدل أي نص عام بنص محدد.
+2. هل هناك أي ادعاء (ضمان بالسنوات، نسبة نجاح، شهادة طبية) غير مبني على معلومات أُعطيت فعلاً؟ احذفه أو خفف صياغته.
+3. هل نصوص compare.them تذكر علامة تجارية حقيقية بالاسم؟ إن وجدت، اجعلها وصفاً عاماً بدل اسم علامة.
+4. هل كل قسم مذكور في sections له بيانات فعلية مقابلة (وليس فارغاً)؟ إن وجدت قسماً بلا بيانات كافية، احذفه من sections.
+5. هل النصوص طويلة بشكل غير مناسب لصفحة موبايل (فقرات ضخمة)؟ اختصرها لتكون مقروءة بسرعة على الهاتف.
+6. هل ctaText وbuttonText نصوص فعل قوية ومقنعة، وليست فقط "اضغط هنا"؟
+7. هل successHeadline وsuccessText يطمئنان العميل بوضوح؟
+
+أعد كائن JSON الكامل المُصحح بنفس الشكل والحقول بالضبط (لا تحذف حقولاً غير مذكورة أعلاه ولم تحتج تعديلاً)، بدون أي نص خارج JSON وبدون Markdown fences. إذا كان كل شيء ممتازاً بالفعل، أعد نفس الكائن كما هو.
+
+كائن JSON الحالي:
+`.trim();
+
+async function runQualityControl(data) {
+  try {
+    const content = [{ type: "text", text: QC_INSTRUCTIONS + "\n" + JSON.stringify(data) }];
+    const fixed = await callClaude(content);
+    return fixed;
+  } catch (e) {
+    // إذا فشلت مراجعة الجودة لأي سبب، لا نوقف العملية — نكمل بالنتيجة الأصلية بدل فشل التوليد كاملاً
+    return data;
+  }
 }
 async function callClaude(content) {
   // يتصل بالـ Backend الخاص بنا (api/generate.js) بدل الاتصال المباشر بـ Anthropic.
@@ -231,15 +293,20 @@ const SCHEMA_INSTRUCTIONS = `
 
 الشكل المطلوب بالضبط:
 {
-  "designSystem": "one of: Tech|Beauty|Health|Home|Fashion|Kids|Car|Gadgets|Tools|Lifestyle",
-  "sections": ["array subset/order from: features,benefits,howToUse,specs,compare,testimonials,faq,urgency"],
+  "designSystem": "one of: Tech|Beauty|Health|Home|Fashion|Kids|Car|Gadgets|Tools|Lifestyle|Luxury|Minimal|Glass|Neon|Corporate|BoldSales",
+  "sections": ["array subset/order from: problem,solution,features,benefits,beforeAfter,howToUse,specs,compare,whatsIncluded,testimonials,guarantee,faq,urgency"],
   "hero": { "eyebrow": "...", "headline": "...", "subheadline": "...", "priceOld": "...", "discountPercent": "...", "ctaText": "...", "badges": ["..."] },
+  "problem": { "title": "...", "text": "وصف المشكلة التي يعاني منها العميل قبل استخدام المنتج" },
+  "solution": { "title": "...", "text": "كيف يحل هذا المنتج تلك المشكلة تحديداً" },
   "features": { "title": "...", "items": [ { "icon": "check|star|truck|shield|clock|heart|zap|gift|phone|battery|drop|award|package|refresh|sparkle", "title": "...", "desc": "..." } ] },
   "benefits": { "title": "...", "items": [ { "icon": "...", "title": "...", "desc": "..." } ] },
+  "beforeAfter": { "title": "...", "beforeLabel": "قبل", "afterLabel": "بعد", "beforeText": "...", "afterText": "..." },
   "howToUse": { "title": "...", "steps": ["...", "..."] },
   "specs": { "title": "...", "items": [ { "label": "...", "value": "..." } ] },
   "compare": { "title": "...", "productLabel": "اسم قصير للمنتج", "us": ["ميزة 1", "ميزة 2", "ميزة 3", "ميزة 4"], "them": ["عيب تقليدي 1", "عيب تقليدي 2", "عيب تقليدي 3", "عيب تقليدي 4"] },
+  "whatsIncluded": { "title": "...", "items": ["العنصر 1 في الصندوق", "العنصر 2"] },
   "testimonials": { "title": "...", "note": "هذه آراء تجريبية Placeholder للمعاينة", "items": [ { "name": "...", "text": "...", "rating": 5 } ] },
+  "guarantee": { "title": "...", "text": "..." },
   "faq": { "title": "...", "items": [ { "q": "...", "a": "..." } ] },
   "urgency": { "countdownLabel": "...", "stockLabel": "..." },
   "orderForm": { "title": "...", "buttonText": "...", "successHeadline": "...", "successText": "..." },
@@ -257,9 +324,16 @@ const SCHEMA_INSTRUCTIONS = `
   Tech (أجهزة إلكترونية عامة، سماعات، شواحن) | Beauty (تجميل، عناية بالبشرة) | Health (صحة، مكملات، لياقة) |
   Home (أدوات منزلية، مطبخ) | Fashion (ملابس، إكسسوارات فاخرة) | Kids (منتجات أطفال) | Car (إكسسوارات سيارات) |
   Gadgets (منتجات تقنية غريبة/مبتكرة تحديداً كالألعاب الذكية أو الأدوات الغريبة، وليس أي جهاز إلكتروني عادي) |
-  Tools (عدد، أدوات يدوية، مستلزمات مهنية) | Lifestyle (منتجات عامة لا تنتمي بوضوح لفئة أخرى).
+  Tools (عدد، أدوات يدوية، مستلزمات مهنية) | Lifestyle (منتجات عامة لا تنتمي بوضوح لفئة أخرى) |
+  Luxury (منتج فاخر بسعر مرتفع، إحساس رقي) | Minimal (أي منتج تريد له عرضاً نظيفاً بلا زخرفة) |
+  Glass (منتج عصري تقني يناسبه إحساس زجاجي شفاف) | Neon (منتج موجه لجمهور شاب/ألعاب/رياضة إلكترونية) |
+  Corporate (خدمة أو منتج موجه لعملاء أعمال/شركات) | BoldSales (أي منتج تريد له إحساس عرض قوي وإلحاح بيع مباشر).
   لا تختر Gadgets إلا إذا كان المنتج فعلاً غريباً/مبتكراً بشكل واضح؛ أغلب الأجهزة الإلكترونية العادية تدخل تحت Tech.
+  نوّع اختيارك؛ لا تحصر نفسك في نفس 3-4 أنظمة لكل المنتجات المتشابهة.
 - اختر فقط الأقسام المناسبة فعلاً لطبيعة هذا المنتج تحديدا، لا تُدرج قسماً لا داعي له. قسم "compare" أدرجه فقط إن كان للمنتج بديل تقليدي واضح يمكن المقارنة معه بإنصاف (بدون ذكر أسماء علامات تجارية حقيقية في "them").
+- استخدم problem+solution+beforeAfter فقط للمنتجات التي تحل مشكلة واضحة (تنظيف، عناية، صحة)؛ لا تستخدمها لمنتج عادي بلا "مشكلة" حقيقية.
+- قسم guarantee: بما أن التاجر لم يزوّدك بتفاصيل ضمان حقيقية، اكتب نصاً عاماً غير ملزم بأرقام (مثل "استبدال سهل إذا واجهتك أي مشكلة") ولا تخترع "ضمان سنتين" أو أرقاماً محددة غير معطاة.
+- whatsIncluded استخدمه فقط إذا كان من الواضح من الصور أن المنتج يأتي مع ملحقات متعددة.
 - اكتب محتوى محدداً بخصائص المنتج الظاهرة في الصور، لا تستخدم عبارات عامة مثل "منتج رائع وعالي الجودة".
 - التزم بلهجة الدولة المطلوبة في كل نصوص الأزرار والعناوين المخاطبة للعميل، بشكل طبيعي غير متكلف.
 - لا تخترع مراجعات عملاء على أنها حقيقية؛ استخدمها كمحتوى Placeholder واضح عبر حقل note.
@@ -340,7 +414,8 @@ function App() {
         { type: "text", text: buildGeneratePrompt(form, country) },
         ...images.map((img) => ({ type: "image", source: { type: "base64", media_type: img.mediaType, data: img.base64 } })),
       ];
-      const result = await callClaude(content);
+      const generated = await callClaude(content);
+      const result = await runQualityControl(generated);
       result._paletteVariant = pickDesignTokens(result.designSystem);
       result._heroLayout = pickHeroLayout();
       setHistory([result]); setHistoryIdx(0); setStep("preview");
@@ -518,6 +593,7 @@ function PreviewScreen(props) {
         <button onClick={onRedo} disabled={!canRedo} style={Object.assign({}, toolBtn, { opacity: canRedo ? 1 : 0.4 })}><Ico size={14}>↷</Ico></button>
         <div style={{ display: "flex", background: "#131A2A", borderRadius: 8, padding: 3, gap: 2 }}>
           <button onClick={() => setPreviewMode("mobile")} style={Object.assign({}, segBtn, { background: previewMode === "mobile" ? "#22D3EE" : "transparent", color: previewMode === "mobile" ? "#04101C" : "#B7C0D4" })}><Ico size={14}>📱</Ico></button>
+          <button onClick={() => setPreviewMode("tablet")} style={Object.assign({}, segBtn, { background: previewMode === "tablet" ? "#22D3EE" : "transparent", color: previewMode === "tablet" ? "#04101C" : "#B7C0D4" })}><Ico size={14}>📟</Ico></button>
           <button onClick={() => setPreviewMode("desktop")} style={Object.assign({}, segBtn, { background: previewMode === "desktop" ? "#22D3EE" : "transparent", color: previewMode === "desktop" ? "#04101C" : "#B7C0D4" })}><Ico size={14}>🖥️</Ico></button>
         </div>
         <button onClick={onCopy} style={toolBtn}><Ico size={14}>📋</Ico> نسخ HTML</button>
@@ -536,7 +612,7 @@ function PreviewScreen(props) {
       </div>
       {error && <div style={{ color: "#F87171", fontSize: 12, textAlign: "center", padding: "6px 0", background: "#0E1526" }}>{error}</div>}
       <div style={{ flex: 1, background: "#05070C", padding: "28px 16px", display: "flex", justifyContent: "center" }}>
-        <div ref={captureRef} style={{ width: previewMode === "mobile" ? 390 : "100%", maxWidth: previewMode === "mobile" ? 390 : 1100, borderRadius: previewMode === "mobile" ? 30 : 16, overflow: "hidden", border: previewMode === "mobile" ? "8px solid #1B1F2B" : "1px solid #1D2740", boxShadow: "0 30px 60px rgba(0,0,0,.5)", height: "fit-content" }}>
+        <div ref={captureRef} style={{ width: previewMode === "mobile" ? 390 : previewMode === "tablet" ? 768 : "100%", maxWidth: previewMode === "mobile" ? 390 : previewMode === "tablet" ? 768 : 1100, borderRadius: previewMode === "mobile" ? 30 : 16, overflow: "hidden", border: previewMode === "mobile" ? "8px solid #1B1F2B" : "1px solid #1D2740", boxShadow: "0 30px 60px rgba(0,0,0,.5)", height: "fit-content" }}>
           <LandingPage data={data} tokens={tokens} images={images} form={form} country={country} />
         </div>
       </div>
@@ -558,6 +634,43 @@ function LandingPage({ data, tokens, images, form, country }) {
   const [orderSent, setOrderSent] = useState(false);
   const [toast, setToast] = useState(null);
   const [exitShown, setExitShown] = useState(false);
+
+  // Sticky CTA: يبان بعد النزول من الـHero، ويختفي كي يوصل المستخدم لنموذج الطلب حتى لا يغطيه
+  const [showStickyCta, setShowStickyCta] = useState(false);
+
+  // Lightbox: تكبير الصور مع تنقل بالسهام ولوحة المفاتيح والسحب باللمس
+  const [lightboxIndex, setLightboxIndex] = useState(null);
+  const touchStartX = useRef(null);
+  useEffect(() => {
+    if (lightboxIndex === null) return;
+    function onKey(e) {
+      if (e.key === "Escape") setLightboxIndex(null);
+      if (e.key === "ArrowRight") setLightboxIndex((i) => (i + 1) % images.length);
+      if (e.key === "ArrowLeft") setLightboxIndex((i) => (i - 1 + images.length) % images.length);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightboxIndex, images.length]);
+  function onLightboxTouchStart(e) { touchStartX.current = e.touches[0].clientX; }
+  function onLightboxTouchEnd(e) {
+    if (touchStartX.current === null) return;
+    const diff = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(diff) > 40) {
+      setLightboxIndex((i) => diff > 0 ? (i - 1 + images.length) % images.length : (i + 1) % images.length);
+    }
+    touchStartX.current = null;
+  }
+  const heroSentinelRef = useRef(null);
+  const orderRef = useRef(null);
+  useEffect(() => {
+    let pastHero = false, atOrder = false;
+    const update = () => setShowStickyCta(pastHero && !atOrder);
+    const heroObs = new IntersectionObserver((entries) => { pastHero = !entries[0].isIntersecting; update(); }, { threshold: 0 });
+    const orderObs = new IntersectionObserver((entries) => { atOrder = entries[0].isIntersecting; update(); }, { threshold: 0.15 });
+    if (heroSentinelRef.current) heroObs.observe(heroSentinelRef.current);
+    if (orderRef.current) orderObs.observe(orderRef.current);
+    return () => { heroObs.disconnect(); orderObs.disconnect(); };
+  }, []);
 
   // عداد محفوظ فـ localStorage — لا يعيد نفسه عند تحديث الصفحة
   const [secondsLeft, setSecondsLeft] = useState(0);
@@ -601,7 +714,32 @@ function LandingPage({ data, tokens, images, form, country }) {
     if (!img) return null;
     return (
       <div style={{ padding: "4px 20px 24px" }}>
-        <img src={img.dataUrl} alt={form.name} style={{ width: "100%", maxHeight: 260, objectFit: "cover", borderRadius: tokens.radius, display: "block" }} />
+        <img src={img.dataUrl} alt={form.name} onClick={() => setLightboxIndex(idx + 1)} style={{ width: "100%", maxHeight: 260, objectFit: "cover", borderRadius: tokens.radius, display: "block", cursor: "zoom-in" }} />
+      </div>
+    );
+  }
+
+  function Lightbox() {
+    if (lightboxIndex === null || !images[lightboxIndex]) return null;
+    return (
+      <div
+        onTouchStart={onLightboxTouchStart} onTouchEnd={onLightboxTouchEnd}
+        style={{ position: "fixed", inset: 0, zIndex: 500, background: "rgba(0,0,0,.92)", display: "flex", alignItems: "center", justifyContent: "center" }}
+        onClick={(e) => { if (e.target === e.currentTarget) setLightboxIndex(null); }}
+      >
+        <button onClick={() => setLightboxIndex(null)} aria-label="إغلاق" style={{ position: "absolute", top: 16, left: 16, width: 40, height: 40, borderRadius: "50%", background: "rgba(255,255,255,.12)", border: "none", color: "#fff", fontSize: 18, cursor: "pointer" }}>✕</button>
+        {images.length > 1 && (
+          <button onClick={() => setLightboxIndex((i) => (i - 1 + images.length) % images.length)} aria-label="السابق" style={{ position: "absolute", right: 12, width: 44, height: 44, borderRadius: "50%", background: "rgba(255,255,255,.12)", border: "none", color: "#fff", fontSize: 20, cursor: "pointer" }}>›</button>
+        )}
+        <img src={images[lightboxIndex].dataUrl} alt={form.name} style={{ maxWidth: "90%", maxHeight: "82%", objectFit: "contain", borderRadius: 8 }} />
+        {images.length > 1 && (
+          <button onClick={() => setLightboxIndex((i) => (i + 1) % images.length)} aria-label="التالي" style={{ position: "absolute", left: 12, width: 44, height: 44, borderRadius: "50%", background: "rgba(255,255,255,.12)", border: "none", color: "#fff", fontSize: 20, cursor: "pointer" }}>‹</button>
+        )}
+        {images.length > 1 && (
+          <div style={{ position: "absolute", bottom: 20, display: "flex", gap: 6 }}>
+            {images.map((_, i) => <span key={i} style={{ width: 7, height: 7, borderRadius: "50%", background: i === lightboxIndex ? "#fff" : "rgba(255,255,255,.35)" }} />)}
+          </div>
+        )}
       </div>
     );
   }
@@ -615,7 +753,7 @@ function LandingPage({ data, tokens, images, form, country }) {
 
       {heroLayout === "fullbleed" && images.length > 0 ? (
         <section style={{ position: "relative" }}>
-          <img src={images[0].dataUrl} alt={form.name} style={{ width: "100%", height: 340, objectFit: "cover", display: "block" }} />
+          <img src={images[0].dataUrl} alt={form.name} onClick={() => setLightboxIndex(0)} style={{ width: "100%", height: 340, objectFit: "cover", display: "block", cursor: "zoom-in" }} />
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top," + tokens.bg + " 15%, transparent 60%)" }} />
           <div style={{ position: "relative", padding: "0 20px 20px", marginTop: -70 }}>
             {data.hero && data.hero.eyebrow && <span style={Object.assign({ display: "inline-block", fontSize: 12, fontWeight: 700, color: tokens.accent, background: tokens.surface, padding: "4px 12px", marginBottom: 12 }, badgeExtra)}>{data.hero.eyebrow}</span>}
@@ -640,7 +778,7 @@ function LandingPage({ data, tokens, images, form, country }) {
           {images.length > 0 && (
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
               <div style={{ position: "relative", width: 220, height: 220, borderRadius: "50%", background: "radial-gradient(circle," + tokens.primary + "33, transparent 70%)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <img src={images[0].dataUrl} alt={form.name} style={{ width: 190, height: 190, objectFit: "cover", borderRadius: "50%", border: "4px solid " + tokens.surface, boxShadow: btnShadow }} />
+                <img src={images[0].dataUrl} alt={form.name} onClick={() => setLightboxIndex(0)} style={{ width: 190, height: 190, objectFit: "cover", borderRadius: "50%", border: "4px solid " + tokens.surface, boxShadow: btnShadow, cursor: "zoom-in" }} />
               </div>
             </div>
           )}
@@ -660,7 +798,7 @@ function LandingPage({ data, tokens, images, form, country }) {
           <h1 style={{ fontFamily: "'" + dna.heading + "', sans-serif", fontSize: 25, fontWeight: 900, marginBottom: 10 }}>{data.hero && data.hero.headline}</h1>
           <p style={{ fontSize: 14.5, color: tokens.muted, marginBottom: 16 }}>{data.hero && data.hero.subheadline}</p>
           {images.length > 0 && (
-            <img src={images[0].dataUrl} alt={form.name} style={{ width: "100%", maxHeight: 320, objectFit: "cover", borderRadius: tokens.radius, display: "block", marginBottom: 16 }} />
+            <img src={images[0].dataUrl} alt={form.name} onClick={() => setLightboxIndex(0)} style={{ width: "100%", maxHeight: 320, objectFit: "cover", borderRadius: tokens.radius, display: "block", marginBottom: 16, cursor: "zoom-in" }} />
           )}
           <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 10 }}>
             <span style={{ fontSize: 26, fontWeight: 900, color: tokens.primary }}>{formatPrice(form.price, country)}</span>
@@ -674,6 +812,8 @@ function LandingPage({ data, tokens, images, form, country }) {
         </section>
       )}
 
+      <div ref={heroSentinelRef} style={{ height: 1 }} />
+
       {sections.includes("urgency") && data.urgency && (
         <section style={{ padding: "0 20px 20px" }}>
           <div style={{ background: tokens.card, borderRadius: tokens.radius, padding: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -681,6 +821,37 @@ function LandingPage({ data, tokens, images, form, country }) {
             <span style={{ color: tokens.accent, fontWeight: 800, fontSize: 13 }}>{data.urgency.countdownLabel}</span>
           </div>
         </section>
+      )}
+
+      {sections.includes("problem") && data.problem && (
+        <Section title={data.problem.title} tokens={tokens}>
+          <div style={{ background: tokens.card, borderRadius: tokens.radius, padding: 16, borderRight: "3px solid " + tokens.accent2 }}>
+            <p style={{ fontSize: 13, lineHeight: 1.8, color: tokens.text }}>{data.problem.text}</p>
+          </div>
+        </Section>
+      )}
+
+      {sections.includes("solution") && data.solution && (
+        <Section title={data.solution.title} tokens={tokens}>
+          <div style={{ background: tokens.card, borderRadius: tokens.radius, padding: 16, borderRight: "3px solid " + tokens.primary }}>
+            <p style={{ fontSize: 13, lineHeight: 1.8, color: tokens.text }}>{data.solution.text}</p>
+          </div>
+        </Section>
+      )}
+
+      {sections.includes("beforeAfter") && data.beforeAfter && (
+        <Section title={data.beforeAfter.title} tokens={tokens}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div style={{ background: tokens.bg, border: "1px solid " + tokens.muted + "33", borderRadius: tokens.radius, padding: 14, textAlign: "center" }}>
+              <div style={{ fontSize: 11, fontWeight: 800, color: tokens.muted, marginBottom: 6 }}>{data.beforeAfter.beforeLabel || "قبل"}</div>
+              <div style={{ fontSize: 12, color: tokens.muted, lineHeight: 1.7 }}>{data.beforeAfter.beforeText}</div>
+            </div>
+            <div style={{ background: tokens.card, border: "1px solid " + tokens.primary, borderRadius: tokens.radius, padding: 14, textAlign: "center" }}>
+              <div style={{ fontSize: 11, fontWeight: 800, color: tokens.primary, marginBottom: 6 }}>{data.beforeAfter.afterLabel || "بعد"}</div>
+              <div style={{ fontSize: 12, lineHeight: 1.7 }}>{data.beforeAfter.afterText}</div>
+            </div>
+          </div>
+        </Section>
       )}
 
       {sections.includes("features") && data.features && (
@@ -753,6 +924,14 @@ function LandingPage({ data, tokens, images, form, country }) {
       )}
       <SectionImage idx={2} />
 
+      {sections.includes("whatsIncluded") && data.whatsIncluded && (
+        <Section title={data.whatsIncluded.title} tokens={tokens}>
+          <div style={{ background: tokens.card, borderRadius: tokens.radius, padding: 14, display: "grid", gap: 8 }}>
+            {(data.whatsIncluded.items || []).map((it, i) => <div key={i} style={{ fontSize: 12.5, display: "flex", gap: 8, alignItems: "center" }}><ContentIcon name="package" size={14} color={tokens.primary} />{it}</div>)}
+          </div>
+        </Section>
+      )}
+
       {sections.includes("testimonials") && data.testimonials && (
         <Section title={data.testimonials.title} tokens={tokens} note={data.testimonials.note}>
           <div style={{ display: "grid", gap: 10 }}>
@@ -767,13 +946,22 @@ function LandingPage({ data, tokens, images, form, country }) {
         </Section>
       )}
 
+      {sections.includes("guarantee") && data.guarantee && (
+        <Section title={data.guarantee.title} tokens={tokens}>
+          <div style={{ background: tokens.card, borderRadius: tokens.radius, padding: 16, display: "flex", gap: 12, alignItems: "center" }}>
+            <ContentIcon name="shield" size={26} color={tokens.accent} />
+            <p style={{ fontSize: 12.5, lineHeight: 1.7, margin: 0 }}>{data.guarantee.text}</p>
+          </div>
+        </Section>
+      )}
+
       {sections.includes("faq") && data.faq && (
         <Section title={data.faq.title} tokens={tokens}>
           <div style={{ display: "grid", gap: 8 }}>{(data.faq.items || []).map((it, i) => <FaqItem key={i} q={it.q} a={it.a} tokens={tokens} />)}</div>
         </Section>
       )}
 
-      <section id="order" style={{ padding: "24px 20px" }}>
+      <section id="order" ref={orderRef} style={{ padding: "24px 20px" }}>
         <div style={{ background: tokens.card, borderRadius: tokens.radius, padding: 18 }}>
           {!orderSent ? (
             <React.Fragment>
@@ -803,7 +991,7 @@ function LandingPage({ data, tokens, images, form, country }) {
         </section>
       )}
 
-      <div style={{ position: "sticky", bottom: 0, background: tokens.surface, borderTop: "1px solid " + tokens.muted + "33", padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, zIndex: 20 }}>
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: tokens.surface, borderTop: "1px solid " + tokens.muted + "33", padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, zIndex: 220, transform: showStickyCta ? "translateY(0)" : "translateY(100%)", transition: "transform .3s ease" }}>
         <div><div style={{ fontSize: 15, fontWeight: 900, color: tokens.primary }}>{formatPrice(form.price, country)}</div></div>
         <a href="#order" style={{ background: tokens.primary, color: tokens.mood === "dark" ? tokens.bg : "#fff", fontWeight: 800, fontSize: 13, padding: "10px 20px", borderRadius: 999, textDecoration: "none" }}>{(data.hero && data.hero.ctaText) || "اطلب الآن"}</a>
       </div>
@@ -821,6 +1009,7 @@ function LandingPage({ data, tokens, images, form, country }) {
           <span style={{ fontSize: 11, fontWeight: 700 }}>{toast}</span>
         </div>
       )}
+      <Lightbox />
     </div>
   );
 }
@@ -863,11 +1052,11 @@ function buildStandaloneHTML(data, tokens, images, form, country) {
   const pool = socialProofPool(form.countryCode);
 
   const heroImg = images[0] ? images[0].dataUrl : "";
-  const heroGalleryHtml = heroImg ? '<img id="mainImg" src="' + heroImg + '" alt="' + esc(form.name) + '" />' : "";
+  const heroGalleryHtml = heroImg ? '<img id="mainImg" class="lb-trigger" data-lb="0" src="' + heroImg + '" alt="' + esc(form.name) + '" />' : "";
 
   // بقية الصور تتوزع على طول الصفحة بدل ما تتجمع فبلاصة وحدة
   const secondaryImages = images.slice(1).map((im) => im.dataUrl);
-  const sectionImg = (idx) => secondaryImages[idx] ? '<div class="sec-img"><img src="' + secondaryImages[idx] + '" alt="' + esc(form.name) + '" /></div>' : "";
+  const sectionImg = (idx) => secondaryImages[idx] ? '<div class="sec-img"><img class="lb-trigger" data-lb="' + (idx+1) + '" src="' + secondaryImages[idx] + '" alt="' + esc(form.name) + '" /></div>' : "";
 
   const heroLayout = data._heroLayout || "split";
   const ctaText = esc((data.hero && data.hero.ctaText) || "اطلب الآن");
@@ -881,19 +1070,24 @@ function buildStandaloneHTML(data, tokens, images, form, country) {
   let heroHtml;
   if (heroLayout === "fullbleed" && heroImg) {
     heroHtml = '<section class="hero hero-fullbleed">' +
-      '<img class="hero-bleed-img" src="' + heroImg + '" alt="' + esc(form.name) + '" />' +
+      '<img class="hero-bleed-img lb-trigger" data-lb="0" src="' + heroImg + '" alt="' + esc(form.name) + '" />' +
       '<div class="hero-bleed-fade"></div>' +
       '<div class="hero-bleed-content">' + eyebrowHtml + headlineHtml +
       '<div class="card">' + priceBlock + '<div class="badges">' + badgesHtml + '</div></div>' + ctaHtml + '</div></section>';
   } else if (heroLayout === "centered") {
     heroHtml = '<section class="hero hero-centered">' + eyebrowHtml + headlineHtml +
-      (heroImg ? '<div class="hero-circle"><img src="' + heroImg + '" alt="' + esc(form.name) + '" /></div>' : "") +
+      (heroImg ? '<div class="hero-circle"><img class="lb-trigger" data-lb="0" src="' + heroImg + '" alt="' + esc(form.name) + '" /></div>' : "") +
       priceBlock + '<div class="badges center">' + badgesHtml + '</div>' + ctaHtml + '</section>';
   } else {
     heroHtml = '<section class="hero">' + eyebrowHtml + headlineHtml + heroGalleryHtml + priceBlock + '<div class="badges">' + badgesHtml + '</div>' + ctaHtml + '</section>';
   }
 
   const urgencyHtml = sections.includes("urgency") && data.urgency ? '<section class="sec"><div class="card row spread"><span class="bold">' + esc(data.urgency.stockLabel) + '</span><span class="accent">' + esc(data.urgency.countdownLabel) + '</span></div></section>' : "";
+  const problemHtml = sections.includes("problem") && data.problem ? '<section class="sec"><h2>' + esc(data.problem.title) + '</h2><div class="card accent-bar-warn"><p class="d">' + esc(data.problem.text) + '</p></div></section>' : "";
+  const solutionHtml = sections.includes("solution") && data.solution ? '<section class="sec"><h2>' + esc(data.solution.title) + '</h2><div class="card accent-bar"><p class="d">' + esc(data.solution.text) + '</p></div></section>' : "";
+  const beforeAfterHtml = sections.includes("beforeAfter") && data.beforeAfter ? '<section class="sec"><h2>' + esc(data.beforeAfter.title) + '</h2><div class="grid2 compare"><div class="card compare-bad center"><div class="ct">' + esc(data.beforeAfter.beforeLabel || "قبل") + '</div><div class="d">' + esc(data.beforeAfter.beforeText) + '</div></div><div class="card compare-good center"><div class="ct">' + esc(data.beforeAfter.afterLabel || "بعد") + '</div><div class="d">' + esc(data.beforeAfter.afterText) + '</div></div></div></section>' : "";
+  const whatsIncludedHtml = sections.includes("whatsIncluded") && data.whatsIncluded ? '<section class="sec"><h2>' + esc(data.whatsIncluded.title) + '</h2><div class="card">' + (data.whatsIncluded.items || []).map((it) => '<div class="incl-row">📦 ' + esc(it) + '</div>').join("") + '</div></section>' : "";
+  const guaranteeHtml = sections.includes("guarantee") && data.guarantee ? '<section class="sec"><h2>' + esc(data.guarantee.title) + '</h2><div class="card row"><span style="font-size:26px;">🛡️</span><p class="d">' + esc(data.guarantee.text) + '</p></div></section>' : "";
   const featuresHtml = (sections.includes("features") && data.features ? '<section class="sec"><h2>' + esc(data.features.title) + '</h2><div class="grid1">' + (data.features.items || []).map((it) => '<div class="card row"><div><div class="t">' + esc(it.title) + '</div><div class="d">' + esc(it.desc) + '</div></div></div>').join("") + '</div></section>' : "") + sectionImg(0);
   const benefitsHtml = sections.includes("benefits") && data.benefits ? '<section class="sec"><h2>' + esc(data.benefits.title) + '</h2><div class="grid2">' + (data.benefits.items || []).map((it) => '<div class="card center"><div class="t">' + esc(it.title) + '</div><div class="d">' + esc(it.desc) + '</div></div>').join("") + '</div></section>' : "";
   const howToHtml = (sections.includes("howToUse") && data.howToUse ? '<section class="sec"><h2>' + esc(data.howToUse.title) + '</h2>' + (data.howToUse.steps || []).map((s, i) => '<div class="step"><span class="num">' + (i + 1) + '</span><span>' + esc(s) + '</span></div>').join("") + '</section>' : "") + sectionImg(1);
@@ -915,11 +1109,12 @@ function buildStandaloneHTML(data, tokens, images, form, country) {
     '<meta name="description" content="' + esc((data.seo && data.seo.description) || "") + '" />' +
     '<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Noto+Kufi+Arabic:wght@400;500;700;800&family=Alexandria:wght@400;500;600;700;800&family=Readex+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">' +
     '<style>:root{--bg:' + tokens.bg + ';--surface:' + tokens.surface + ';--card:' + tokens.card + ';--primary:' + tokens.primary + ';--primary-deep:' + tokens.primaryDeep + ';--accent:' + tokens.accent + ';--accent2:' + tokens.accent2 + ';--text:' + tokens.text + ';--muted:' + tokens.muted + ';--radius:' + tokens.radius + ';}' +
-    '*{box-sizing:border-box;margin:0;padding:0;}html{scroll-behavior:smooth;}body{background:var(--bg);color:var(--text);font-family:"' + dna.body + '",sans-serif;line-height:1.5;padding-top:32px;}.wrap{max-width:480px;margin:0 auto;}.hero{padding:28px 20px 24px;}' +
+    '*{box-sizing:border-box;margin:0;padding:0;max-width:100%;}html{scroll-behavior:smooth;overflow-x:hidden;}body{background:var(--bg);color:var(--text);font-family:"' + dna.body + '",sans-serif;line-height:1.5;padding-top:32px;overflow-x:hidden;}.wrap{max-width:480px;margin:0 auto;}.hero{padding:28px 20px 24px;}' +
     '.skip-link{position:absolute;right:-9999px;background:#fff;color:#000;padding:10px 16px;border-radius:10px;z-index:500;}.skip-link:focus{right:14px;top:40px;}' +
     'a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px;}' +
     '.scarcity{position:fixed;top:0;left:0;right:0;z-index:300;background:linear-gradient(90deg,var(--primary-deep),var(--primary));color:#fff;text-align:center;font-weight:700;font-size:11.5px;padding:8px;display:flex;align-items:center;justify-content:center;gap:6px;}' +
     '.scarcity .dot{width:7px;height:7px;border-radius:50%;background:#fff;animation:pd 1.4s ease-in-out infinite;}@keyframes pd{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.35;transform:scale(1.5);}}' +
+    '@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important;}}' +
     '.eyebrow{display:inline-block;font-size:12px;font-weight:700;color:var(--accent);background:var(--surface);padding:4px 12px;margin-bottom:12px;' + badgeCss + '}h1{font-family:"' + dna.heading + '",sans-serif;font-size:25px;font-weight:900;margin-bottom:10px;}' +
     '.hero-fullbleed{padding:0;position:relative;}.hero-bleed-img{width:100%;height:320px;object-fit:cover;display:block;}.hero-bleed-fade{position:absolute;top:0;left:0;right:0;height:320px;background:linear-gradient(to top,var(--bg) 15%,transparent 60%);}' +
     '.hero-bleed-content{position:relative;padding:0 20px 20px;margin-top:-70px;}.hero-bleed-content .card{padding:14px;margin-bottom:14px;}' +
@@ -933,7 +1128,8 @@ function buildStandaloneHTML(data, tokens, images, form, country) {
     '.badge{font-size:11.5px;font-weight:600;color:var(--muted);background:var(--surface);padding:5px 10px;border-radius:999px;}.cta{display:block;text-align:center;background:var(--primary);color:' + (tokens.mood === "dark" ? tokens.bg : "#fff") + ';font-weight:800;font-size:15.5px;padding:15px;border-radius:' + btnRadius + ';box-shadow:' + btnShadow + ';text-decoration:none;font-family:"' + dna.heading + '",sans-serif;}' +
     '.sec{padding:10px 20px 24px;}.sec h2{font-size:17px;font-weight:800;margin-bottom:12px;}.grid1{display:grid;gap:12px;}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}' +
     '.card{background:var(--card);border-radius:var(--radius);padding:14px;margin-bottom:10px;}.row{display:flex;gap:12px;}.spread{display:flex;justify-content:space-between;align-items:center;}.center{text-align:center;}' +
-    '.compare-bad{background:var(--bg);border:1px solid rgba(140,140,140,.3);}.compare-good{border:1px solid var(--primary);}.ct{font-weight:800;font-size:12px;margin-bottom:8px;}.ci{font-size:11.5px;margin-bottom:6px;}' +
+    '.compare-bad{background:var(--bg);border:1px solid rgba(140,140,140,.3);}.compare-good{border:1px solid var(--primary);}.ct{font-weight:800;font-size:12px;margin-bottom:8px;}.ci{font-size:11.5px;margin-bottom:6px;}.compare .center{text-align:center;}' +
+    '.accent-bar{border-right:3px solid var(--primary);}.accent-bar-warn{border-right:3px solid var(--accent2);}.incl-row{font-size:12.5px;padding:6px 0;display:flex;gap:8px;align-items:center;}' +
     '.t{font-weight:700;font-size:14px;}.d{font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.7;}.step{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;}' +
     '.num{width:24px;height:24px;border-radius:50%;background:var(--primary);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}' +
     '.spec-row{display:flex;justify-content:space-between;padding:8px 0;font-size:12.5px;border-bottom:1px solid var(--bg);}.bold{font-weight:700;}.muted{color:var(--muted);}.accent{color:var(--accent);font-weight:800;}' +
@@ -942,7 +1138,8 @@ function buildStandaloneHTML(data, tokens, images, form, country) {
     '.order button{width:100%;background:var(--primary);color:' + (tokens.mood === "dark" ? tokens.bg : "#fff") + ';font-weight:800;font-size:15px;padding:14px;border-radius:var(--radius);border:none;cursor:pointer;font-family:inherit;}' +
     '.order-success{display:none;text-align:center;padding:10px 0;}.order-success.show{display:block;}.order-success .emoji{font-size:32px;}' +
     '.final{padding:10px 20px 90px;text-align:center;}.final h3{font-size:17px;font-weight:800;margin-bottom:14px;}.final a{display:inline-block;background:var(--accent);color:var(--bg);font-weight:800;padding:13px 26px;border-radius:var(--radius);text-decoration:none;font-size:14px;}' +
-    '.sticky{position:sticky;bottom:0;background:var(--surface);border-top:1px solid rgba(140,140,140,.3);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;z-index:20;}.sticky .price{font-size:15px;}' +
+    '.sticky{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid rgba(140,140,140,.3);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;z-index:220;transform:translateY(100%);transition:transform .3s ease;}.sticky.show{transform:translateY(0);}.sticky .price{font-size:15px;}' +
+    '.hero-sentinel{height:1px;}' +
     '.sticky a{background:var(--primary);color:' + (tokens.mood === "dark" ? tokens.bg : "#fff") + ';font-weight:800;font-size:13px;padding:10px 20px;border-radius:999px;text-decoration:none;}' +
     '.floating-btns{position:fixed;bottom:76px;left:14px;display:flex;flex-direction:column;gap:10px;z-index:250;}.fab{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;text-decoration:none;box-shadow:0 10px 24px rgba(0,0,0,.4);}' +
     '.fab.wa{background:linear-gradient(135deg,#2FE070,#1DAA53);}.fab.call{background:linear-gradient(135deg,var(--primary),var(--primary-deep));}' +
@@ -951,12 +1148,18 @@ function buildStandaloneHTML(data, tokens, images, form, country) {
     '.exit-ov{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:400;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .3s;}.exit-ov.show{opacity:1;pointer-events:auto;}' +
     '.exit-modal{background:var(--surface);border-radius:20px;padding:30px 24px;max-width:340px;width:100%;text-align:center;position:relative;transform:scale(.9);transition:transform .3s;}.exit-ov.show .exit-modal{transform:scale(1);}' +
     '.exit-close{position:absolute;top:10px;left:10px;width:28px;height:28px;border-radius:50%;background:rgba(140,140,140,.2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:900;}' +
-    '.exit-price{font-size:24px;font-weight:900;color:var(--accent);margin:12px 0;}</style></head><body>' +
+    '.exit-price{font-size:24px;font-weight:900;color:var(--accent);margin:12px 0;}' +
+    '.lb-trigger{cursor:zoom-in;}.lightbox{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;}.lightbox.show{display:flex;}' +
+    '.lightbox img{max-width:90%;max-height:82%;object-fit:contain;border-radius:8px;}.lb-btn{position:absolute;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.12);border:none;color:#fff;font-size:19px;cursor:pointer;display:flex;align-items:center;justify-content:center;}' +
+    '.lb-close{top:16px;left:16px;}.lb-prev{right:12px;top:50%;transform:translateY(-50%);}.lb-next{left:12px;top:50%;transform:translateY(-50%);}' +
+    '.lb-dots{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:6px;}.lb-dots span{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.35);}.lb-dots span.on{background:#fff;}' +
+    '</style></head><body>' +
     '<a href="#order" class="skip-link">انتقل إلى نموذج الطلب</a>' +
     '<div class="scarcity"><span class="dot"></span><span>العرض ينتهي خلال <span id="cd">36:00:00</span></span></div>' +
     '<div class="wrap">' +
     heroHtml +
-    urgencyHtml + featuresHtml + benefitsHtml + howToHtml + specsHtml + compareHtml + testimonialsHtml + faqHtml +
+    '<div class="hero-sentinel" id="heroSentinel"></div>' +
+    urgencyHtml + problemHtml + solutionHtml + beforeAfterHtml + featuresHtml + benefitsHtml + howToHtml + specsHtml + compareHtml + whatsIncludedHtml + testimonialsHtml + guaranteeHtml + faqHtml +
     '<section class="order" id="order"><div class="card">' +
     '<div id="orderFormWrap"><h3 style="font-size:16px;font-weight:800;margin-bottom:14px;">' + esc((data.orderForm && data.orderForm.title) || "أكمل طلبك الآن") + '</h3>' +
     '<input id="ofName" placeholder="الاسم الكامل" /><input id="ofPhone" placeholder="رقم الهاتف" /><input id="ofCity" placeholder="المدينة" /><input id="ofAddr" placeholder="العنوان بالتفصيل" />' +
@@ -964,21 +1167,12 @@ function buildStandaloneHTML(data, tokens, images, form, country) {
     '<div class="order-success" id="orderSuccess"><div class="emoji">🎉</div><h3 style="font-size:16px;font-weight:800;margin:10px 0 6px;">' + successHeadline + '</h3><p style="font-size:12.5px;color:var(--muted);">' + successText + '</p></div>' +
     '</div></section>' +
     (data.finalCta ? '<section class="final"><h3>' + esc(data.finalCta.headline) + '</h3><a href="#order">' + esc(data.finalCta.buttonText) + '</a></section>' : "") +
-    '<div class="sticky"><span class="price">' + esc(formatPrice(form.price, country)) + '</span><a href="#order">' + ctaText + '</a></div></div>' +
+    '<div class="sticky" id="stickyBar"><span class="price">' + esc(formatPrice(form.price, country)) + '</span><a href="#order">' + ctaText + '</a></div></div>' +
     floatingBtnsHtml +
     '<div class="toast" id="toast"><span class="d1"></span><span class="tx" id="toastTx"></span></div>' +
     '<div class="exit-ov" id="exitOv"><div class="exit-modal"><div class="exit-close" id="exitClose">✕</div><div style="font-size:28px;">🎁</div><h3 style="margin:10px 0;">قبل ما تسالي...</h3><p style="color:var(--muted);font-size:13px;">خصم إضافي إذا أكملتِ طلبك الآن</p><div class="exit-price">' + esc(formatPrice(form.price, country)) + '</div><a href="#order" class="cta" id="exitCta">أكمل طلبي الآن</a></div></div>' +
+    '<div class="lightbox" id="lightbox"><button class="lb-btn lb-close" id="lbClose">✕</button><button class="lb-btn lb-prev" id="lbPrev">›</button><img id="lbImg" src="" alt="' + esc(form.name) + '" /><button class="lb-btn lb-next" id="lbNext">‹</button><div class="lb-dots" id="lbDots"></div></div>' +
     '<script>' +
     '(function(){var KEY="deadline_' + (form.name || "p").replace(/[^a-zA-Z0-9]/g, "").slice(0, 24) + '";var d=localStorage.getItem(KEY);if(!d||new Date(d)<new Date()){d=new Date(Date.now()+1000*60*60*36).toISOString();localStorage.setItem(KEY,d);}function tick(){var diff=Math.max(0,new Date(d)-new Date());var h=String(Math.floor(diff/3600000)).padStart(2,"0");var m=String(Math.floor((diff%3600000)/60000)).padStart(2,"0");var s=String(Math.floor((diff%60000)/1000)).padStart(2,"0");var el=document.getElementById("cd");if(el)el.textContent=h+":"+m+":"+s;}tick();setInterval(tick,1000);})();' +
     '(function(){var names=' + JSON.stringify(pool) + ';var toast=document.getElementById("toast");var tx=document.getElementById("toastTx");function show(){var r=names[Math.floor(Math.random()*names.length)];tx.textContent=r[0]+" من "+r[1]+" طلب المنتج للتو";toast.classList.add("show");setTimeout(function(){toast.classList.remove("show");},4500);}setTimeout(show,4000);setInterval(show,15000);})();' +
-    '(function(){var ov=document.getElementById("exitOv");var shown=sessionStorage.getItem("exitShown");document.addEventListener("mouseleave",function(e){if(e.clientY<10&&!shown){ov.classList.add("show");shown=true;sessionStorage.setItem("exitShown","1");}});document.getElementById("exitClose").addEventListener("click",function(){ov.classList.remove("show");});document.getElementById("exitCta").addEventListener("click",function(){ov.classList.remove("show");});ov.addEventListener("click",function(e){if(e.target===ov)ov.classList.remove("show");});})();' +
-    'function submitOrder(){var n=document.getElementById("ofName").value;var p=document.getElementById("ofPhone").value;if(!n||!p){alert("الرجاء إدخال الاسم ورقم الهاتف على الأقل");return;}document.getElementById("orderFormWrap").style.display="none";document.getElementById("orderSuccess").classList.add("show");document.getElementById("orderSuccess").scrollIntoView({behavior:"smooth",block:"center"});}' +
-    '<\/script></body></html>';
-}
-
-const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(<App />);
-</script>
-</body>
-</html>
-
+    '(function(){var ov=document.getElementById("exitOv");var shown=se
