@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Arabic Landing AI — مولّد صفحات الهبوط</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Noto+Kufi+Arabic:wght@400;500;700;800&family=Alexandria:wght@400;500;600;700;800&family=Readex+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
@@ -117,6 +117,34 @@ function pickDesignTokens(systemName) {
   return variants[Math.floor(Math.random() * variants.length)];
 }
 
+// الهوية البنيوية لكل نظام: خطوط، شكل الأزرار، الظلال، شكل الشارات — هذا ما يصنع فرقاً حقيقياً غير اللون
+const STYLE_DNA = {
+  Tech:      { heading: "Alexandria",        body: "IBM Plex Sans Arabic", button: "pill",  shadow: "glow", badge: "pill" },
+  Beauty:    { heading: "Readex Pro",         body: "Tajawal",             button: "soft",  shadow: "soft", badge: "outline" },
+  Health:    { heading: "IBM Plex Sans Arabic", body: "Tajawal",           button: "soft",  shadow: "soft", badge: "pill" },
+  Home:      { heading: "Noto Kufi Arabic",   body: "Cairo",               button: "square", shadow: "soft", badge: "ribbon" },
+  Fashion:   { heading: "Alexandria",         body: "Cairo",               button: "square", shadow: "none", badge: "outline" },
+  Kids:      { heading: "Cairo",              body: "Tajawal",             button: "pill",  shadow: "soft", badge: "pill" },
+  Car:       { heading: "Noto Kufi Arabic",   body: "Cairo",               button: "square", shadow: "glow", badge: "ribbon" },
+  Gadgets:   { heading: "Alexandria",         body: "IBM Plex Sans Arabic", button: "pill",  shadow: "glow", badge: "pill" },
+  Tools:     { heading: "Cairo",              body: "Cairo",               button: "square", shadow: "none", badge: "outline" },
+  Lifestyle: { heading: "Readex Pro",         body: "Tajawal",             button: "soft",  shadow: "soft", badge: "pill" },
+};
+function styleDNA(systemName) { return STYLE_DNA[systemName] || STYLE_DNA.Lifestyle; }
+
+// أشكال أزرار مختلفة فعلياً حسب هوية النظام
+function buttonRadius(style, baseRadius) { return style === "pill" ? "999px" : style === "square" ? "4px" : baseRadius; }
+function ctaShadow(style, color) { return style === "glow" ? "0 14px 34px -8px " + color + "aa" : style === "soft" ? "0 10px 24px rgba(0,0,0,.12)" : "none"; }
+function badgeStyleCss(style, tokens) {
+  if (style === "ribbon") return { borderRadius: "4px 4px 4px 0", clipPath: "none" };
+  if (style === "outline") return { background: "transparent", border: "1.5px solid " + tokens.primary, color: tokens.primary };
+  return { borderRadius: 999 };
+}
+
+// 3 تخطيطات Hero مختلفة بنيوياً — الاختلاف في ترتيب/شكل العناصر وليس فقط الألوان
+const HERO_LAYOUTS = ["split", "centered", "fullbleed"];
+function pickHeroLayout() { return HERO_LAYOUTS[Math.floor(Math.random() * HERO_LAYOUTS.length)]; }
+
 const EMOJI = {
   check: "✅", star: "⭐", truck: "🚚", shield: "🛡️", clock: "⏰", heart: "❤️", zap: "⚡",
   gift: "🎁", phone: "📞", battery: "🔋", drop: "💧", award: "🏆", package: "📦",
@@ -220,6 +248,11 @@ const SCHEMA_INSTRUCTIONS = `
 }
 
 قواعد مهمة:
+- ترتيب sections يجب أن يعكس استراتيجية بيع مناسبة لنوع المنتج فعلاً، أمثلة:
+  منتج تنظيف/مشاكل عملية: features → benefits → howToUse → testimonials → urgency
+  إلكترونيات: features → specs → compare → benefits → testimonials → urgency
+  تجميل/عناية: benefits → features → howToUse → testimonials → urgency
+  لا تستخدم نفس الترتيب دائماً بلا تفكير؛ اختره بناءً على ما يقنع مشتري هذا المنتج تحديداً.
 - اختيار designSystem يجب أن يعكس طبيعة المنتج الحقيقية الظاهرة في الصور، وليس اختياراً افتراضياً متكرراً. دليل الاختيار:
   Tech (أجهزة إلكترونية عامة، سماعات، شواحن) | Beauty (تجميل، عناية بالبشرة) | Health (صحة، مكملات، لياقة) |
   Home (أدوات منزلية، مطبخ) | Fashion (ملابس، إكسسوارات فاخرة) | Kids (منتجات أطفال) | Car (إكسسوارات سيارات) |
@@ -270,6 +303,7 @@ function App() {
 
   const country = COUNTRIES.find((c) => c.code === form.countryCode) || COUNTRIES[0];
   const tokens = data && data._paletteVariant ? data._paletteVariant : DESIGN_SYSTEMS.Tech[0];
+  const heroLayout = data && data._heroLayout ? data._heroLayout : "split";
 
   const genTimer = useRef(null);
   useEffect(() => {
@@ -308,6 +342,7 @@ function App() {
       ];
       const result = await callClaude(content);
       result._paletteVariant = pickDesignTokens(result.designSystem);
+      result._heroLayout = pickHeroLayout();
       setHistory([result]); setHistoryIdx(0); setStep("preview");
     } catch (err) {
       setError(err.message || "حدث خطأ أثناء التوليد، حاول مرة أخرى.");
@@ -321,7 +356,9 @@ function App() {
     try {
       const content = [{ type: "text", text: buildEditPrompt(data, editCmd.trim(), country) }];
       const result = await callClaude(content);
-      result._paletteVariant = (result.designSystem === data.designSystem) ? data._paletteVariant : pickDesignTokens(result.designSystem);
+      const designChanged = result.designSystem !== data.designSystem;
+      result._paletteVariant = designChanged ? pickDesignTokens(result.designSystem) : data._paletteVariant;
+      result._heroLayout = designChanged ? pickHeroLayout() : data._heroLayout;
       const truncated = history.slice(0, historyIdx + 1);
       const nextHistory = [...truncated, result];
       setHistory(nextHistory); setHistoryIdx(nextHistory.length - 1); setEditCmd("");
@@ -332,6 +369,22 @@ function App() {
 
   function undo() { if (historyIdx > 0) setHistoryIdx(historyIdx - 1); }
   function redo() { if (historyIdx < history.length - 1) setHistoryIdx(historyIdx + 1); }
+
+  // ولّد تصميم مختلف: نفس المحتوى بالضبط، لكن نظام تصميم + تخطيط Hero + تنويعة ألوان جديدة، بلا استدعاء API (فوري)
+  function handleShuffleDesign() {
+    if (!data) return;
+    const allSystems = Object.keys(DESIGN_SYSTEMS);
+    const otherSystems = allSystems.filter((s) => s !== data.designSystem);
+    const nextSystem = otherSystems[Math.floor(Math.random() * otherSystems.length)] || data.designSystem;
+    const next = Object.assign({}, data, {
+      designSystem: nextSystem,
+      _paletteVariant: pickDesignTokens(nextSystem),
+      _heroLayout: pickHeroLayout(),
+    });
+    const truncated = history.slice(0, historyIdx + 1);
+    const nextHistory = [...truncated, next];
+    setHistory(nextHistory); setHistoryIdx(nextHistory.length - 1);
+  }
 
   const htmlString = data ? buildStandaloneHTML(data, tokens, images, form, country) : "";
 
@@ -358,6 +411,7 @@ function App() {
           editCmd={editCmd} setEditCmd={setEditCmd} onApplyEdit={handleApplyEdit} editing={editing}
           canUndo={historyIdx > 0} canRedo={historyIdx < history.length - 1} onUndo={undo} onRedo={redo}
           onCopy={copyHTML} onDownload={downloadHTML} copyStatus={copyStatus} error={error}
+          onShuffleDesign={handleShuffleDesign}
           onBack={() => setStep("form")} />
       )}
     </div>
@@ -439,7 +493,7 @@ function LoadingScreen({ stepIdx }) {
 }
 
 function PreviewScreen(props) {
-  const { data, tokens, images, form, country, previewMode, setPreviewMode, editCmd, setEditCmd, onApplyEdit, editing, canUndo, canRedo, onUndo, onRedo, onCopy, onDownload, copyStatus, error, onBack } = props;
+  const { data, tokens, images, form, country, previewMode, setPreviewMode, editCmd, setEditCmd, onApplyEdit, editing, canUndo, canRedo, onUndo, onRedo, onCopy, onDownload, copyStatus, error, onBack, onShuffleDesign } = props;
   const captureRef = useRef(null);
   const [jpgLoading, setJpgLoading] = useState(false);
   async function exportJPG() {
@@ -458,6 +512,7 @@ function PreviewScreen(props) {
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <div style={{ position: "sticky", top: 0, zIndex: 20, background: "#0E1526", borderBottom: "1px solid #1D2740", padding: "10px 16px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <button onClick={onBack} style={toolBtn}>← مشروع جديد</button>
+        <button onClick={onShuffleDesign} style={Object.assign({}, toolBtn, { background: "#7C3AED", color: "#fff", borderColor: "#7C3AED" })}><Ico size={14}>🎲</Ico> ولّد تصميم مختلف</button>
         <div style={{ flex: 1 }} />
         <button onClick={onUndo} disabled={!canUndo} style={Object.assign({}, toolBtn, { opacity: canUndo ? 1 : 0.4 })}><Ico size={14}>↶</Ico></button>
         <button onClick={onRedo} disabled={!canRedo} style={Object.assign({}, toolBtn, { opacity: canRedo ? 1 : 0.4 })}><Ico size={14}>↷</Ico></button>
@@ -495,6 +550,10 @@ const segBtn = { border: "none", borderRadius: 6, padding: "6px 9px", cursor: "p
 
 function LandingPage({ data, tokens, images, form, country }) {
   const sections = data.sections || [];
+  const dna = styleDNA(data.designSystem);
+  const btnRadius = buttonRadius(dna.button, tokens.radius);
+  const btnShadow = ctaShadow(dna.shadow, tokens.primary);
+  const badgeExtra = dna.badge === "outline" ? { background: "transparent", border: "1.5px solid " + tokens.primary, color: tokens.primary } : dna.badge === "ribbon" ? { borderRadius: "4px 4px 4px 0" } : { borderRadius: 999 };
   const [orderState, setOrderState] = useState({ name: "", phone: "", city: "", address: "" });
   const [orderSent, setOrderSent] = useState(false);
   const [toast, setToast] = useState(null);
@@ -554,25 +613,66 @@ function LandingPage({ data, tokens, images, form, country }) {
         العرض ينتهي خلال {hh}:{mm}:{ss}
       </div>
 
-      <section style={{ padding: "24px 20px 20px" }}>
-        {data.hero && data.hero.eyebrow && <span style={{ display: "inline-block", fontSize: 12, fontWeight: 700, color: tokens.accent, background: tokens.surface, padding: "4px 12px", borderRadius: 999, marginBottom: 12 }}>{data.hero.eyebrow}</span>}
-        <h1 style={{ fontSize: 25, fontWeight: 900, marginBottom: 10 }}>{data.hero && data.hero.headline}</h1>
-        <p style={{ fontSize: 14.5, color: tokens.muted, marginBottom: 16 }}>{data.hero && data.hero.subheadline}</p>
-
-        {images.length > 0 && (
-          <img src={images[0].dataUrl} alt={form.name} style={{ width: "100%", maxHeight: 320, objectFit: "cover", borderRadius: tokens.radius, display: "block", marginBottom: 16 }} />
-        )}
-
-        <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 10 }}>
-          <span style={{ fontSize: 26, fontWeight: 900, color: tokens.primary }}>{formatPrice(form.price, country)}</span>
-          {data.hero && data.hero.priceOld && <span style={{ fontSize: 15, color: tokens.muted, textDecoration: "line-through" }}>{formatPrice(data.hero.priceOld, country)}</span>}
-          {data.hero && data.hero.discountPercent && <span style={{ fontSize: 12, fontWeight: 800, color: "#fff", background: "#E63946", padding: "3px 9px", borderRadius: 999 }}>خصم {data.hero.discountPercent}%</span>}
-        </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 18 }}>
-          {(data.hero && data.hero.badges || []).map((b, i) => <span key={i} style={{ fontSize: 11.5, fontWeight: 600, color: tokens.muted, background: tokens.surface, padding: "5px 10px", borderRadius: 999 }}>{b}</span>)}
-        </div>
-        <a href="#order" style={{ display: "block", textAlign: "center", background: tokens.primary, color: tokens.mood === "dark" ? tokens.bg : "#fff", fontWeight: 800, fontSize: 15.5, padding: 15, borderRadius: tokens.radius, textDecoration: "none" }}>{(data.hero && data.hero.ctaText) || "اطلب الآن"}</a>
-      </section>
+      {heroLayout === "fullbleed" && images.length > 0 ? (
+        <section style={{ position: "relative" }}>
+          <img src={images[0].dataUrl} alt={form.name} style={{ width: "100%", height: 340, objectFit: "cover", display: "block" }} />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top," + tokens.bg + " 15%, transparent 60%)" }} />
+          <div style={{ position: "relative", padding: "0 20px 20px", marginTop: -70 }}>
+            {data.hero && data.hero.eyebrow && <span style={Object.assign({ display: "inline-block", fontSize: 12, fontWeight: 700, color: tokens.accent, background: tokens.surface, padding: "4px 12px", marginBottom: 12 }, badgeExtra)}>{data.hero.eyebrow}</span>}
+            <h1 style={{ fontFamily: "'" + dna.heading + "', sans-serif", fontSize: 24, fontWeight: 900, marginBottom: 8, color: tokens.text }}>{data.hero && data.hero.headline}</h1>
+            <p style={{ fontSize: 14, color: tokens.muted, marginBottom: 14 }}>{data.hero && data.hero.subheadline}</p>
+            <div style={{ background: tokens.card, borderRadius: tokens.radius, padding: 14, marginBottom: 14 }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 8 }}>
+                <span style={{ fontSize: 24, fontWeight: 900, color: tokens.primary }}>{formatPrice(form.price, country)}</span>
+                {data.hero && data.hero.priceOld && <span style={{ fontSize: 14, color: tokens.muted, textDecoration: "line-through" }}>{formatPrice(data.hero.priceOld, country)}</span>}
+                {data.hero && data.hero.discountPercent && <span style={{ fontSize: 11, fontWeight: 800, color: "#fff", background: "#E63946", padding: "3px 9px", borderRadius: 999 }}>خصم {data.hero.discountPercent}%</span>}
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{(data.hero && data.hero.badges || []).map((b, i) => <span key={i} style={{ fontSize: 11, fontWeight: 600, color: tokens.muted }}>✓ {b}</span>)}</div>
+            </div>
+            <a href="#order" style={{ display: "block", textAlign: "center", background: tokens.primary, color: tokens.mood === "dark" ? tokens.bg : "#fff", fontWeight: 800, fontSize: 15.5, padding: 15, borderRadius: btnRadius, boxShadow: btnShadow, textDecoration: "none", fontFamily: "'" + dna.heading + "', sans-serif" }}>{(data.hero && data.hero.ctaText) || "اطلب الآن"}</a>
+          </div>
+        </section>
+      ) : heroLayout === "centered" ? (
+        <section style={{ padding: "28px 20px 20px", textAlign: "center" }}>
+          {data.hero && data.hero.eyebrow && <span style={Object.assign({ display: "inline-block", fontSize: 12, fontWeight: 700, color: tokens.accent, background: tokens.surface, padding: "4px 12px", marginBottom: 14 }, badgeExtra)}>{data.hero.eyebrow}</span>}
+          <h1 style={{ fontFamily: "'" + dna.heading + "', sans-serif", fontSize: 24, fontWeight: 900, marginBottom: 10 }}>{data.hero && data.hero.headline}</h1>
+          <p style={{ fontSize: 14, color: tokens.muted, marginBottom: 20, maxWidth: 320, marginLeft: "auto", marginRight: "auto" }}>{data.hero && data.hero.subheadline}</p>
+          {images.length > 0 && (
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
+              <div style={{ position: "relative", width: 220, height: 220, borderRadius: "50%", background: "radial-gradient(circle," + tokens.primary + "33, transparent 70%)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <img src={images[0].dataUrl} alt={form.name} style={{ width: 190, height: 190, objectFit: "cover", borderRadius: "50%", border: "4px solid " + tokens.surface, boxShadow: btnShadow }} />
+              </div>
+            </div>
+          )}
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 10, marginBottom: 10 }}>
+            <span style={{ fontSize: 26, fontWeight: 900, color: tokens.primary }}>{formatPrice(form.price, country)}</span>
+            {data.hero && data.hero.priceOld && <span style={{ fontSize: 15, color: tokens.muted, textDecoration: "line-through" }}>{formatPrice(data.hero.priceOld, country)}</span>}
+            {data.hero && data.hero.discountPercent && <span style={{ fontSize: 12, fontWeight: 800, color: "#fff", background: "#E63946", padding: "3px 9px", borderRadius: 999 }}>خصم {data.hero.discountPercent}%</span>}
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8, marginBottom: 18 }}>
+            {(data.hero && data.hero.badges || []).map((b, i) => <span key={i} style={{ fontSize: 11.5, fontWeight: 600, color: tokens.muted, background: tokens.surface, padding: "5px 10px", borderRadius: 999 }}>{b}</span>)}
+          </div>
+          <a href="#order" style={{ display: "inline-block", textAlign: "center", background: tokens.primary, color: tokens.mood === "dark" ? tokens.bg : "#fff", fontWeight: 800, fontSize: 15.5, padding: "15px 40px", borderRadius: btnRadius, boxShadow: btnShadow, textDecoration: "none", fontFamily: "'" + dna.heading + "', sans-serif" }}>{(data.hero && data.hero.ctaText) || "اطلب الآن"}</a>
+        </section>
+      ) : (
+        <section style={{ padding: "24px 20px 20px" }}>
+          {data.hero && data.hero.eyebrow && <span style={Object.assign({ display: "inline-block", fontSize: 12, fontWeight: 700, color: tokens.accent, background: tokens.surface, padding: "4px 12px", marginBottom: 12 }, badgeExtra)}>{data.hero.eyebrow}</span>}
+          <h1 style={{ fontFamily: "'" + dna.heading + "', sans-serif", fontSize: 25, fontWeight: 900, marginBottom: 10 }}>{data.hero && data.hero.headline}</h1>
+          <p style={{ fontSize: 14.5, color: tokens.muted, marginBottom: 16 }}>{data.hero && data.hero.subheadline}</p>
+          {images.length > 0 && (
+            <img src={images[0].dataUrl} alt={form.name} style={{ width: "100%", maxHeight: 320, objectFit: "cover", borderRadius: tokens.radius, display: "block", marginBottom: 16 }} />
+          )}
+          <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 10 }}>
+            <span style={{ fontSize: 26, fontWeight: 900, color: tokens.primary }}>{formatPrice(form.price, country)}</span>
+            {data.hero && data.hero.priceOld && <span style={{ fontSize: 15, color: tokens.muted, textDecoration: "line-through" }}>{formatPrice(data.hero.priceOld, country)}</span>}
+            {data.hero && data.hero.discountPercent && <span style={{ fontSize: 12, fontWeight: 800, color: "#fff", background: "#E63946", padding: "3px 9px", borderRadius: 999 }}>خصم {data.hero.discountPercent}%</span>}
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 18 }}>
+            {(data.hero && data.hero.badges || []).map((b, i) => <span key={i} style={{ fontSize: 11.5, fontWeight: 600, color: tokens.muted, background: tokens.surface, padding: "5px 10px", borderRadius: 999 }}>{b}</span>)}
+          </div>
+          <a href="#order" style={{ display: "block", textAlign: "center", background: tokens.primary, color: tokens.mood === "dark" ? tokens.bg : "#fff", fontWeight: 800, fontSize: 15.5, padding: 15, borderRadius: btnRadius, boxShadow: btnShadow, textDecoration: "none", fontFamily: "'" + dna.heading + "', sans-serif" }}>{(data.hero && data.hero.ctaText) || "اطلب الآن"}</a>
+        </section>
+      )}
 
       {sections.includes("urgency") && data.urgency && (
         <section style={{ padding: "0 20px 20px" }}>
@@ -754,6 +854,10 @@ function FaqItem({ q, a, tokens }) {
 function buildStandaloneHTML(data, tokens, images, form, country) {
   const esc = (s) => String(s == null ? "" : s).replace(/</g, "&lt;");
   const sections = data.sections || [];
+  const dna = styleDNA(data.designSystem);
+  const btnRadius = buttonRadius(dna.button, tokens.radius);
+  const btnShadow = ctaShadow(dna.shadow, tokens.primary);
+  const badgeCss = dna.badge === "outline" ? "background:transparent;border:1.5px solid var(--primary);color:var(--primary);" : dna.badge === "ribbon" ? "border-radius:4px 4px 4px 0;" : "border-radius:999px;";
   const hasContact = !!form.whatsapp;
   const waNumber = hasContact ? country.phoneCode.replace("+", "") + form.whatsapp : "";
   const pool = socialProofPool(form.countryCode);
@@ -765,7 +869,30 @@ function buildStandaloneHTML(data, tokens, images, form, country) {
   const secondaryImages = images.slice(1).map((im) => im.dataUrl);
   const sectionImg = (idx) => secondaryImages[idx] ? '<div class="sec-img"><img src="' + secondaryImages[idx] + '" alt="' + esc(form.name) + '" /></div>' : "";
 
+  const heroLayout = data._heroLayout || "split";
+  const ctaText = esc((data.hero && data.hero.ctaText) || "اطلب الآن");
   const badgesHtml = (data.hero && data.hero.badges || []).map((b) => '<span class="badge">' + esc(b) + '</span>').join("");
+  const priceBlock = '<div class="price-row"><span class="price">' + esc(formatPrice(form.price, country)) + '</span>' +
+    (data.hero && data.hero.priceOld ? '<span class="old">' + esc(formatPrice(data.hero.priceOld, country)) + '</span>' : "") +
+    (data.hero && data.hero.discountPercent ? '<span class="discount">خصم ' + esc(data.hero.discountPercent) + '%</span>' : "") + '</div>';
+  const eyebrowHtml = data.hero && data.hero.eyebrow ? '<span class="eyebrow">' + esc(data.hero.eyebrow) + '</span>' : "";
+  const headlineHtml = '<h1>' + esc(data.hero && data.hero.headline) + '</h1><p class="sub">' + esc(data.hero && data.hero.subheadline) + '</p>';
+  const ctaHtml = '<a class="cta" href="#order">' + ctaText + '</a>';
+  let heroHtml;
+  if (heroLayout === "fullbleed" && heroImg) {
+    heroHtml = '<section class="hero hero-fullbleed">' +
+      '<img class="hero-bleed-img" src="' + heroImg + '" alt="' + esc(form.name) + '" />' +
+      '<div class="hero-bleed-fade"></div>' +
+      '<div class="hero-bleed-content">' + eyebrowHtml + headlineHtml +
+      '<div class="card">' + priceBlock + '<div class="badges">' + badgesHtml + '</div></div>' + ctaHtml + '</div></section>';
+  } else if (heroLayout === "centered") {
+    heroHtml = '<section class="hero hero-centered">' + eyebrowHtml + headlineHtml +
+      (heroImg ? '<div class="hero-circle"><img src="' + heroImg + '" alt="' + esc(form.name) + '" /></div>' : "") +
+      priceBlock + '<div class="badges center">' + badgesHtml + '</div>' + ctaHtml + '</section>';
+  } else {
+    heroHtml = '<section class="hero">' + eyebrowHtml + headlineHtml + heroGalleryHtml + priceBlock + '<div class="badges">' + badgesHtml + '</div>' + ctaHtml + '</section>';
+  }
+
   const urgencyHtml = sections.includes("urgency") && data.urgency ? '<section class="sec"><div class="card row spread"><span class="bold">' + esc(data.urgency.stockLabel) + '</span><span class="accent">' + esc(data.urgency.countdownLabel) + '</span></div></section>' : "";
   const featuresHtml = (sections.includes("features") && data.features ? '<section class="sec"><h2>' + esc(data.features.title) + '</h2><div class="grid1">' + (data.features.items || []).map((it) => '<div class="card row"><div><div class="t">' + esc(it.title) + '</div><div class="d">' + esc(it.desc) + '</div></div></div>').join("") + '</div></section>' : "") + sectionImg(0);
   const benefitsHtml = sections.includes("benefits") && data.benefits ? '<section class="sec"><h2>' + esc(data.benefits.title) + '</h2><div class="grid2">' + (data.benefits.items || []).map((it) => '<div class="card center"><div class="t">' + esc(it.title) + '</div><div class="d">' + esc(it.desc) + '</div></div>').join("") + '</div></section>' : "";
@@ -774,7 +901,6 @@ function buildStandaloneHTML(data, tokens, images, form, country) {
   const compareHtml = (sections.includes("compare") && data.compare ? '<section class="sec"><h2>' + esc(data.compare.title) + '</h2><div class="grid2 compare"><div class="card compare-bad"><div class="ct">✗ الطريقة التقليدية</div>' + (data.compare.them || []).map((t) => '<div class="ci muted">✗ ' + esc(t) + '</div>').join("") + '</div><div class="card compare-good"><div class="ct">✓ ' + esc(data.compare.productLabel || form.name) + '</div>' + (data.compare.us || []).map((t) => '<div class="ci">✓ ' + esc(t) + '</div>').join("") + '</div></div></section>' : "") + sectionImg(2);
   const testimonialsHtml = sections.includes("testimonials") && data.testimonials ? '<section class="sec"><h2>' + esc(data.testimonials.title) + '</h2><p class="note">' + esc(data.testimonials.note) + '</p>' + (data.testimonials.items || []).map((it) => '<div class="card"><div class="d">' + esc(it.text) + '</div><div class="name">' + esc(it.name) + '</div></div>').join("") + '</section>' : "";
   const faqHtml = sections.includes("faq") && data.faq ? '<section class="sec"><h2>' + esc(data.faq.title) + '</h2>' + (data.faq.items || []).map((it) => '<details class="card"><summary>' + esc(it.q) + '</summary><p class="d">' + esc(it.a) + '</p></details>').join("") + '</section>' : "";
-  const ctaText = esc((data.hero && data.hero.ctaText) || "اطلب الآن");
   const successHeadline = esc((data.orderForm && data.orderForm.successHeadline) || "تم استلام طلبك بنجاح!");
   const successText = esc((data.orderForm && data.orderForm.successText) || "سنتصل بك قريباً لتأكيد الطلب وموعد التوصيل.");
 
@@ -787,19 +913,24 @@ function buildStandaloneHTML(data, tokens, images, form, country) {
   return '<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />' +
     '<title>' + esc((data.seo && data.seo.title) || form.name) + '</title>' +
     '<meta name="description" content="' + esc((data.seo && data.seo.description) || "") + '" />' +
-    '<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">' +
+    '<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Noto+Kufi+Arabic:wght@400;500;700;800&family=Alexandria:wght@400;500;600;700;800&family=Readex+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">' +
     '<style>:root{--bg:' + tokens.bg + ';--surface:' + tokens.surface + ';--card:' + tokens.card + ';--primary:' + tokens.primary + ';--primary-deep:' + tokens.primaryDeep + ';--accent:' + tokens.accent + ';--accent2:' + tokens.accent2 + ';--text:' + tokens.text + ';--muted:' + tokens.muted + ';--radius:' + tokens.radius + ';}' +
-    '*{box-sizing:border-box;margin:0;padding:0;}html{scroll-behavior:smooth;}body{background:var(--bg);color:var(--text);font-family:"Cairo",sans-serif;line-height:1.5;padding-top:32px;}.wrap{max-width:480px;margin:0 auto;}.hero{padding:28px 20px 24px;}' +
+    '*{box-sizing:border-box;margin:0;padding:0;}html{scroll-behavior:smooth;}body{background:var(--bg);color:var(--text);font-family:"' + dna.body + '",sans-serif;line-height:1.5;padding-top:32px;}.wrap{max-width:480px;margin:0 auto;}.hero{padding:28px 20px 24px;}' +
     '.skip-link{position:absolute;right:-9999px;background:#fff;color:#000;padding:10px 16px;border-radius:10px;z-index:500;}.skip-link:focus{right:14px;top:40px;}' +
     'a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px;}' +
     '.scarcity{position:fixed;top:0;left:0;right:0;z-index:300;background:linear-gradient(90deg,var(--primary-deep),var(--primary));color:#fff;text-align:center;font-weight:700;font-size:11.5px;padding:8px;display:flex;align-items:center;justify-content:center;gap:6px;}' +
     '.scarcity .dot{width:7px;height:7px;border-radius:50%;background:#fff;animation:pd 1.4s ease-in-out infinite;}@keyframes pd{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.35;transform:scale(1.5);}}' +
-    '.eyebrow{display:inline-block;font-size:12px;font-weight:700;color:var(--accent);background:var(--surface);padding:4px 12px;border-radius:999px;margin-bottom:12px;}h1{font-size:25px;font-weight:900;margin-bottom:10px;}' +
+    '.eyebrow{display:inline-block;font-size:12px;font-weight:700;color:var(--accent);background:var(--surface);padding:4px 12px;margin-bottom:12px;' + badgeCss + '}h1{font-family:"' + dna.heading + '",sans-serif;font-size:25px;font-weight:900;margin-bottom:10px;}' +
+    '.hero-fullbleed{padding:0;position:relative;}.hero-bleed-img{width:100%;height:320px;object-fit:cover;display:block;}.hero-bleed-fade{position:absolute;top:0;left:0;right:0;height:320px;background:linear-gradient(to top,var(--bg) 15%,transparent 60%);}' +
+    '.hero-bleed-content{position:relative;padding:0 20px 20px;margin-top:-70px;}.hero-bleed-content .card{padding:14px;margin-bottom:14px;}' +
+    '.hero-centered{text-align:center;}.hero-centered .sub{max-width:300px;margin:0 auto 20px;}.hero-centered .badges{justify-content:center;}.hero-centered .cta{display:inline-block;padding:15px 40px;}' +
+    '.hero-circle{width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,' + tokens.primary + '33,transparent 70%);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;}' +
+    '.hero-circle img{width:190px;height:190px;object-fit:cover;border-radius:50%;border:4px solid var(--surface);}' +
     '.sub{font-size:14.5px;color:var(--muted);margin-bottom:18px;}.hero img#mainImg{width:100%;border-radius:var(--radius);margin-bottom:8px;display:block;max-height:320px;object-fit:cover;}' +
     '.sec-img{padding:0 20px 24px;}.sec-img img{width:100%;max-height:260px;object-fit:cover;border-radius:var(--radius);display:block;}' +
     '.price-row{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;}.price{font-size:26px;font-weight:900;color:var(--primary);}.old{font-size:15px;color:var(--muted);text-decoration:line-through;}' +
     '.discount{font-size:12px;font-weight:800;color:#fff;background:#E63946;padding:3px 9px;border-radius:999px;}.badges{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;}' +
-    '.badge{font-size:11.5px;font-weight:600;color:var(--muted);background:var(--surface);padding:5px 10px;border-radius:999px;}.cta{display:block;text-align:center;background:var(--primary);color:' + (tokens.mood === "dark" ? tokens.bg : "#fff") + ';font-weight:800;font-size:15.5px;padding:15px;border-radius:var(--radius);text-decoration:none;}' +
+    '.badge{font-size:11.5px;font-weight:600;color:var(--muted);background:var(--surface);padding:5px 10px;border-radius:999px;}.cta{display:block;text-align:center;background:var(--primary);color:' + (tokens.mood === "dark" ? tokens.bg : "#fff") + ';font-weight:800;font-size:15.5px;padding:15px;border-radius:' + btnRadius + ';box-shadow:' + btnShadow + ';text-decoration:none;font-family:"' + dna.heading + '",sans-serif;}' +
     '.sec{padding:10px 20px 24px;}.sec h2{font-size:17px;font-weight:800;margin-bottom:12px;}.grid1{display:grid;gap:12px;}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}' +
     '.card{background:var(--card);border-radius:var(--radius);padding:14px;margin-bottom:10px;}.row{display:flex;gap:12px;}.spread{display:flex;justify-content:space-between;align-items:center;}.center{text-align:center;}' +
     '.compare-bad{background:var(--bg);border:1px solid rgba(140,140,140,.3);}.compare-good{border:1px solid var(--primary);}.ct{font-weight:800;font-size:12px;margin-bottom:8px;}.ci{font-size:11.5px;margin-bottom:6px;}' +
@@ -824,13 +955,7 @@ function buildStandaloneHTML(data, tokens, images, form, country) {
     '<a href="#order" class="skip-link">انتقل إلى نموذج الطلب</a>' +
     '<div class="scarcity"><span class="dot"></span><span>العرض ينتهي خلال <span id="cd">36:00:00</span></span></div>' +
     '<div class="wrap">' +
-    '<section class="hero">' + (data.hero && data.hero.eyebrow ? '<span class="eyebrow">' + esc(data.hero.eyebrow) + '</span>' : "") +
-    '<h1>' + esc(data.hero && data.hero.headline) + '</h1><p class="sub">' + esc(data.hero && data.hero.subheadline) + '</p>' +
-    heroGalleryHtml +
-    '<div class="price-row"><span class="price">' + esc(formatPrice(form.price, country)) + '</span>' +
-    (data.hero && data.hero.priceOld ? '<span class="old">' + esc(formatPrice(data.hero.priceOld, country)) + '</span>' : "") +
-    (data.hero && data.hero.discountPercent ? '<span class="discount">خصم ' + esc(data.hero.discountPercent) + '%</span>' : "") + '</div>' +
-    '<div class="badges">' + badgesHtml + '</div><a class="cta" href="#order">' + ctaText + '</a></section>' +
+    heroHtml +
     urgencyHtml + featuresHtml + benefitsHtml + howToHtml + specsHtml + compareHtml + testimonialsHtml + faqHtml +
     '<section class="order" id="order"><div class="card">' +
     '<div id="orderFormWrap"><h3 style="font-size:16px;font-weight:800;margin-bottom:14px;">' + esc((data.orderForm && data.orderForm.title) || "أكمل طلبك الآن") + '</h3>' +
@@ -856,3 +981,4 @@ root.render(<App />);
 </script>
 </body>
 </html>
+
