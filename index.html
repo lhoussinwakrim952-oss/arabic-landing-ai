@@ -205,6 +205,9 @@ const SVG_PATHS = {
   back: "M19 12H5M5 12l6-6M5 12l6 6",
   shuffle: "M4 4h4l10 16h4M4 20h4l3.5-5.6M17 4h4v4M15 8l6-4M17 20h4v-4",
   send: "M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z",
+  eye: "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z",
+  close: "M18 6 6 18M6 6l12 12",
+  cloudDownload: "M7 18a4.5 4.5 0 0 1-1.2-8.84A6 6 0 0 1 17.5 8H18a4 4 0 0 1 .5 7.97M12 11v9m0 0-3.5-3.5M12 20l3.5-3.5",
 };
 function SvgIcon({ name, size, color, strokeWidth, style }) {
   const d = SVG_PATHS[name];
@@ -580,7 +583,7 @@ function FormScreen({ form, setForm, images, onUpload, onRemoveImage, onEnhanceI
               </label>
             )}
           </div>
-          <span style={{ color: "#5B6478", fontSize: 11 }}>دوس على ✨ فوق أي صورة باش تقوّي التباين والألوان ديالها (تحسين تلقائي، ماشي تعديل بالذكاء الاصطناعي).</span>
+          <span style={{ color: "#5B6478", fontSize: 11 }}>اضغط على ✨ فوق أي صورة لتقوية التباين والألوان الخاصة بها (تحسين تلقائي، وليس تعديلاً بالذكاء الاصطناعي).</span>
         </Field>
         <Field label="وصف المنتج (اختياري)"><textarea value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder="اتركه فارغاً وسيقوم الذكاء الاصطناعي بكتابة وصف من الصور" rows={3} style={Object.assign({}, inputStyle, { resize: "vertical" })} /></Field>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -631,6 +634,7 @@ function PreviewScreen(props) {
   const { data, tokens, images, form, country, previewMode, setPreviewMode, editCmd, setEditCmd, onApplyEdit, editing, canUndo, canRedo, onUndo, onRedo, onCopy, onDownload, copyStatus, error, onBack, onShuffleDesign } = props;
   const captureRef = useRef(null);
   const [jpgLoading, setJpgLoading] = useState(false);
+  const [fullPreviewOpen, setFullPreviewOpen] = useState(false);
   async function exportJPG() {
     if (!captureRef.current || !window.html2canvas) return;
     setJpgLoading(true);
@@ -656,9 +660,12 @@ function PreviewScreen(props) {
           <button onClick={() => setPreviewMode("tablet")} style={Object.assign({}, segBtn, { background: previewMode === "tablet" ? "#22D3EE" : "transparent", color: previewMode === "tablet" ? "#04101C" : "#B7C0D4" })}><SvgIcon name="tablet" size={14} /></button>
           <button onClick={() => setPreviewMode("desktop")} style={Object.assign({}, segBtn, { background: previewMode === "desktop" ? "#22D3EE" : "transparent", color: previewMode === "desktop" ? "#04101C" : "#B7C0D4" })}><SvgIcon name="desktop" size={14} /></button>
         </div>
+        <button onClick={() => setFullPreviewOpen(true)} style={toolBtn}><SvgIcon name="eye" size={14} /> معاينة كاملة</button>
         <button onClick={onCopy} style={toolBtn}><SvgIcon name="copy" size={14} /> نسخ HTML</button>
         <button onClick={exportJPG} disabled={jpgLoading} style={Object.assign({}, toolBtn, { opacity: jpgLoading ? 0.6 : 1 })}><SvgIcon name="image" size={14} /> {jpgLoading ? "..." : "تحميل JPG"}</button>
-        <button onClick={onDownload} style={Object.assign({}, toolBtn, { background: "#22D3EE", color: "#04101C", borderColor: "#22D3EE" })}><SvgIcon name="download" size={14} /> تحميل HTML</button>
+        <button onClick={onDownload} style={{ display: "flex", alignItems: "center", gap: 7, background: "linear-gradient(135deg,#22D3EE,#3B82F6)", border: "none", color: "#04101C", fontSize: 12.5, fontWeight: 800, padding: "9px 15px", borderRadius: 999, cursor: "pointer", boxShadow: "0 10px 22px -6px #22D3EEaa" }}>
+          <SvgIcon name="cloudDownload" size={15} strokeWidth={2.4} /> تحميل HTML
+        </button>
       </div>
       {copyStatus && <div style={{ textAlign: "center", color: "#6EE7B7", fontSize: 12, padding: "6px 0", background: "#0E1526" }}>{copyStatus}</div>}
       <div style={{ background: "#0E1526", borderBottom: "1px solid #1D2740", padding: "10px 16px", display: "flex", gap: 8 }}>
@@ -676,6 +683,43 @@ function PreviewScreen(props) {
           <div ref={captureRef}>
             <LandingPage data={data} tokens={tokens} images={images} form={form} country={country} />
           </div>
+        </div>
+      </div>
+      {fullPreviewOpen && (
+        <FullPreviewModal onClose={() => setFullPreviewOpen(false)} onDownload={onDownload}>
+          <LandingPage data={data} tokens={tokens} images={images} form={form} country={country} />
+        </FullPreviewModal>
+      )}
+    </div>
+  );
+}
+
+// معاينة كاملة بلا شريط أدوات يغطي المحتوى — سكرول حر للصفحة بأكملها بحال ما غادي تبان عند الزبون بالضبط، قبل ما تنزّل الملف
+function FullPreviewModal({ onClose, onDownload, children }) {
+  useEffect(() => {
+    function onKey(e) { if (e.key === "Escape") onClose(); }
+    window.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = ""; };
+  }, [onClose]);
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 400, background: "#05070C", display: "flex", flexDirection: "column" }} className="fade-in">
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: "#0E1526", borderBottom: "1px solid #1D2740", flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#B7C0D4", fontSize: 13, fontWeight: 700 }}>
+          <SvgIcon name="eye" size={16} color="#22D3EE" /> معاينة كاملة — بحال ما غادي تبان عند الزبون بالضبط
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={onDownload} style={{ display: "flex", alignItems: "center", gap: 6, background: "linear-gradient(135deg,#22D3EE,#3B82F6)", border: "none", color: "#04101C", fontSize: 12.5, fontWeight: 800, padding: "8px 14px", borderRadius: 999, cursor: "pointer" }}>
+            <SvgIcon name="cloudDownload" size={14} strokeWidth={2.4} /> تحميل HTML
+          </button>
+          <button onClick={onClose} aria-label="إغلاق المعاينة" style={{ width: 34, height: 34, borderRadius: "50%", background: "#131A2A", border: "1px solid #202A42", color: "#E2E8F5", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+            <SvgIcon name="close" size={16} />
+          </button>
+        </div>
+      </div>
+      <div style={{ flex: 1, overflowY: "auto", display: "flex", justifyContent: "center", padding: "24px 16px" }}>
+        <div style={{ width: 390, maxWidth: "100%", borderRadius: 30, overflow: "hidden", border: "8px solid #1B1F2B", boxShadow: "0 30px 60px rgba(0,0,0,.5)", height: "fit-content" }}>
+          {children}
         </div>
       </div>
     </div>
@@ -1218,60 +1262,4 @@ function buildStandaloneHTML(data, tokens, images, form, country) {
     '.t{font-weight:700;font-size:14px;}.d{font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.7;}.step{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;}' +
     '.num{width:24px;height:24px;border-radius:50%;background:var(--primary);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}' +
     '.spec-row{display:flex;justify-content:space-between;padding:8px 0;font-size:12.5px;border-bottom:1px solid var(--bg);}.bold{font-weight:700;}.muted{color:var(--muted);}.accent{color:var(--accent);font-weight:800;}' +
-    '.note{font-size:10.5px;color:var(--muted);margin-bottom:12px;}.name{font-size:11px;color:var(--muted);margin-top:6px;font-weight:700;}summary{cursor:pointer;font-size:13px;font-weight:700;}' +
-    '.order{padding:24px 20px;}.order .card input{width:100%;background:var(--bg);border:1px solid rgba(140,140,140,.3);border-radius:8px;padding:11px 12px;color:var(--text);font-size:13px;margin-bottom:10px;font-family:inherit;}' +
-    '.order button{width:100%;background:var(--primary);color:' + (tokens.mood === "dark" ? tokens.bg : "#fff") + ';font-weight:800;font-size:15px;padding:14px;border-radius:var(--radius);border:none;cursor:pointer;font-family:inherit;}' +
-    '.order-success{display:none;text-align:center;padding:10px 0;}.order-success.show{display:block;}.order-success .emoji{font-size:32px;}' +
-    '.final{padding:10px 20px 90px;text-align:center;}.final h3{font-size:17px;font-weight:800;margin-bottom:14px;}.final a{display:inline-block;background:var(--accent);color:var(--bg);font-weight:800;padding:13px 26px;border-radius:var(--radius);text-decoration:none;font-size:14px;}' +
-    '.sticky{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid rgba(140,140,140,.3);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;z-index:220;transform:translateY(100%);transition:transform .3s ease;}.sticky.show{transform:translateY(0);}.sticky .price{font-size:15px;}' +
-    '.hero-sentinel{height:1px;}' +
-    '.sticky a{background:var(--primary);color:' + (tokens.mood === "dark" ? tokens.bg : "#fff") + ';font-weight:800;font-size:13px;padding:10px 20px;border-radius:999px;text-decoration:none;}' +
-    '.floating-btns{position:fixed;bottom:76px;left:14px;display:flex;flex-direction:column;gap:10px;z-index:250;}.fab{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;text-decoration:none;box-shadow:0 10px 24px rgba(0,0,0,.4);}' +
-    '.fab.wa{background:linear-gradient(135deg,#2FE070,#1DAA53);}.fab.call{background:linear-gradient(135deg,var(--primary),var(--primary-deep));}' +
-    '.toast{position:fixed;bottom:76px;right:14px;background:var(--surface);border:1px solid rgba(140,140,140,.3);border-radius:12px;padding:10px 14px;display:flex;gap:8px;align-items:center;max-width:210px;z-index:250;box-shadow:0 12px 26px rgba(0,0,0,.3);transform:translateY(16px);opacity:0;pointer-events:none;transition:transform .3s ease,opacity .3s ease;}' +
-    '.toast.show{transform:translateY(0);opacity:1;}.toast .d1{width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0;}.toast .tx{font-size:11px;font-weight:700;}' +
-    '.exit-ov{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:400;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .3s;}.exit-ov.show{opacity:1;pointer-events:auto;}' +
-    '.exit-modal{background:var(--surface);border-radius:20px;padding:30px 24px;max-width:340px;width:100%;text-align:center;position:relative;transform:scale(.9);transition:transform .3s;}.exit-ov.show .exit-modal{transform:scale(1);}' +
-    '.exit-close{position:absolute;top:10px;left:10px;width:28px;height:28px;border-radius:50%;background:rgba(140,140,140,.2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:900;}' +
-    '.exit-price{font-size:24px;font-weight:900;color:var(--accent);margin:12px 0;}' +
-    '.lb-trigger{cursor:zoom-in;}.lightbox{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;}.lightbox.show{display:flex;}' +
-    '.lightbox img{max-width:90%;max-height:82%;object-fit:contain;border-radius:8px;}.lb-btn{position:absolute;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.12);border:none;color:#fff;font-size:19px;cursor:pointer;display:flex;align-items:center;justify-content:center;}' +
-    '.lb-close{top:16px;left:16px;}.lb-prev{right:12px;top:50%;transform:translateY(-50%);}.lb-next{left:12px;top:50%;transform:translateY(-50%);}' +
-    '.lb-dots{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:6px;}.lb-dots span{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.35);}.lb-dots span.on{background:#fff;}' +
-    '</style></head><body>' +
-    '<a href="' + esc(primaryCtaHref) + '" class="skip-link">' + (showOrderForm ? "انتقل إلى نموذج الطلب" : "اطلب الآن") + '</a>' +
-    '<div class="scarcity"><span class="dot"></span><span>العرض ينتهي خلال <span id="cd">36:00:00</span></span></div>' +
-    '<div class="wrap">' +
-    heroHtml +
-    '<div class="hero-sentinel" id="heroSentinel"></div>' +
-    urgencyHtml + problemHtml + solutionHtml + beforeAfterHtml + featuresHtml + benefitsHtml + howToHtml + specsHtml + compareHtml + whatsIncludedHtml + testimonialsHtml + guaranteeHtml + faqHtml +
-    (showOrderForm ?
-      '<section class="order" id="order"><div class="card">' +
-      '<div id="orderFormWrap"><h3 style="font-size:16px;font-weight:800;margin-bottom:14px;">' + esc((data.orderForm && data.orderForm.title) || "أكمل طلبك الآن") + '</h3>' +
-      '<input id="ofName" placeholder="الاسم الكامل" /><input id="ofPhone" placeholder="رقم الهاتف" /><input id="ofCity" placeholder="المدينة" /><input id="ofAddr" placeholder="العنوان بالتفصيل" />' +
-      '<button type="button" onclick="submitOrder()">' + esc((data.orderForm && data.orderForm.buttonText) || "اطلب الآن") + '</button></div>' +
-      '<div class="order-success" id="orderSuccess"><div class="emoji">🎉</div><h3 style="font-size:16px;font-weight:800;margin:10px 0 6px;">' + successHeadline + '</h3><p style="font-size:12.5px;color:var(--muted);">' + successText + '</p></div>' +
-      '</div></section>'
-    : '<div id="order" style="height:1px;"></div>') +
-    (data.finalCta ? '<section class="final"><h3>' + esc(data.finalCta.headline) + '</h3><a href="' + esc(primaryCtaHref) + '">' + esc(data.finalCta.buttonText) + '</a></section>' : "") +
-    '<div class="sticky" id="stickyBar"><span class="price">' + esc(formatPrice(form.price, country)) + '</span><a href="' + esc(primaryCtaHref) + '">' + ctaText + '</a></div></div>' +
-    floatingBtnsHtml +
-    '<div class="toast" id="toast"><span class="d1"></span><span class="tx" id="toastTx"></span></div>' +
-    '<div class="exit-ov" id="exitOv"><div class="exit-modal"><div class="exit-close" id="exitClose">✕</div><div style="font-size:28px;">🎁</div><h3 style="margin:10px 0;">قبل ما تسالي...</h3><p style="color:var(--muted);font-size:13px;">خصم إضافي إذا أكملتِ طلبك الآن</p><div class="exit-price">' + esc(formatPrice(form.price, country)) + '</div><a href="' + esc(primaryCtaHref) + '" class="cta" id="exitCta">أكمل طلبي الآن</a></div></div>' +
-    '<div class="lightbox" id="lightbox"><button class="lb-btn lb-close" id="lbClose">✕</button><button class="lb-btn lb-prev" id="lbPrev">›</button><img id="lbImg" src="" alt="' + esc(form.name) + '" /><button class="lb-btn lb-next" id="lbNext">‹</button><div class="lb-dots" id="lbDots"></div></div>' +
-    '<script>' +
-    '(function(){var KEY="deadline_' + (form.name || "p").replace(/[^a-zA-Z0-9]/g, "").slice(0, 24) + '";var d=localStorage.getItem(KEY);if(!d||new Date(d)<new Date()){d=new Date(Date.now()+1000*60*60*36).toISOString();localStorage.setItem(KEY,d);}function tick(){var diff=Math.max(0,new Date(d)-new Date());var h=String(Math.floor(diff/3600000)).padStart(2,"0");var m=String(Math.floor((diff%3600000)/60000)).padStart(2,"0");var s=String(Math.floor((diff%60000)/1000)).padStart(2,"0");var el=document.getElementById("cd");if(el)el.textContent=h+":"+m+":"+s;}tick();setInterval(tick,1000);})();' +
-    '(function(){var names=' + JSON.stringify(pool) + ';var toast=document.getElementById("toast");var tx=document.getElementById("toastTx");function show(){var r=names[Math.floor(Math.random()*names.length)];tx.textContent=r[0]+" من "+r[1]+" طلب المنتج للتو";toast.classList.add("show");setTimeout(function(){toast.classList.remove("show");},4500);}setTimeout(show,4000);setInterval(show,15000);})();' +
-    '(function(){var ov=document.getElementById("exitOv");var shown=false;function show(){if(shown)return;shown=true;ov.classList.add("show");}document.addEventListener("mouseout",function(e){if(!e.relatedTarget&&e.clientY<10)show();});var closeBtn=document.getElementById("exitClose");if(closeBtn)closeBtn.addEventListener("click",function(){ov.classList.remove("show");});ov.addEventListener("click",function(e){if(e.target===ov)ov.classList.remove("show");});var exitCta=document.getElementById("exitCta");if(exitCta)exitCta.addEventListener("click",function(){ov.classList.remove("show");});})();' +
-    '(function(){var imgs=' + JSON.stringify(images.map(function(im){return im.dataUrl;})) + ';var idx=0;var lb=document.getElementById("lightbox");if(!lb||!imgs.length)return;var lbImg=document.getElementById("lbImg");var dotsWrap=document.getElementById("lbDots");function renderDots(){dotsWrap.innerHTML="";imgs.forEach(function(_,i){var s=document.createElement("span");if(i===idx)s.className="on";dotsWrap.appendChild(s);});}function open(i){idx=i;lbImg.src=imgs[idx];renderDots();lb.classList.add("show");}function close(){lb.classList.remove("show");}function next(){idx=(idx+1)%imgs.length;lbImg.src=imgs[idx];renderDots();}function prev(){idx=(idx-1+imgs.length)%imgs.length;lbImg.src=imgs[idx];renderDots();}document.querySelectorAll(".lb-trigger").forEach(function(el){el.addEventListener("click",function(){open(parseInt(el.getAttribute("data-lb"),10)||0);});});var closeBtn=document.getElementById("lbClose");if(closeBtn)closeBtn.addEventListener("click",close);var prevBtn=document.getElementById("lbPrev");if(prevBtn)prevBtn.addEventListener("click",prev);var nextBtn=document.getElementById("lbNext");if(nextBtn)nextBtn.addEventListener("click",next);lb.addEventListener("click",function(e){if(e.target===lb)close();});document.addEventListener("keydown",function(e){if(!lb.classList.contains("show"))return;if(e.key==="Escape")close();if(e.key==="ArrowRight")next();if(e.key==="ArrowLeft")prev();});var touchStartX=null;lb.addEventListener("touchstart",function(e){touchStartX=e.touches[0].clientX;});lb.addEventListener("touchend",function(e){if(touchStartX===null)return;var diff=e.changedTouches[0].clientX-touchStartX;if(Math.abs(diff)>40){if(diff>0)prev();else next();}touchStartX=null;});})();' +
-    '(function(){var sentinel=document.getElementById("heroSentinel");var order=document.getElementById("order");var sticky=document.getElementById("stickyBar");if(!sentinel||!order||!sticky||!("IntersectionObserver" in window))return;var pastHero=false,atOrder=false;function update(){if(pastHero&&!atOrder)sticky.classList.add("show");else sticky.classList.remove("show");}new IntersectionObserver(function(entries){pastHero=!entries[0].isIntersecting;update();}).observe(sentinel);new IntersectionObserver(function(entries){atOrder=entries[0].isIntersecting;update();},{threshold:0.15}).observe(order);})();' +
-    'function submitOrder(){var nameEl=document.getElementById("ofName");var phoneEl=document.getElementById("ofPhone");var name=nameEl?nameEl.value.trim():"";var phone=phoneEl?phoneEl.value.trim():"";if(!name||!phone){alert("عفاك عمر الاسم ورقم الهاتف على الأقل");return;}var wrap=document.getElementById("orderFormWrap");if(wrap)wrap.style.display="none";var succ=document.getElementById("orderSuccess");if(succ)succ.classList.add("show");}' +
-    '<\/script></body></html>';
-}
-
-/* ============================== MOUNT ============================== */
-
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-</script>
-</body>
-</html>
+    '.note{font-size:10.5px;color:var(--muted);margin-bottom:12px;}.name{font-size:11px;
