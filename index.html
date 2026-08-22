@@ -123,7 +123,7 @@ const DESIGN_SYSTEMS = {
   ],
 };
 
-// كل نظام عندو 1-3 تنويعات لونية — نختار وحدة عشوائياً كل مرة باش الصفحات ما تبقاش بلون واحد مكرر
+// كل نظام لديه 1-3 تنويعات لونية — نختار واحدة عشوائياً في كل مرة حتى لا تبقى الصفحات بلون واحد مكرر
 function pickDesignTokens(systemName) {
   const variants = DESIGN_SYSTEMS[systemName] || DESIGN_SYSTEMS.Lifestyle;
   return variants[Math.floor(Math.random() * variants.length)];
@@ -238,8 +238,8 @@ function dataUrlParts(dataUrl) {
   const m = /^data:(.+?);base64,(.+)$/.exec(dataUrl || "");
   return m ? { mediaType: m[1], base64: m[2] } : null;
 }
-// تحسين الصورة محلياً بالـ Canvas: يقوّي التباين/الإضاءة/التشبع باش تبان الصورة أوضح وأقوى بحال صور الإعلانات
-// (هذا تحسين تلقائي بفلاتر، وليس تعديلاً بالذكاء الاصطناعي التوليدي — ماكاينش موديل تعديل صور حقيقي متاح فهاد البيئة)
+// تحسين الصورة محلياً بالـ Canvas: يقوّي التباين/الإضاءة/التشبع لكي تظهر الصورة أوضح وأقوى مثل صور الإعلانات
+// (هذا تحسين تلقائي بالفلاتر، وليس تعديلاً بالذكاء الاصطناعي التوليدي — لا يوجد نموذج حقيقي لتعديل الصور متاح في هذه البيئة)
 function enhanceImageForAds(dataUrl) {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -595,13 +595,13 @@ function FormScreen({ form, setForm, images, onUpload, onRemoveImage, onEnhanceI
             <span style={Object.assign({}, inputStyle, { width: "auto", display: "flex", alignItems: "center", color: "#8da0bd", fontWeight: 800 })}>{country.phoneCode}</span>
             <input value={form.whatsapp} onChange={(e) => setForm((f) => ({ ...f, whatsapp: e.target.value.replace(/[^0-9]/g, "") }))} placeholder="5xxxxxxxx" dir="ltr" style={Object.assign({}, inputStyle, { flex: 1 })} />
           </div>
-          <span style={{ color: "#5B6478", fontSize: 11 }}>إلا خليتيه فارغ، أزرار الواتساب/الاتصال ما غاديش تظهر فالصفحة.</span>
+          <span style={{ color: "#5B6478", fontSize: 11 }}>إذا تركته فارغاً، فلن تظهر أزرار الواتساب/الاتصال في الصفحة.</span>
         </Field>
         <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", padding: "10px 2px" }}>
           <input type="checkbox" checked={form.showOrderForm} onChange={(e) => setForm((f) => ({ ...f, showOrderForm: e.target.checked }))} style={{ width: 18, height: 18, accentColor: "#22D3EE", cursor: "pointer" }} />
           <span style={{ color: "#B7C0D4", fontSize: 13, fontWeight: 600 }}>تضمين نموذج طلب داخل الصفحة</span>
         </label>
-        <span style={{ color: "#5B6478", fontSize: 11, marginTop: -10 }}>إلا عطلتيه، الأزرار غادي توديك مباشرة للواتساب/الاتصال إلا كان الرقم متوفر.</span>
+        <span style={{ color: "#5B6478", fontSize: 11, marginTop: -10 }}>إذا عطّلت هذا الخيار، فستنقلك الأزرار مباشرة إلى الواتساب أو الاتصال إذا كان الرقم متوفراً.</span>
         {error && <div style={{ color: "#F87171", fontSize: 13, background: "#2A1519", padding: "8px 12px", borderRadius: 8 }}>{error}</div>}
         <button onClick={onGenerate} style={{ marginTop: 6, background: "linear-gradient(90deg,#3B82F6,#22D3EE,#5eead4)", border: "none", borderRadius: 12, color: "#04101C", fontWeight: 800, fontSize: 16, padding: "15px 20px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: "0 16px 34px -10px #22D3EE88" }}>
           أنشئ صفحة الهبوط <span style={{ fontSize: 18 }}>🚀</span>
@@ -694,7 +694,7 @@ function PreviewScreen(props) {
   );
 }
 
-// معاينة كاملة بلا شريط أدوات يغطي المحتوى — سكرول حر للصفحة بأكملها بحال ما غادي تبان عند الزبون بالضبط، قبل ما تنزّل الملف
+// معاينة كاملة بلا شريط أدوات يغطي المحتوى — سكرول حر للصفحة بأكملها كما ستظهر تماماً عند العميل، قبل تنزيل الملف
 function FullPreviewModal({ onClose, onDownload, children }) {
   useEffect(() => {
     function onKey(e) { if (e.key === "Escape") onClose(); }
@@ -706,7 +706,7 @@ function FullPreviewModal({ onClose, onDownload, children }) {
     <div style={{ position: "fixed", inset: 0, zIndex: 400, background: "#05070C", display: "flex", flexDirection: "column" }} className="fade-in">
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: "#0E1526", borderBottom: "1px solid #1D2740", flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#B7C0D4", fontSize: 13, fontWeight: 700 }}>
-          <SvgIcon name="eye" size={16} color="#22D3EE" /> معاينة كاملة — بحال ما غادي تبان عند الزبون بالضبط
+          <SvgIcon name="eye" size={16} color="#22D3EE" /> معاينة كاملة — كما ستظهر تماماً عند العميل
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <button onClick={onDownload} style={{ display: "flex", alignItems: "center", gap: 6, background: "linear-gradient(135deg,#22D3EE,#3B82F6)", border: "none", color: "#04101C", fontSize: 12.5, fontWeight: 800, padding: "8px 14px", borderRadius: 999, cursor: "pointer" }}>
@@ -742,7 +742,7 @@ function LandingPage({ data, tokens, images, form, country }) {
   const [toast, setToast] = useState(null);
   const [exitShown, setExitShown] = useState(false);
 
-  // Sticky CTA: يبان بعد النزول من الـHero، ويختفي كي يوصل المستخدم لنموذج الطلب حتى لا يغطيه
+  // Sticky CTA: يظهر بعد النزول من الـHero، ويختفي عندما يصل المستخدم إلى نموذج الطلب حتى لا يغطيه
   const [showStickyCta, setShowStickyCta] = useState(false);
 
   // Lightbox: تكبير الصور مع تنقل بالسهام ولوحة المفاتيح والسحب باللمس
@@ -779,7 +779,7 @@ function LandingPage({ data, tokens, images, form, country }) {
     return () => { heroObs.disconnect(); orderObs.disconnect(); };
   }, []);
 
-  // عداد محفوظ فـ localStorage — لا يعيد نفسه عند تحديث الصفحة
+  // عداد محفوظ في localStorage — لا يتكرر عند تحديث الصفحة
   const [secondsLeft, setSecondsLeft] = useState(0);
   useEffect(() => {
     const key = "deadline_" + (form.name || "p").replace(/[^a-zA-Z0-9]/g, "").slice(0, 24);
@@ -814,15 +814,15 @@ function LandingPage({ data, tokens, images, form, country }) {
   const waLink = hasContact ? "https://wa.me/" + country.phoneCode.replace("+", "") + form.whatsapp : "";
   const callLink = hasContact ? "tel:" + country.phoneCode + form.whatsapp : "";
 
-  // السعر قبل التخفيض ونسبة الخصم يُحسبان من القيم اللي دخلها المستخدم فالفورم مباشرة
+  // السعر قبل التخفيض ونسبة الخصم يُحسبان من القيم التي أدخلها المستخدم في النموذج مباشرة
   const priceOld = form.priceOld && Number(form.priceOld) > Number(form.price) ? form.priceOld : null;
   const discountPercent = priceOld ? Math.round((1 - Number(form.price) / Number(priceOld)) * 100) : null;
 
-  // نموذج الطلب اختياري — إلا تعطّل، الأزرار كلها تودي مباشرة للواتساب/الاتصال إن وُجد
+  // نموذج الطلب اختياري — إذا تم تعطيله، فإن الأزرار كلها تنقل مباشرة إلى الواتساب/الاتصال إن وُجد
   const showOrderForm = form.showOrderForm !== false;
   const primaryCtaHref = showOrderForm ? "#order" : (hasContact ? waLink : (hasContact ? callLink : "#order"));
 
-  // بقية الصور (غير صورة الهيرو) تتوزع على طول الصفحة بدل ما تتجمع فبلاصة وحدة
+  // بقية الصور (غير صورة الهيرو) تتوزع على طول الصفحة بدلاً من أن تتجمع في مكان واحد
   const secondaryImages = images.slice(1);
   function SectionImage({ idx }) {
     const img = secondaryImages[idx];
@@ -1170,7 +1170,7 @@ function buildStandaloneHTML(data, tokens, images, form, country) {
   const waNumber = hasContact ? country.phoneCode.replace("+", "") + form.whatsapp : "";
   const pool = socialProofPool(form.countryCode);
 
-  // السعر قبل التخفيض ونسبة الخصم من قيم الفورم مباشرة
+  // السعر قبل التخفيض ونسبة الخصم من قيم النموذج مباشرة
   const priceOld = form.priceOld && Number(form.priceOld) > Number(form.price) ? form.priceOld : null;
   const discountPercent = priceOld ? Math.round((1 - Number(form.price) / Number(priceOld)) * 100) : null;
 
@@ -1183,7 +1183,7 @@ function buildStandaloneHTML(data, tokens, images, form, country) {
   const heroImg = images[0] ? images[0].dataUrl : "";
   const heroGalleryHtml = heroImg ? '<img id="mainImg" class="lb-trigger" data-lb="0" src="' + heroImg + '" alt="' + esc(form.name) + '" />' : "";
 
-  // بقية الصور تتوزع على طول الصفحة بدل ما تتجمع فبلاصة وحدة
+  // بقية الصور تتوزع على طول الصفحة بدلاً من أن تتجمع في مكان واحد
   const secondaryImages = images.slice(1).map((im) => im.dataUrl);
   const sectionImg = (idx) => secondaryImages[idx] ? '<div class="sec-img"><img class="lb-trigger" data-lb="' + (idx+1) + '" src="' + secondaryImages[idx] + '" alt="' + esc(form.name) + '" /></div>' : "";
 
@@ -1262,4 +1262,4 @@ function buildStandaloneHTML(data, tokens, images, form, country) {
     '.t{font-weight:700;font-size:14px;}.d{font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.7;}.step{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;}' +
     '.num{width:24px;height:24px;border-radius:50%;background:var(--primary);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}' +
     '.spec-row{display:flex;justify-content:space-between;padding:8px 0;font-size:12.5px;border-bottom:1px solid var(--bg);}.bold{font-weight:700;}.muted{color:var(--muted);}.accent{color:var(--accent);font-weight:800;}' +
-    '.note{font-size:10.5px;color:var(--muted);margin-bottom:12px;}.name{font-size:11px;
+    '.note{font-size:10.5px;color:var(--muted);margin-
