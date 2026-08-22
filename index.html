@@ -6,10 +6,27 @@
 <title>Arabic Landing AI — مولّد صفحات الهبوط</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Noto+Kufi+Arabic:wght@400;500;700;800&family=Alexandria:wght@400;500;600;700;800&family=Readex+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" onerror="this.onerror=null;this.src='https://unpkg.com/react@18/umd/react.production.min.js'"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" onerror="this.onerror=null;this.src='https://unpkg.com/react-dom@18/umd/react-dom.production.min.js'"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js" onerror="this.onerror=null;this.src='https://unpkg.com/@babel/standalone@7.23.5/babel.min.js'"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" onerror="this.onerror=null;this.src='https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js'"></script>
+<script>
+  // حارس تحميل: إذا لم تُحمَّل المكتبات الأساسية خلال 10 ثوانٍ (شبكة بطيئة/محجوبة)، نعرض رسالة واضحة بدل صفحة فارغة بلا تفسير
+  window.__loadWatchdog = setTimeout(function () {
+    if (typeof React === "undefined" || typeof ReactDOM === "undefined" || typeof Babel === "undefined") {
+      var root = document.getElementById("root");
+      if (root && !root.hasChildNodes()) {
+        root.innerHTML = '<div dir="rtl" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#0B0F19;font-family:sans-serif;">' +
+          '<div style="max-width:340px;text-align:center;color:#F1F5F9;">' +
+          '<div style="font-size:36px;margin-bottom:14px;">⚠️</div>' +
+          '<h2 style="font-size:18px;margin-bottom:10px;">تعذّر تحميل الصفحة</h2>' +
+          '<p style="font-size:13.5px;color:#8B96AC;line-height:1.8;margin-bottom:18px;">لم تنجح المكتبات الأساسية في التحميل. تأكد من اتصالك بالإنترنت أو جرّب تعطيل أي حاجب إعلانات (Ad Blocker)، ثم أعد تحميل الصفحة.</p>' +
+          '<button onclick="location.reload()" style="background:#22D3EE;color:#04101C;border:none;font-weight:800;font-size:14px;padding:12px 26px;border-radius:10px;cursor:pointer;">إعادة تحميل الصفحة</button>' +
+          '</div></div>';
+      }
+    }
+  }, 10000);
+</script>
 <style>
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: #0B0F19; }
@@ -1254,12 +1271,4 @@ function buildStandaloneHTML(data, tokens, images, form, country) {
     '.sec-img{padding:0 20px 24px;}.sec-img img{width:100%;max-height:260px;object-fit:cover;border-radius:var(--radius);display:block;}' +
     '.price-row{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;}.price{font-size:26px;font-weight:900;color:var(--primary);}.old{font-size:15px;color:var(--muted);text-decoration:line-through;}' +
     '.discount{font-size:12px;font-weight:800;color:#fff;background:#E63946;padding:3px 9px;border-radius:999px;}.badges{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;}' +
-    '.badge{font-size:11.5px;font-weight:600;color:var(--muted);background:var(--surface);padding:5px 10px;border-radius:999px;}.cta{display:block;text-align:center;background:var(--primary);color:' + (tokens.mood === "dark" ? tokens.bg : "#fff") + ';font-weight:800;font-size:15.5px;padding:15px;border-radius:' + btnRadius + ';box-shadow:' + btnShadow + ';text-decoration:none;font-family:"' + dna.heading + '",sans-serif;}' +
-    '.sec{padding:10px 20px 24px;}.sec h2{font-size:17px;font-weight:800;margin-bottom:12px;}.grid1{display:grid;gap:12px;}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}' +
-    '.card{background:var(--card);border-radius:var(--radius);padding:14px;margin-bottom:10px;}.row{display:flex;gap:12px;}.spread{display:flex;justify-content:space-between;align-items:center;}.center{text-align:center;}' +
-    '.compare-bad{background:var(--bg);border:1px solid rgba(140,140,140,.3);}.compare-good{border:1px solid var(--primary);}.ct{font-weight:800;font-size:12px;margin-bottom:8px;}.ci{font-size:11.5px;margin-bottom:6px;}.compare .center{text-align:center;}' +
-    '.accent-bar{border-right:3px solid var(--primary);}.accent-bar-warn{border-right:3px solid var(--accent2);}.incl-row{font-size:12.5px;padding:6px 0;display:flex;gap:8px;align-items:center;}' +
-    '.t{font-weight:700;font-size:14px;}.d{font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.7;}.step{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;}' +
-    '.num{width:24px;height:24px;border-radius:50%;background:var(--primary);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}' +
-    '.spec-row{display:flex;justify-content:space-between;padding:8px 0;font-size:12.5px;border-bottom:1px solid var(--bg);}.bold{font-weight:700;}.muted{color:var(--muted);}.accent{color:var(--accent);font-weight:800;}' +
-    '.note{font-size:10.5px;color:var(--muted);margin-
+    '.badge{font-size:11.5px;font-weight:600;color:var(--muted);background:var(--surface);padding:5px 10px;border-radius:999px;}.cta{display:block;text-align:center;background:var(--primary);color:' + (tokens.mood === "dark" ? tokens.bg : "#fff") + ';font-weigh
