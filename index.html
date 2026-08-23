@@ -240,6 +240,32 @@ function fileToDataUrl(file) {
     r.readAsDataURL(file);
   });
 }
+// نضغط ونصغّر الصورة قبل رفعها: الصور الأصلية من الهاتف (4-8 ميجابكسل) توصل حجمها بعد base64
+// لمئات الكيلوبايت لكل صورة، وبمجموع 8 صور يمكن تتجاوز حد حجم الطلب المسموح به عند السيرفر (fetch إلى /api/generate)
+// فيتلقى المستخدم خطأ "Request Entity Too Large" بدل رد JSON. هذا التصغير يبقي جودة كافية للعرض والتحليل، ويقلل الحجم بشكل كبير.
+function resizeImageDataUrl(dataUrl, maxDim, quality) {
+  maxDim = maxDim || 1600;
+  quality = quality || 0.85;
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        let w = img.naturalWidth, h = img.naturalHeight;
+        if (w > maxDim || h > maxDim) {
+          if (w >= h) { h = Math.round(h * (maxDim / w)); w = maxDim; }
+          else { w = Math.round(w * (maxDim / h)); h = maxDim; }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      } catch (e) { reject(e); }
+    };
+    img.onerror = reject;
+    img.src = dataUrl;
+  });
+}
 function dataUrlParts(dataUrl) {
   const m = /^data:(.+?);base64,(.+)$/.exec(dataUrl || "");
   return m ? { mediaType: m[1], base64: m[2] } : null;
@@ -313,13 +339,37 @@ async function runQualityControl(data) {
   }
 }
 async function callClaude(content) {
-  const response = await fetch("/api/generate", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ content }),
-  });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error || "تعذّر الاتصال بمحرك الذكاء الاصطناعي.");
+  // يتصل بالـ Backend الخاص بنا (api/generate.js) بدل الاتصال المباشر بـ Anthropic.
+  // مفتاح الـ API مخبّأ فالسيرفر (Environment Variable) وما ظاهرش هنا فالفرونت-إند.
+  let response;
+  try {
+    response = await fetch("/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content }),
+    });
+  } catch (netErr) {
+    throw new Error("تعذّر الوصول للسيرفر. تأكد من اتصالك بالإنترنت أو أن نقطة /api/generate تعمل بشكل صحيح.");
+  }
+  const rawText = await response.text();
+  let data;
+  try {
+    data = JSON.parse(rawText);
+  } catch (parseErr) {
+    // الرد ماشي JSON صحيح — غالباً خطأ من السيرفر نفسه (حجم الطلب كبير، انتهاء المهلة، أو المسار /api/generate غير موجود)
+    const preview = (rawText || "").trim().slice(0, 120);
+    if (response.status === 413 || /request entity too large/i.test(preview)) {
+      throw new Error("حجم الصور المرسلة كبير بزاف على السيرفر (خطأ 413: Request Entity Too Large). جرّب صور أقل أو بجودة أخف.");
+    }
+    if (response.status === 404) {
+      throw new Error("نقطة الاتصال /api/generate غير موجودة على السيرفر. تأكد من إعداد الـ backend.");
+    }
+    if (response.status === 504 || response.status === 408) {
+      throw new Error("انتهت مهلة الاتصال بالسيرفر (Timeout). حاول مرة أخرى.");
+    }
+    throw new Error("رد غير متوقع من السيرفر (كود " + response.status + "): " + (preview || "لا يوجد محتوى") + (preview.length >= 120 ? "…" : ""));
+  }
+  if (!response.ok) throw new Error(data.error || "تعذّر الاتصال بمحرك الذكاء الاصطناعي (كود " + response.status + ").");
   if (!data.text) throw new Error("لم يصل رد نصي من المحرك");
   return validateGeneratedData(stripToJSON(data.text));
 }
@@ -414,7 +464,9 @@ function App() {
     const next = [];
     for (const f of files) {
       try {
-        const dataUrl = await fileToDataUrl(f);
+        const rawDataUrl = await fileToDataUrl(f);
+        // نصغّر الصورة قبل تخزينها (تُستخدم فالمعاينة وفالإرسال للـ API معاً) لتفادي تجاوز حد حجم الطلب عند التوليد
+        const dataUrl = await resizeImageDataUrl(rawDataUrl, 1600, 0.85);
         const parts = dataUrlParts(dataUrl);
         if (parts) next.push({ dataUrl, mediaType: parts.mediaType, base64: parts.base64 });
       } catch (e2) {}
