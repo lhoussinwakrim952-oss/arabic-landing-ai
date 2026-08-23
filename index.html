@@ -612,10 +612,39 @@ function LoadingScreen({ stepIdx }) {
 }
 
 function PreviewScreen(props) {
-  const { data, tokens, images, form, country, previewMode, setPreviewMode, editCmd, setEditCmd, onApplyEdit, editing, canUndo, canRedo, onUndo, onRedo, onCopy, onDownload, copyStatus, error, onBack, onShuffleDesign } = props;
+  const { data, tokens, images, form, country, previewMode, setPreviewMode, editCmd, setEditCmd, onApplyEdit, editing, canUndo, canRedo, onUndo, onRedo, onDownload, error, onBack, onShuffleDesign } = props;
   const captureRef = useRef(null);
   const [jpgLoading, setJpgLoading] = useState(false);
-  const [fullPreviewOpen, setFullPreviewOpen] = useState(false);
+
+  // شريط الأدوات (الأزرار + حقل التعديل) يختفي للأعلى أثناء النزول في الصفحة، ويظهر من جديد عند الصعود لأعلى
+  const headerRef = useRef(null);
+  const [headerHeight, setHeaderHeight] = useState(0);
+  const [headerVisible, setHeaderVisible] = useState(true);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    function measure() { if (headerRef.current) setHeaderHeight(headerRef.current.offsetHeight); }
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+
+  useEffect(() => {
+    lastScrollY.current = window.scrollY || 0;
+    function onScroll() {
+      const y = window.scrollY || 0;
+      const goingDown = y > lastScrollY.current;
+      const delta = Math.abs(y - lastScrollY.current);
+      if (y <= 4) { setHeaderVisible(true); lastScrollY.current = y; return; }
+      if (delta > 4) {
+        setHeaderVisible(goingDown && y > 80 ? false : !goingDown ? true : headerVisible);
+        lastScrollY.current = y;
+      }
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   async function exportJPG() {
     if (!captureRef.current || !window.html2canvas) return;
     setJpgLoading(true);
@@ -630,76 +659,38 @@ function PreviewScreen(props) {
   }
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      <div style={{ position: "sticky", top: 0, zIndex: 20, background: "#0E1526", borderBottom: "1px solid #1D2740", padding: "10px 16px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-        <button onClick={onBack} style={toolBtn}><SvgIcon name="back" size={14} /> مشروع جديد</button>
-        <button onClick={onShuffleDesign} style={Object.assign({}, toolBtn, { background: "#7C3AED", color: "#fff", borderColor: "#7C3AED" })}><SvgIcon name="shuffle" size={14} /> ولّد تصميم مختلف</button>
-        <div style={{ flex: 1 }} />
-        <button onClick={onUndo} disabled={!canUndo} style={Object.assign({}, toolBtn, { opacity: canUndo ? 1 : 0.4 })}><SvgIcon name="undo" size={14} /></button>
-        <button onClick={onRedo} disabled={!canRedo} style={Object.assign({}, toolBtn, { opacity: canRedo ? 1 : 0.4 })}><SvgIcon name="redo" size={14} /></button>
-        <div style={{ display: "flex", background: "#131A2A", borderRadius: 8, padding: 3, gap: 2 }}>
-          <button onClick={() => setPreviewMode("mobile")} style={Object.assign({}, segBtn, { background: previewMode === "mobile" ? "#22D3EE" : "transparent", color: previewMode === "mobile" ? "#04101C" : "#B7C0D4" })}><SvgIcon name="mobile" size={14} /></button>
-          <button onClick={() => setPreviewMode("tablet")} style={Object.assign({}, segBtn, { background: previewMode === "tablet" ? "#22D3EE" : "transparent", color: previewMode === "tablet" ? "#04101C" : "#B7C0D4" })}><SvgIcon name="tablet" size={14} /></button>
-          <button onClick={() => setPreviewMode("desktop")} style={Object.assign({}, segBtn, { background: previewMode === "desktop" ? "#22D3EE" : "transparent", color: previewMode === "desktop" ? "#04101C" : "#B7C0D4" })}><SvgIcon name="desktop" size={14} /></button>
+      <div ref={headerRef} style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 50, background: "#0E1526", transform: headerVisible ? "translateY(0)" : "translateY(-100%)", transition: "transform .3s ease", boxShadow: "0 6px 18px rgba(0,0,0,.35)" }}>
+        <div style={{ borderBottom: "1px solid #1D2740", padding: "10px 16px", display: "flex", alignItems: "center", gap: 8, overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+          <button onClick={onBack} style={Object.assign({}, toolBtn, { flexShrink: 0 })}><SvgIcon name="back" size={14} /> مشروع جديد</button>
+          <button onClick={onShuffleDesign} style={Object.assign({}, toolBtn, { flexShrink: 0, background: "#7C3AED", color: "#fff", borderColor: "#7C3AED" })}><SvgIcon name="shuffle" size={14} /> ولّد تصميم مختلف</button>
+          <button onClick={onUndo} disabled={!canUndo} style={Object.assign({}, toolBtn, { flexShrink: 0, opacity: canUndo ? 1 : 0.4 })}><SvgIcon name="undo" size={14} /></button>
+          <button onClick={onRedo} disabled={!canRedo} style={Object.assign({}, toolBtn, { flexShrink: 0, opacity: canRedo ? 1 : 0.4 })}><SvgIcon name="redo" size={14} /></button>
+          <div style={{ display: "flex", background: "#131A2A", borderRadius: 8, padding: 3, gap: 2, flexShrink: 0 }}>
+            <button onClick={() => setPreviewMode("mobile")} style={Object.assign({}, segBtn, { background: previewMode === "mobile" ? "#22D3EE" : "transparent", color: previewMode === "mobile" ? "#04101C" : "#B7C0D4" })}><SvgIcon name="mobile" size={14} /></button>
+            <button onClick={() => setPreviewMode("desktop")} style={Object.assign({}, segBtn, { background: previewMode === "desktop" ? "#22D3EE" : "transparent", color: previewMode === "desktop" ? "#04101C" : "#B7C0D4" })}><SvgIcon name="desktop" size={14} /></button>
+          </div>
+          <button onClick={exportJPG} disabled={jpgLoading} style={Object.assign({}, toolBtn, { flexShrink: 0, opacity: jpgLoading ? 0.6 : 1 })}><SvgIcon name="image" size={14} /> {jpgLoading ? "..." : "تحميل كصورة"}</button>
+          <button onClick={onDownload} style={{ display: "flex", alignItems: "center", gap: 7, flexShrink: 0, background: "linear-gradient(135deg,#22D3EE,#3B82F6)", border: "none", color: "#04101C", fontSize: 12.5, fontWeight: 800, padding: "9px 15px", borderRadius: 999, cursor: "pointer", boxShadow: "0 10px 22px -6px #22D3EEaa" }}>
+            <SvgIcon name="cloudDownload" size={15} strokeWidth={2.4} /> تحميل HTML
+          </button>
         </div>
-        <button onClick={() => setFullPreviewOpen(true)} style={toolBtn}><SvgIcon name="eye" size={14} /> معاينة كاملة</button>
-        <button onClick={onCopy} style={toolBtn}><SvgIcon name="copy" size={14} /> نسخ HTML</button>
-        <button onClick={exportJPG} disabled={jpgLoading} style={Object.assign({}, toolBtn, { opacity: jpgLoading ? 0.6 : 1 })}><SvgIcon name="image" size={14} /> {jpgLoading ? "..." : "تحميل JPG"}</button>
-        <button onClick={onDownload} style={{ display: "flex", alignItems: "center", gap: 7, background: "linear-gradient(135deg,#22D3EE,#3B82F6)", border: "none", color: "#04101C", fontSize: 12.5, fontWeight: 800, padding: "9px 15px", borderRadius: 999, cursor: "pointer", boxShadow: "0 10px 22px -6px #22D3EEaa" }}>
-          <SvgIcon name="cloudDownload" size={15} strokeWidth={2.4} /> تحميل HTML
-        </button>
-      </div>
-      {copyStatus && <div style={{ textAlign: "center", color: "#6EE7B7", fontSize: 12, padding: "6px 0", background: "#0E1526" }}>{copyStatus}</div>}
-      <div style={{ background: "#0E1526", borderBottom: "1px solid #1D2740", padding: "10px 16px", display: "flex", gap: 8 }}>
-        <div style={{ flex: 1, position: "relative" }}>
-          <span style={{ position: "absolute", top: "50%", right: 12, transform: "translateY(-50%)" }}><SvgIcon name="wand" size={15} color="#5B6478" /></span>
-          <input value={editCmd} onChange={(e) => setEditCmd(e.target.value)} onKeyDown={(e) => e.key === "Enter" && onApplyEdit()} placeholder='مثال: "غيّر العنوان ليكون أكثر إقناعاً" أو "احذف آراء العملاء"' style={Object.assign({}, inputStyle, { paddingRight: 34 })} disabled={editing} />
+        <div style={{ background: "#0E1526", borderBottom: "1px solid #1D2740", padding: "10px 16px", display: "flex", gap: 8 }}>
+          <div style={{ flex: 1, position: "relative" }}>
+            <span style={{ position: "absolute", top: "50%", right: 12, transform: "translateY(-50%)" }}><SvgIcon name="wand" size={15} color="#5B6478" /></span>
+            <input value={editCmd} onChange={(e) => setEditCmd(e.target.value)} onKeyDown={(e) => e.key === "Enter" && onApplyEdit()} placeholder='مثال: "غيّر العنوان ليكون أكثر إقناعاً" أو "احذف آراء العملاء"' style={Object.assign({}, inputStyle, { paddingRight: 34 })} disabled={editing} />
+          </div>
+          <button onClick={onApplyEdit} disabled={editing || !editCmd.trim()} style={Object.assign({}, toolBtn, { background: "#3B82F6", color: "#fff", borderColor: "#3B82F6", opacity: editing || !editCmd.trim() ? 0.5 : 1 })}>
+            <SvgIcon name={editing ? "redo" : "send"} size={14} style={editing ? { animation: "spin 1s linear infinite" } : {}} />
+          </button>
         </div>
-        <button onClick={onApplyEdit} disabled={editing || !editCmd.trim()} style={Object.assign({}, toolBtn, { background: "#3B82F6", color: "#fff", borderColor: "#3B82F6", opacity: editing || !editCmd.trim() ? 0.5 : 1 })}>
-          <SvgIcon name={editing ? "redo" : "send"} size={14} style={editing ? { animation: "spin 1s linear infinite" } : {}} />
-        </button>
+        {error && <div style={{ color: "#F87171", fontSize: 12, textAlign: "center", padding: "6px 0", background: "#0E1526" }}>{error}</div>}
       </div>
-      {error && <div style={{ color: "#F87171", fontSize: 12, textAlign: "center", padding: "6px 0", background: "#0E1526" }}>{error}</div>}
+      <div style={{ height: headerHeight }} />
       <div style={{ flex: 1, background: "#05070C", padding: "28px 16px", display: "flex", justifyContent: "center" }}>
-        <div style={{ width: previewMode === "mobile" ? 390 : previewMode === "tablet" ? 768 : "100%", maxWidth: previewMode === "mobile" ? 390 : previewMode === "tablet" ? 768 : 1100, borderRadius: previewMode === "mobile" ? 30 : 16, overflow: "hidden", border: previewMode === "mobile" ? "8px solid #1B1F2B" : "1px solid #1D2740", boxShadow: "0 30px 60px rgba(0,0,0,.5)", height: "fit-content" }}>
+        <div style={{ width: previewMode === "mobile" ? 390 : "100%", maxWidth: previewMode === "mobile" ? 390 : 1100, borderRadius: previewMode === "mobile" ? 30 : 16, overflow: "hidden", border: previewMode === "mobile" ? "8px solid #1B1F2B" : "1px solid #1D2740", boxShadow: "0 30px 60px rgba(0,0,0,.5)", height: "fit-content" }}>
           <div ref={captureRef}>
             <LandingPage data={data} tokens={tokens} images={images} form={form} country={country} />
           </div>
-        </div>
-      </div>
-      {fullPreviewOpen && (
-        <FullPreviewModal onClose={() => setFullPreviewOpen(false)} onDownload={onDownload}>
-          <LandingPage data={data} tokens={tokens} images={images} form={form} country={country} />
-        </FullPreviewModal>
-      )}
-    </div>
-  );
-}
-
-function FullPreviewModal({ onClose, onDownload, children }) {
-  useEffect(() => {
-    function onKey(e) { if (e.key === "Escape") onClose(); }
-    window.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
-    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = ""; };
-  }, [onClose]);
-  return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 400, background: "#05070C", display: "flex", flexDirection: "column" }} className="fade-in">
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: "#0E1526", borderBottom: "1px solid #1D2740", flexShrink: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#B7C0D4", fontSize: 13, fontWeight: 700 }}>
-          <SvgIcon name="eye" size={16} color="#22D3EE" /> معاينة كاملة — كما ستظهر تماماً عند العميل
-        </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={onDownload} style={{ display: "flex", alignItems: "center", gap: 6, background: "linear-gradient(135deg,#22D3EE,#3B82F6)", border: "none", color: "#04101C", fontSize: 12.5, fontWeight: 800, padding: "8px 14px", borderRadius: 999, cursor: "pointer" }}>
-            <SvgIcon name="cloudDownload" size={14} strokeWidth={2.4} /> تحميل HTML
-          </button>
-          <button onClick={onClose} aria-label="إغلاق المعاينة" style={{ width: 34, height: 34, borderRadius: "50%", background: "#131A2A", border: "1px solid #202A42", color: "#E2E8F5", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-            <SvgIcon name="close" size={16} />
-          </button>
-        </div>
-      </div>
-      <div style={{ flex: 1, overflowY: "auto", display: "flex", justifyContent: "center", padding: "24px 16px" }}>
-        <div style={{ width: 390, maxWidth: "100%", borderRadius: 30, overflow: "hidden", border: "8px solid #1B1F2B", boxShadow: "0 30px 60px rgba(0,0,0,.5)", height: "fit-content" }}>
-          {children}
         </div>
       </div>
     </div>
