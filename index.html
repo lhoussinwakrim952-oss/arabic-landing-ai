@@ -497,9 +497,12 @@ function App() {
     if (images.length === 0) return setError("ارفع صورة واحدة على الأقل للمنتج.");
     setStep("loading");
     try {
+      // نرسل بحد أقصى 5 صور فقط لمحرك التوليد (كافية لتحليل جيد للمنتج) لتقليل حجم الطلب،
+      // بينما جميع الصور المرفوعة (حتى 8) تبقى متوفرة فمعرض الصفحة النهائية
+      const imagesForAI = images.slice(0, 5);
       const content = [
         { type: "text", text: buildGeneratePrompt(form, country) },
-        ...images.map((img) => ({ type: "image", source: { type: "base64", media_type: img.mediaType, data: img.base64 } })),
+        ...imagesForAI.map((img) => ({ type: "image", source: { type: "base64", media_type: img.mediaType, data: img.base64 } })),
       ];
       const generated = await callClaude(content);
       const result = await runQualityControl(generated);
