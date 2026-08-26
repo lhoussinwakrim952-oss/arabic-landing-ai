@@ -10,6 +10,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" onerror="this.onerror=null;this.src='https://unpkg.com/react-dom@18/umd/react-dom.production.min.js'"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js" onerror="this.onerror=null;this.src='https://unpkg.com/@babel/standalone@7.23.5/babel.min.js'"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" onerror="this.onerror=null;this.src='https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js'"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" onerror="this.onerror=null;this.src='https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js'"></script>
 <script>
   window.__loadWatchdog = setTimeout(function () {
     if (typeof React === "undefined" || typeof ReactDOM === "undefined" || typeof Babel === "undefined") {
@@ -429,6 +430,303 @@ function buildEditPrompt(currentData, instruction, country) {
     "، العملة: " + country.currency + ".\n\nعدّل فقط ما يطلبه المستخدم، وأعد كامل كائن JSON بنفس الشكل والحقول بالضبط " +
     "(بما فيها designSystem وsections وhero وseo) بعد تطبيق التعديل، بدون أي نص خارج JSON وبدون Markdown fences.";
 }
+
+/* ============================== SUPABASE AUTH ============================== */
+/* لا يغيّر هذا القسم أي شيء في Generator (App وما بعده). فقط يضيف بوابة تسجيل دخول
+   وشريطاً علوياً يعرض البريد/الرصيد قبل عرض App كما هي بدون أي تعديل عليها. */
+
+let __sbClientPromise = null;
+function getSupabaseClient() {
+  if (__sbClientPromise) return __sbClientPromise;
+  __sbClientPromise = fetch("/api/supabase-config")
+    .then((r) => { if (!r.ok) throw new Error("config-fetch-failed"); return r.json(); })
+    .then((cfg) => {
+      if (!cfg || !cfg.url || !cfg.key || typeof window.supabase === "undefined") return null;
+      return window.supabase.createClient(cfg.url, cfg.key, {
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+      });
+    })
+    .catch(() => null);
+  return __sbClientPromise;
+}
+
+function mapAuthError(err) {
+  const msg = (err && err.message) || "";
+  if (/already registered|already exists|user_repeated_signup/i.test(msg)) return "هذا البريد الإلكتروني مسجّل مسبقاً. جرّب تسجيل الدخول.";
+  if (/invalid login credentials/i.test(msg)) return "البريد الإلكتروني أو كلمة المرور غير صحيحة.";
+  if (/password should be at least/i.test(msg)) return "كلمة المرور يجب ألا تقل عن 6 أحرف.";
+  if (/email not confirmed/i.test(msg)) return "لم يتم تأكيد البريد الإلكتروني بعد. تحقق من صندوق الوارد.";
+  if (/unable to validate email|invalid email/i.test(msg)) return "صيغة البريد الإلكتروني غير صحيحة.";
+  if (/rate limit/i.test(msg)) return "محاولات كثيرة جداً. حاول مرة أخرى بعد قليل.";
+  return msg || "حدث خطأ غير متوقع. حاول مرة أخرى.";
+}
+
+function SplashLoader() {
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0B0F19" }}>
+      <div style={{ width: 34, height: 34, borderRadius: "50%", border: "3px solid #202A42", borderTopColor: "#22D3EE", animation: "spin .8s linear infinite" }} />
+    </div>
+  );
+}
+
+function ConfigErrorScreen() {
+  return (
+    <div dir="rtl" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0B0F19", padding: 24 }}>
+      <div className="glass" style={{ maxWidth: 380, textAlign: "center", padding: 26, borderRadius: 20, color: "#F1F5F9" }}>
+        <div style={{ fontSize: 32, marginBottom: 12 }}>⚠️</div>
+        <h2 style={{ fontSize: 17, marginBottom: 8 }}>إعداد تسجيل الدخول غير مكتمل</h2>
+        <p style={{ fontSize: 13, color: "#8B96AC", lineHeight: 1.8 }}>تعذّر الاتصال بخدمة المصادقة. تأكد من إضافة SUPABASE_URL وSUPABASE_PUBLISHABLE_KEY في متغيرات البيئة على Vercel، ثم أعد النشر.</p>
+      </div>
+    </div>
+  );
+}
+
+function AuthShell({ children }) {
+  return (
+    <div dir="rtl" style={{ minHeight: "100vh", background: "#0B0F19", position: "relative", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 20px" }} className="fade-in">
+      <div className="orb" style={{ width: 260, height: 260, top: -40, right: -40, background: "#2563eb55", animation: "drift 9s ease-in-out infinite" }} />
+      <div className="orb" style={{ width: 200, height: 200, bottom: 60, left: -50, background: "#06b6d455", animation: "drift 11s ease-in-out infinite reverse" }} />
+      <div style={{ width: "100%", maxWidth: 380, position: "relative" }}>
+        <div style={{ textAlign: "center", marginBottom: 26 }}>
+          <div className="glass" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 14px", borderRadius: 999, color: "#5eead4", fontSize: 13, fontWeight: 600 }}>
+            <Ico size={14}>✨</Ico> Arabic Landing AI
+          </div>
+        </div>
+        <div className="glass" style={{ borderRadius: 20, padding: 24, boxShadow: "0 30px 70px rgba(0,0,0,.45)" }}>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const authBtnStyle = { marginTop: 4, background: "linear-gradient(90deg,#3B82F6,#22D3EE,#5eead4)", border: "none", borderRadius: 12, color: "#04101C", fontWeight: 800, fontSize: 15, padding: "14px 20px", cursor: "pointer", width: "100%", fontFamily: "inherit" };
+const authLinkStyle = { background: "none", border: "none", color: "#22D3EE", fontSize: 13, fontWeight: 700, cursor: "pointer", padding: 0, fontFamily: "inherit" };
+
+function AuthMessages({ error, msg }) {
+  return (
+    <React.Fragment>
+      {error && <div style={{ color: "#F87171", fontSize: 13, background: "#2A1519", padding: "8px 12px", borderRadius: 8 }}>{error}</div>}
+      {msg && <div style={{ color: "#5eead4", fontSize: 13, background: "#0e2b28", padding: "8px 12px", borderRadius: 8 }}>{msg}</div>}
+    </React.Fragment>
+  );
+}
+
+function LoginScreen({ onLogin, onSwitch, onForgot, busy, error, msg }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  return (
+    <AuthShell>
+      <h1 style={{ color: "#F1F5F9", fontSize: 20, fontWeight: 800, margin: "0 0 18px", textAlign: "center" }}>تسجيل الدخول</h1>
+      <div style={{ display: "grid", gap: 14 }}>
+        <Field label="البريد الإلكتروني"><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" dir="ltr" style={inputStyle} /></Field>
+        <Field label="كلمة المرور"><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" dir="ltr" style={inputStyle} /></Field>
+        <AuthMessages error={error} msg={msg} />
+        <button onClick={() => onLogin(email.trim(), password)} disabled={busy || !email.trim() || !password} style={Object.assign({}, authBtnStyle, busy ? { opacity: .6, cursor: "default" } : {})}>{busy ? "جارٍ الدخول..." : "تسجيل الدخول"}</button>
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
+          <button style={authLinkStyle} onClick={() => onSwitch("signup")}>إنشاء حساب جديد</button>
+          <button style={authLinkStyle} onClick={onForgot}>نسيت كلمة المرور؟</button>
+        </div>
+      </div>
+    </AuthShell>
+  );
+}
+
+function SignUpScreen({ onSignUp, onSwitch, busy, error, msg }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [localError, setLocalError] = useState("");
+  function submit() {
+    setLocalError("");
+    if (password.length < 6) { setLocalError("كلمة المرور يجب ألا تقل عن 6 أحرف."); return; }
+    if (password !== confirm) { setLocalError("كلمتا المرور غير متطابقتين."); return; }
+    onSignUp(email.trim(), password);
+  }
+  return (
+    <AuthShell>
+      <h1 style={{ color: "#F1F5F9", fontSize: 20, fontWeight: 800, margin: "0 0 18px", textAlign: "center" }}>إنشاء حساب</h1>
+      <div style={{ display: "grid", gap: 14 }}>
+        <Field label="البريد الإلكتروني"><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" dir="ltr" style={inputStyle} /></Field>
+        <Field label="كلمة المرور"><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="6 أحرف على الأقل" dir="ltr" style={inputStyle} /></Field>
+        <Field label="تأكيد كلمة المرور"><input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="••••••••" dir="ltr" style={inputStyle} /></Field>
+        <AuthMessages error={localError || error} msg={msg} />
+        <button onClick={submit} disabled={busy || !email.trim() || !password || !confirm} style={Object.assign({}, authBtnStyle, busy ? { opacity: .6, cursor: "default" } : {})}>{busy ? "جارٍ الإنشاء..." : "إنشاء الحساب"}</button>
+        <div style={{ textAlign: "center", marginTop: 4 }}>
+          <button style={authLinkStyle} onClick={() => onSwitch("login")}>لديك حساب؟ سجّل الدخول</button>
+        </div>
+      </div>
+    </AuthShell>
+  );
+}
+
+function ForgotPasswordScreen({ onForgot, onSwitch, busy, error, msg }) {
+  const [email, setEmail] = useState("");
+  return (
+    <AuthShell>
+      <h1 style={{ color: "#F1F5F9", fontSize: 20, fontWeight: 800, margin: "0 0 8px", textAlign: "center" }}>استعادة كلمة المرور</h1>
+      <p style={{ color: "#8B96AC", fontSize: 13, textAlign: "center", margin: "0 0 18px" }}>أدخل بريدك الإلكتروني وسنرسل لك رابط إعادة التعيين.</p>
+      <div style={{ display: "grid", gap: 14 }}>
+        <Field label="البريد الإلكتروني"><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" dir="ltr" style={inputStyle} /></Field>
+        <AuthMessages error={error} msg={msg} />
+        <button onClick={() => onForgot(email.trim())} disabled={busy || !email.trim()} style={Object.assign({}, authBtnStyle, busy ? { opacity: .6, cursor: "default" } : {})}>{busy ? "جارٍ الإرسال..." : "إرسال رابط إعادة التعيين"}</button>
+        <div style={{ textAlign: "center", marginTop: 4 }}>
+          <button style={authLinkStyle} onClick={() => onSwitch("login")}>العودة لتسجيل الدخول</button>
+        </div>
+      </div>
+    </AuthShell>
+  );
+}
+
+function ResetPasswordScreen({ onReset, busy, error, msg }) {
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [localError, setLocalError] = useState("");
+  function submit() {
+    setLocalError("");
+    if (password.length < 6) { setLocalError("كلمة المرور يجب ألا تقل عن 6 أحرف."); return; }
+    if (password !== confirm) { setLocalError("كلمتا المرور غير متطابقتين."); return; }
+    onReset(password);
+  }
+  return (
+    <AuthShell>
+      <h1 style={{ color: "#F1F5F9", fontSize: 20, fontWeight: 800, margin: "0 0 18px", textAlign: "center" }}>تعيين كلمة مرور جديدة</h1>
+      <div style={{ display: "grid", gap: 14 }}>
+        <Field label="كلمة المرور الجديدة"><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="6 أحرف على الأقل" dir="ltr" style={inputStyle} /></Field>
+        <Field label="تأكيد كلمة المرور"><input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="••••••••" dir="ltr" style={inputStyle} /></Field>
+        <AuthMessages error={localError || error} msg={msg} />
+        <button onClick={submit} disabled={busy || !password || !confirm} style={Object.assign({}, authBtnStyle, busy ? { opacity: .6, cursor: "default" } : {})}>{busy ? "جارٍ الحفظ..." : "حفظ كلمة المرور"}</button>
+      </div>
+    </AuthShell>
+  );
+}
+
+function TopBar({ email, credits, loading, onLogout }) {
+  return (
+    <div style={{ position: "sticky", top: 0, zIndex: 300, background: "rgba(11,15,25,.92)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderBottom: "1px solid rgba(148,180,220,.14)" }}>
+      <div style={{ maxWidth: 640, margin: "0 auto", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+        <span style={{ color: "#8B96AC", fontSize: 12, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 200 }} title={email || ""}>{email}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span className="glass" style={{ padding: "5px 12px", borderRadius: 999, color: "#5eead4", fontSize: 12.5, fontWeight: 700, whiteSpace: "nowrap" }}>
+            {loading ? "..." : "رصيدك: " + (credits != null ? credits : 0) + " صفحة"}
+          </span>
+          <button onClick={onLogout} style={{ background: "none", border: "1px solid #2A3654", color: "#B7C0D4", fontSize: 12.5, fontWeight: 700, padding: "6px 12px", borderRadius: 999, cursor: "pointer", fontFamily: "inherit" }}>تسجيل الخروج</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AuthGate() {
+  const [ready, setReady] = useState(false);
+  const [configError, setConfigError] = useState(false);
+  const [session, setSession] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [view, setView] = useState("login");
+  const [recoveryMode, setRecoveryMode] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [msg, setMsg] = useState("");
+  const clientRef = useRef(null);
+
+  async function fetchProfile(client, userId) {
+    setProfileLoading(true);
+    try {
+      const { data, error: err } = await client.from("profiles").select("email, credits").eq("id", userId).single();
+      if (!err) setProfile(data);
+    } catch (e) {}
+    setProfileLoading(false);
+  }
+
+  useEffect(() => {
+    let subscription = null;
+    let cancelled = false;
+    (async () => {
+      const client = await getSupabaseClient();
+      if (cancelled) return;
+      if (!client) { setConfigError(true); setReady(true); return; }
+      clientRef.current = client;
+
+      if (window.location.hash.indexOf("type=recovery") !== -1) setRecoveryMode(true);
+
+      const { data } = await client.auth.getSession();
+      if (cancelled) return;
+      setSession(data.session);
+      setReady(true);
+      if (data.session) fetchProfile(client, data.session.user.id);
+
+      const sub = client.auth.onAuthStateChange((event, newSession) => {
+        setSession(newSession);
+        if (event === "PASSWORD_RECOVERY") setRecoveryMode(true);
+        if (event === "SIGNED_OUT") { setProfile(null); setRecoveryMode(false); }
+        if (newSession) fetchProfile(client, newSession.user.id);
+      });
+      subscription = sub.data.subscription;
+    })();
+    return () => { cancelled = true; if (subscription) subscription.unsubscribe(); };
+  }, []);
+
+  async function handleLogin(email, password) {
+    setBusy(true); setError(""); setMsg("");
+    const { error: err } = await clientRef.current.auth.signInWithPassword({ email, password });
+    setBusy(false);
+    if (err) setError(mapAuthError(err));
+  }
+
+  async function handleSignUp(email, password) {
+    setBusy(true); setError(""); setMsg("");
+    const { error: err } = await clientRef.current.auth.signUp({ email, password });
+    setBusy(false);
+    if (err) { setError(mapAuthError(err)); return; }
+    setMsg("تم إنشاء الحساب بنجاح. إذا طُلب تأكيد البريد الإلكتروني، تحقق من بريدك ثم سجّل الدخول.");
+    setView("login");
+  }
+
+  async function handleForgot(email) {
+    setBusy(true); setError(""); setMsg("");
+    const { error: err } = await clientRef.current.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + window.location.pathname,
+    });
+    setBusy(false);
+    if (err) { setError(mapAuthError(err)); return; }
+    setMsg("إذا كان البريد مسجلاً لدينا، فسيصلك رابط إعادة تعيين كلمة المرور خلال دقائق.");
+  }
+
+  async function handleReset(password) {
+    setBusy(true); setError(""); setMsg("");
+    const { error: err } = await clientRef.current.auth.updateUser({ password });
+    setBusy(false);
+    if (err) { setError(mapAuthError(err)); return; }
+    setRecoveryMode(false);
+    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+  }
+
+  async function handleLogout() {
+    if (clientRef.current) await clientRef.current.auth.signOut();
+  }
+
+  function switchView(v) { setView(v); setError(""); setMsg(""); }
+
+  if (!ready) return <SplashLoader />;
+  if (configError) return <ConfigErrorScreen />;
+  if (recoveryMode) return <ResetPasswordScreen onReset={handleReset} busy={busy} error={error} msg={msg} />;
+
+  if (!session) {
+    if (view === "signup") return <SignUpScreen onSignUp={handleSignUp} onSwitch={switchView} busy={busy} error={error} msg={msg} />;
+    if (view === "forgot") return <ForgotPasswordScreen onForgot={handleForgot} onSwitch={switchView} busy={busy} error={error} msg={msg} />;
+    return <LoginScreen onLogin={handleLogin} onSwitch={switchView} onForgot={() => switchView("forgot")} busy={busy} error={error} msg={msg} />;
+  }
+
+  return (
+    <React.Fragment>
+      <TopBar email={(profile && profile.email) || session.user.email} credits={profile ? profile.credits : null} loading={profileLoading} onLogout={handleLogout} />
+      <App />
+    </React.Fragment>
+  );
+}
+
+/* ============================== GENERATOR (لم يتغيّر) ============================== */
 
 function App() {
   const [step, setStep] = useState("form");
@@ -1385,7 +1683,7 @@ function buildStandaloneHTML(data, tokens, images, form, country) {
 /* ============================== MOUNT ============================== */
 const rootEl = document.getElementById("root");
 if (window.__loadWatchdog) clearTimeout(window.__loadWatchdog);
-ReactDOM.createRoot(rootEl).render(<App />);
+ReactDOM.createRoot(rootEl).render(<AuthGate />);
 </script>
 </body>
 </html>
