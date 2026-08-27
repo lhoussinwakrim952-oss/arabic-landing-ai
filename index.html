@@ -29,7 +29,7 @@
 </script>
 <style>
   * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; background: #0B0F19; }
+  html, body { margin: 0; padding: 0; background: #0B0F19; overflow-x: hidden; }
   body { font-family: 'Cairo', sans-serif; }
   ::-webkit-scrollbar { width: 8px; height: 8px; }
   ::-webkit-scrollbar-thumb { background: #2A3346; border-radius: 8px; }
@@ -49,14 +49,18 @@
   .orb { position: absolute; border-radius: 50%; filter: blur(60px); pointer-events: none; z-index: 0; }
   #api-warning { display:none; }
 
-  .account-bar{position:sticky;top:0;z-index:300;background:rgba(11,15,25,.96);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(148,180,220,.12);height:58px}
-  .account-bar-inner{max-width:1400px;margin:0 auto;height:100%;padding:0 14px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center}
-  .account-brand{grid-column:2;display:flex;width:36px;height:36px;border-radius:50%;align-items:center;justify-content:center;background:linear-gradient(135deg,#17233c,#243c67);border:1px solid #2d3b59;color:#fff;font-size:16px;font-weight:900;text-align:center;box-shadow:0 5px 16px rgba(0,0,0,.25)}
-  .account-wrap{position:relative;grid-column:3;justify-self:end;display:flex;align-items:center;gap:9px}
-  .balance-pill{display:flex;align-items:center;gap:5px;height:34px;padding:0 11px;border:1px solid #243653;border-radius:999px;background:#101827;color:#aebbd0;font-size:11px;font-weight:800;white-space:nowrap}
-  .balance-pill strong{color:#5eead4;font-size:12px}
-  .account-avatar{width:34px;height:34px;border-radius:50%;border:1px solid #2d3b59;background:linear-gradient(135deg,#17233c,#243c67);color:#fff;font-weight:900;cursor:pointer;font-family:inherit;box-shadow:0 5px 16px rgba(0,0,0,.25)}
-  .account-dropdown{position:absolute;top:42px;right:0;left:auto;width:245px;background:#101827;border:1px solid #263653;border-radius:14px;padding:10px;box-shadow:0 20px 50px rgba(0,0,0,.45);z-index:1000}
+  .account-bar{position:sticky;top:0;z-index:300;background:rgba(11,15,25,.97);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(148,180,220,.12);height:64px}
+  .account-bar-inner{max-width:1400px;margin:0 auto;height:100%;padding:0 14px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;position:relative}
+  .account-brand{grid-column:2;display:flex;width:46px;height:46px;border-radius:50%;align-items:center;justify-content:center;background:#08101f;border:1px solid #243b66;box-shadow:0 0 0 1px rgba(34,211,238,.08),0 6px 18px rgba(0,0,0,.28);overflow:hidden}
+  .account-brand img{width:100%;height:100%;display:block;object-fit:cover;border-radius:50%}
+  .topbar-account-left{grid-column:1;justify-self:start;position:relative;display:flex;align-items:center}
+  .topbar-balance-right{grid-column:3;justify-self:end;display:flex;align-items:center}
+  .account-wrap{position:relative;display:flex;align-items:center;gap:9px}
+  .balance-pill{display:flex;align-items:center;gap:5px;height:38px;padding:0 13px;border:1px solid #243653;border-radius:999px;background:#101827;color:#aebbd0;font-size:12px;font-weight:800;white-space:nowrap;cursor:pointer;font-family:inherit}
+  .balance-pill strong{color:#5eead4;font-size:13px}
+  .account-avatar{width:40px;height:40px;border-radius:50%;border:1px solid #2d3b59;background:linear-gradient(135deg,#17233c,#243c67);color:#fff;font-size:17px;font-weight:900;cursor:pointer;font-family:inherit;box-shadow:0 5px 16px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center}
+  .account-dropdown{position:absolute;top:calc(100% + 10px);left:0;right:auto;width:min(285px,calc(100vw - 20px));max-width:calc(100vw - 20px);background:#101827;border:1px solid #263653;border-radius:16px;padding:10px;box-shadow:0 20px 50px rgba(0,0,0,.5);z-index:1000;transform-origin:top left;animation:accountMenuIn .16s ease-out both}
+  @keyframes accountMenuIn{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
   .account-email{padding:8px 9px 10px;color:#dce5f5;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid #202c43}
   .account-credit-row{display:flex;align-items:center;justify-content:space-between;padding:12px 9px;color:#9eabc0;font-size:12px}
   .account-credit-row strong{color:#5eead4}
@@ -81,7 +85,7 @@
   .editor-command-row{max-width:1400px;margin:0 auto;padding:7px 12px;display:flex;gap:7px;border-top:1px solid #172137}
   .floating-editor-back{position:fixed;bottom:22px;right:22px;z-index:1000;border:1px solid #2d4f73;background:rgba(13,25,42,.94);color:#dffcff;border-radius:999px;padding:10px 15px;font-family:inherit;font-weight:800;font-size:12px;cursor:pointer;box-shadow:0 12px 30px rgba(0,0,0,.4)}
   @media(max-width:700px){
-    .account-bar{height:56px}.account-brand{font-size:16px;display:flex;width:36px;height:36px;border-radius:50%;align-items:center;justify-content:center;background:linear-gradient(135deg,#17233c,#243c67);border:1px solid #2d3b59;color:#fff;box-shadow:0 5px 16px rgba(0,0,0,.25)}.account-bar-inner{grid-template-columns:1fr auto 1fr;padding:0 10px}.account-wrap{grid-column:3;gap:6px}.balance-pill{height:32px;padding:0 9px;font-size:10.5px}.balance-pill strong{font-size:11.5px}.account-avatar{width:32px;height:32px}
+    .account-bar{height:58px}.account-brand{width:40px;height:40px}.account-bar-inner{grid-template-columns:1fr auto 1fr;padding:0 10px}.topbar-account-left{grid-column:1}.topbar-balance-right{grid-column:3}.account-wrap{gap:6px}.balance-pill{height:32px;padding:0 9px;font-size:10.5px}.balance-pill strong{font-size:11.5px}.account-avatar{width:36px;height:36px;font-size:16px}.account-dropdown{top:calc(100% + 8px);width:min(285px,calc(100vw - 20px))}
     .editor-toolbar{top:48px}.toolbar-main{padding:6px 8px;gap:5px;overflow:visible}.editor-tool{font-size:0;width:36px;height:34px;padding:0}.editor-tool span:first-child{font-size:15px}.editor-tool svg{width:14px;height:14px}.editor-tool:nth-child(1) span,.editor-tool:nth-child(2) span,.editor-tool:nth-child(3) span,.editor-tool:nth-child(4) span,.editor-tool:nth-child(5) span,.editor-tool:nth-child(6) span{display:none}
     .editor-tool:nth-child(1):after{content:"↩";font-size:15px}.editor-tool:nth-child(2):after{content:"＋";font-size:17px}.editor-tool:nth-child(3):after{content:"✨";font-size:15px}.editor-tool:nth-child(4):after{content:"↓";font-size:17px}.editor-tool:nth-child(5):after{content:"🖼";font-size:14px}.editor-tool:nth-child(6):after{content:"👁";font-size:14px}
     .toolbar-more-wrap{display:block}.toolbar-more{width:auto!important;padding:0 10px!important;font-size:0!important}.toolbar-more:after{content:"⋮";font-size:19px}.toolbar-more span{display:none}.device-switch{display:none}
@@ -678,9 +682,29 @@ function CreditsModal({ open, onClose, onBuy, buying }) {
 function AccountMenu({ email, credits, loading, onLogout, onBuy }) {
   const [open, setOpen] = useState(false);
   const initial = ((email || "U").trim().charAt(0) || "U").toUpperCase();
+  const wrapRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const closeOnOutside = (e) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
+    };
+    const closeOnEscape = (e) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", closeOnOutside);
+    document.addEventListener("touchstart", closeOnOutside, { passive: true });
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutside);
+      document.removeEventListener("touchstart", closeOnOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [open]);
+
   return (
-    <div className="account-wrap" dir="rtl">
-      <button className="account-avatar" onClick={() => setOpen((v) => !v)} aria-label="حساب المستخدم">{initial}</button>
+    <div className="account-wrap" dir="rtl" ref={wrapRef}>
+      <button type="button" className="account-avatar" onClick={() => setOpen((v) => !v)} aria-label="حساب المستخدم" aria-expanded={open}>{initial}</button>
       {open && (
         <div className="account-dropdown">
           <div className="account-email">{email || "حساب المستخدم"}</div>
@@ -688,8 +712,8 @@ function AccountMenu({ email, credits, loading, onLogout, onBuy }) {
             <span>⚡ الرصيد</span>
             <strong>{loading ? "..." : (credits ?? 0) + " نقطة"}</strong>
           </div>
-          <button className="account-buy" onClick={() => { setOpen(false); onBuy(); }}>＋ شراء نقاط</button>
-          <button className="account-logout" onClick={onLogout}>🚪 تسجيل الخروج</button>
+          <button type="button" className="account-buy" onClick={() => { setOpen(false); onBuy(); }}>＋ شراء نقاط</button>
+          <button type="button" className="account-logout" onClick={() => { setOpen(false); onLogout(); }}>🚪 تسجيل الخروج</button>
         </div>
       )}
     </div>
@@ -700,11 +724,16 @@ function TopBar({ email, credits, loading, onLogout, onBuy }) {
   return (
     <div className="account-bar">
       <div className="account-bar-inner">
-        <div aria-hidden="true" />
-        <div className="account-brand" title="Arabic Landing AI">L</div>
-        <div className="account-wrap" dir="rtl">
-          <button className="balance-pill" onClick={onBuy} title="شراء نقاط">⚡ <strong>{loading ? "..." : Number(credits ?? 0)}</strong> نقطة</button>
+        <div className="topbar-account-left">
           <AccountMenu email={email} credits={credits} loading={loading} onLogout={onLogout} onBuy={onBuy} />
+        </div>
+
+        <div className="account-brand" title="Arabic Landing AI">
+          <img src="https://i.ibb.co/spZLnqzb/file-00000000da0c81f4a4088e7d66ce8dc8.png" alt="Arabic Landing AI" />
+        </div>
+
+        <div className="topbar-balance-right">
+          <button type="button" className="balance-pill" onClick={onBuy} title="شراء نقاط">⚡ <strong>{loading ? "..." : Number(credits ?? 0)}</strong> نقطة</button>
         </div>
       </div>
     </div>
@@ -1483,6 +1512,8 @@ function LandingPage({ data, tokens, images, form, country }) {
               <div style={{ fontSize: 11, fontWeight: 800, color: tokens.muted, marginBottom: 6 }}>{data.beforeAfter.beforeLabel || "قبل"}</div>
               <div style={{ fontSize: 12, color: tokens.muted, lineHeight: 1.7 }}>{data.beforeAfter.beforeText}</div>
             </div>
+            <div style={{ fontSize: 12, color: tokens.muted, lineHeight: 1.7 }}>{data.beforeAfter.beforeText}</div>
+            </div>
             <div style={{ background: tokens.card, border: "1px solid " + tokens.primary, borderRadius: tokens.radius, padding: 14, textAlign: "center" }}>
               <div style={{ fontSize: 11, fontWeight: 800, color: tokens.primary, marginBottom: 6 }}>{data.beforeAfter.afterLabel || "بعد"}</div>
               <div style={{ fontSize: 12, lineHeight: 1.7 }}>{data.beforeAfter.afterText}</div>
@@ -1508,7 +1539,8 @@ function LandingPage({ data, tokens, images, form, country }) {
       {sections.includes("benefits") && data.benefits && (
         <Section title={data.benefits.title} tokens={tokens}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            {(data.benefits.items || []).map((it, i) => (<div key={i} style={{ background: tokens.card, borderRadius: tokens.radius, padding: 14, textAlign: "center" }}>
+            {(data.benefits.items || []).map((it, i) => (
+              <div key={i} style={{ background: tokens.card, borderRadius: tokens.radius, padding: 14, textAlign: "center" }}>
                 <ContentIcon name={it.icon} size={20} color={tokens.accent} style={{ margin: "0 auto 8px" }} />
                 <div style={{ fontWeight: 700, fontSize: 13 }}>{it.title}</div>
                 <div style={{ fontSize: 11.5, color: tokens.muted, marginTop: 4, lineHeight: 1.6 }}>{it.desc}</div>
@@ -1893,4 +1925,3 @@ ReactDOM.createRoot(rootEl).render(<AuthGate />);
 </script>
 </body>
 </html>
-  
