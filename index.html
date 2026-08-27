@@ -48,6 +48,43 @@
   .glass { background: rgba(19,26,42,.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(148,180,220,.14); }
   .orb { position: absolute; border-radius: 50%; filter: blur(60px); pointer-events: none; z-index: 0; }
   #api-warning { display:none; }
+
+  .account-bar{position:sticky;top:0;z-index:300;background:rgba(11,15,25,.94);backdrop-filter:blur(16px);border-bottom:1px solid rgba(148,180,220,.12);height:48px}
+  .account-bar-inner{max-width:1400px;margin:0 auto;height:100%;padding:0 14px;display:flex;align-items:center;justify-content:space-between}
+  .account-brand{font-size:12px;font-weight:800;color:#8fa2c1;letter-spacing:.2px}
+  .account-wrap{position:relative}
+  .account-avatar{width:34px;height:34px;border-radius:50%;border:1px solid #2d3b59;background:linear-gradient(135deg,#17233c,#243c67);color:#fff;font-weight:900;cursor:pointer;font-family:inherit;box-shadow:0 5px 16px rgba(0,0,0,.25)}
+  .account-dropdown{position:absolute;top:42px;left:0;width:245px;background:#101827;border:1px solid #263653;border-radius:14px;padding:10px;box-shadow:0 20px 50px rgba(0,0,0,.45);z-index:1000}
+  .account-email{padding:8px 9px 10px;color:#dce5f5;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid #202c43}
+  .account-credit-row{display:flex;align-items:center;justify-content:space-between;padding:12px 9px;color:#9eabc0;font-size:12px}
+  .account-credit-row strong{color:#5eead4}
+  .account-buy,.account-logout{width:100%;border:0;border-radius:9px;padding:9px 10px;text-align:right;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer}
+  .account-buy{background:#19334a;color:#67e8f9;margin-bottom:6px}.account-logout{background:#21181e;color:#fda4af}
+  .credits-modal-backdrop{position:fixed;inset:0;z-index:1200;background:rgba(2,6,15,.76);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:18px}
+  .credits-modal{position:relative;width:min(760px,100%);padding:24px;border-radius:22px;box-shadow:0 30px 90px rgba(0,0,0,.55)}
+  .credits-modal-close{position:absolute;top:12px;left:12px;width:34px;height:34px;border-radius:50%;border:1px solid #2b3954;background:#131c2d;color:#b8c4d8;cursor:pointer}
+  .credit-plans{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .credit-plan{position:relative;background:#111a2b;border:1px solid #24334f;border-radius:16px;padding:18px;text-align:center}
+  .credit-plan.popular{border-color:#22d3ee;box-shadow:0 0 0 1px #22d3ee33,0 15px 35px #22d3ee12}
+  .credit-popular{position:absolute;top:-10px;right:50%;transform:translateX(50%);white-space:nowrap;background:#22d3ee;color:#06202b;border-radius:999px;padding:3px 10px;font-size:10px;font-weight:900}
+  .credit-plan-name{color:#9ba9c1;font-size:12px;font-weight:700}.credit-plan-number{color:#f1f5f9;font-size:30px;font-weight:900;margin:6px 0}.credit-plan-number small{font-size:11px;color:#7f8da7}.credit-plan-price{color:#5eead4;font-size:18px;font-weight:900;margin-bottom:12px}
+  .credit-plan button{width:100%;padding:10px;border:0;border-radius:9px;background:linear-gradient(90deg,#3b82f6,#22d3ee);color:#04101c;font-family:inherit;font-weight:900;cursor:pointer}
+  .editor-toolbar{position:sticky;top:48px;z-index:250;background:#0e1526;border-bottom:1px solid #1d2740;box-shadow:0 8px 25px rgba(0,0,0,.22)}
+  .toolbar-main{max-width:1400px;margin:0 auto;padding:7px 12px;display:flex;align-items:center;gap:6px;min-height:46px}
+  .editor-tool{display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap;background:#131a2a;border:1px solid #202a42;color:#e2e8f5;font-size:11.5px;font-weight:700;padding:7px 9px;border-radius:8px;cursor:pointer;font-family:inherit}
+  .editor-tool:hover{border-color:#3a4d72;background:#18223a}.editor-design{background:#6339bd;border-color:#7c3aed;color:#fff}
+  .toolbar-more-wrap{display:none;position:relative}.toolbar-dropdown{position:absolute;top:40px;right:0;width:190px;background:#101827;border:1px solid #263653;border-radius:12px;padding:6px;box-shadow:0 20px 50px rgba(0,0,0,.45)}
+  .toolbar-dropdown button{width:100%;background:transparent;border:0;color:#dce5f5;text-align:right;padding:9px;border-radius:8px;font-family:inherit;font-size:12px;cursor:pointer}.toolbar-dropdown button:hover{background:#19243a}.toolbar-dropdown button:disabled{opacity:.35;cursor:default}
+  .device-switch{display:flex;background:#131a2a;border-radius:8px;padding:2px;margin-right:auto}.device-switch button{border:0;background:transparent;color:#9aa7bd;border-radius:6px;padding:6px 8px;cursor:pointer;display:flex}.device-switch button.active{background:#22d3ee;color:#04101c}
+  .editor-command-row{max-width:1400px;margin:0 auto;padding:7px 12px;display:flex;gap:7px;border-top:1px solid #172137}
+  .floating-editor-back{position:fixed;bottom:22px;right:22px;z-index:1000;border:1px solid #2d4f73;background:rgba(13,25,42,.94);color:#dffcff;border-radius:999px;padding:10px 15px;font-family:inherit;font-weight:800;font-size:12px;cursor:pointer;box-shadow:0 12px 30px rgba(0,0,0,.4)}
+  @media(max-width:700px){
+    .account-brand{display:none}.account-bar-inner{justify-content:flex-start}.account-wrap{margin-right:auto}
+    .editor-toolbar{top:48px}.toolbar-main{padding:6px 8px;gap:5px;overflow:visible}.editor-tool{font-size:0;width:36px;height:34px;padding:0}.editor-tool span:first-child{font-size:15px}.editor-tool svg{width:14px;height:14px}.editor-tool:nth-child(1) span,.editor-tool:nth-child(2) span,.editor-tool:nth-child(3) span,.editor-tool:nth-child(4) span,.editor-tool:nth-child(5) span,.editor-tool:nth-child(6) span{display:none}
+    .editor-tool:nth-child(1):after{content:"↩";font-size:15px}.editor-tool:nth-child(2):after{content:"＋";font-size:17px}.editor-tool:nth-child(3):after{content:"✨";font-size:15px}.editor-tool:nth-child(4):after{content:"↓";font-size:17px}.editor-tool:nth-child(5):after{content:"🖼";font-size:14px}.editor-tool:nth-child(6):after{content:"👁";font-size:14px}
+    .toolbar-more-wrap{display:block}.toolbar-more{width:auto!important;padding:0 10px!important;font-size:0!important}.toolbar-more:after{content:"⋮";font-size:19px}.toolbar-more span{display:none}.device-switch{display:none}
+    .editor-command-row{padding:6px 8px}.credit-plans{grid-template-columns:1fr}.credits-modal{padding:20px 14px}
+  }
 </style>
 </head>
 <body>
@@ -601,17 +638,68 @@ function ResetPasswordScreen({ onReset, busy, error, msg }) {
   );
 }
 
-function TopBar({ email, credits, loading, onLogout }) {
+const CREDIT_PLANS = [
+  { name: "البداية", credits: 3, price: "$4", variantId: "YOUR_VARIANT_ID_3" },
+  { name: "المحترف", credits: 15, price: "$10", variantId: "YOUR_VARIANT_ID_15", popular: true },
+  { name: "المتقدم", credits: 30, price: "$20", variantId: "YOUR_VARIANT_ID_30" },
+];
+
+function CreditsModal({ open, onClose, onBuy, buying }) {
+  if (!open) return null;
   return (
-    <div style={{ position: "sticky", top: 0, zIndex: 300, background: "rgba(11,15,25,.92)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderBottom: "1px solid rgba(148,180,220,.14)" }}>
-      <div style={{ maxWidth: 640, margin: "0 auto", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
-        <span style={{ color: "#8B96AC", fontSize: 12, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 200 }} title={email || ""}>{email}</span>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span className="glass" style={{ padding: "5px 12px", borderRadius: 999, color: "#5eead4", fontSize: 12.5, fontWeight: 700, whiteSpace: "nowrap" }}>
-            {loading ? "..." : "رصيدك: " + (credits != null ? credits : 0) + " صفحة"}
-          </span>
-          <button onClick={onLogout} style={{ background: "none", border: "1px solid #2A3654", color: "#B7C0D4", fontSize: 12.5, fontWeight: 700, padding: "6px 12px", borderRadius: 999, cursor: "pointer", fontFamily: "inherit" }}>تسجيل الخروج</button>
+    <div className="credits-modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="credits-modal glass" dir="rtl">
+        <button className="credits-modal-close" onClick={onClose} aria-label="إغلاق">✕</button>
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
+          <div style={{ fontSize: 30 }}>⚡</div>
+          <h2 style={{ margin: "6px 0", color: "#F1F5F9", fontSize: 21 }}>اشترِ نقاط التوليد</h2>
+          <p style={{ margin: 0, color: "#8B96AC", fontSize: 12.5 }}>كل صفحة هبوط يتم توليدها تستهلك نقطة واحدة.</p>
         </div>
+        <div className="credit-plans">
+          {CREDIT_PLANS.map((plan) => (
+            <div key={plan.variantId} className={"credit-plan " + (plan.popular ? "popular" : "")}>
+              {plan.popular && <span className="credit-popular">الأكثر طلباً</span>}
+              <div className="credit-plan-name">{plan.name}</div>
+              <div className="credit-plan-number">{plan.credits} <small>نقطة</small></div>
+              <div className="credit-plan-price">{plan.price}</div>
+              <button onClick={() => onBuy(plan.variantId)} disabled={buying}>
+                {buying ? "جاري التحويل..." : "شراء النقاط"}
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AccountMenu({ email, credits, loading, onLogout, onBuy }) {
+  const [open, setOpen] = useState(false);
+  const initial = ((email || "U").trim().charAt(0) || "U").toUpperCase();
+  return (
+    <div className="account-wrap" dir="rtl">
+      <button className="account-avatar" onClick={() => setOpen((v) => !v)} aria-label="حساب المستخدم">{initial}</button>
+      {open && (
+        <div className="account-dropdown">
+          <div className="account-email">{email || "حساب المستخدم"}</div>
+          <div className="account-credit-row">
+            <span>⚡ الرصيد</span>
+            <strong>{loading ? "..." : (credits ?? 0) + " نقطة"}</strong>
+          </div>
+          <button className="account-buy" onClick={() => { setOpen(false); onBuy(); }}>＋ شراء نقاط</button>
+          <button className="account-logout" onClick={onLogout}>🚪 تسجيل الخروج</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TopBar({ email, credits, loading, onLogout, onBuy }) {
+  return (
+    <div className="account-bar">
+      <div className="account-bar-inner">
+        <div className="account-brand">Arabic Landing AI</div>
+        <AccountMenu email={email} credits={credits} loading={loading} onLogout={onLogout} onBuy={onBuy} />
       </div>
     </div>
   );
@@ -623,6 +711,10 @@ function AuthGate() {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
   const [profileLoading, setProfileLoading] = useState(false);
+  const [credits, setCredits] = useState(0);
+  const [showBuyModal, setShowBuyModal] = useState(false);
+  const [buying, setBuying] = useState(false);
+  const [editorPreview, setEditorPreview] = useState(false);
   const [view, setView] = useState("login");
   const [recoveryMode, setRecoveryMode] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -633,10 +725,35 @@ function AuthGate() {
   async function fetchProfile(client, userId) {
     setProfileLoading(true);
     try {
-      const { data, error: err } = await client.from("profiles").select("email, credits").eq("id", userId).single();
-      if (!err) setProfile(data);
-    } catch (e) {}
+      // نظام النقاط يعتمد على users. profiles يبقى fallback للتوافق مع النسخة الحالية.
+      let result = await client.from("users").select("credits").eq("id", userId).single();
+      if (result.error) {
+        result = await client.from("profiles").select("email, credits").eq("id", userId).single();
+      }
+      if (!result.error && result.data) {
+        setProfile(result.data);
+        setCredits(Number(result.data.credits || 0));
+      } else {
+        setCredits(0);
+      }
+    } catch (e) {
+      setCredits(0);
+    }
     setProfileLoading(false);
+  }
+
+  async function handleBuyCredits(variantId) {
+    if (!session || !session.user) return;
+    if (!variantId || String(variantId).indexOf("YOUR_VARIANT_ID") === 0) {
+      setError("أضف Variant ID الخاص بكل خطة في CREDIT_PLANS أولاً.");
+      return;
+    }
+    setBuying(true);
+    const store = "yourstore";
+    const checkoutUrl = "https://" + store + ".lemonsqueezy.com/checkout/buy/" +
+      encodeURIComponent(variantId) +
+      "?checkout%5Bcustom%5D%5Buser_id%5D=" + encodeURIComponent(session.user.id);
+    window.location.href = checkoutUrl;
   }
 
   useEffect(() => {
@@ -720,15 +837,35 @@ function AuthGate() {
 
   return (
     <React.Fragment>
-      <TopBar email={(profile && profile.email) || session.user.email} credits={profile ? profile.credits : null} loading={profileLoading} onLogout={handleLogout} />
-      <App />
+      {!editorPreview && (
+        <TopBar
+          email={(profile && profile.email) || session.user.email}
+          credits={credits}
+          loading={profileLoading}
+          onLogout={handleLogout}
+          onBuy={() => setShowBuyModal(true)}
+        />
+      )}
+      <App
+        credits={credits}
+        setCredits={setCredits}
+        user={session.user}
+        onBuyCredits={() => setShowBuyModal(true)}
+        onPreviewChange={setEditorPreview}
+      />
+      <CreditsModal
+        open={showBuyModal}
+        onClose={() => setShowBuyModal(false)}
+        onBuy={handleBuyCredits}
+        buying={buying}
+      />
     </React.Fragment>
   );
 }
 
 /* ============================== GENERATOR (لم يتغيّر) ============================== */
 
-function App() {
+function App({ credits, setCredits, user, onBuyCredits, onPreviewChange }) {
   const [step, setStep] = useState("form");
   const [form, setForm] = useState({ name: "", price: "", priceOld: "", description: "", countryCode: "SA", dialect: "auto", whatsapp: "", showOrderForm: true });
   const [images, setImages] = useState([]);
@@ -790,6 +927,10 @@ function App() {
 
   async function handleGenerate() {
     setError("");
+    if (credits <= 0) {
+      onBuyCredits();
+      return;
+    }
     if (!form.name.trim()) return setError("أدخل اسم المنتج أولاً.");
     if (!form.price) return setError("أدخل سعر المنتج أولاً.");
     if (images.length === 0) return setError("ارفع صورة واحدة على الأقل للمنتج.");
@@ -806,6 +947,32 @@ function App() {
       const result = await runQualityControl(generated);
       result._paletteVariant = pickDesignTokens(result.designSystem);
       result._heroLayout = pickHeroLayout();
+
+      // خصم نقطة واحدة بعد نجاح التوليد فقط. شرط credits يمنع خصماً سالباً.
+      const previousCredits = Number(credits || 0);
+      const nextCredits = Math.max(0, previousCredits - 1);
+      const client = await getSupabaseClient();
+      if (client && user && previousCredits > 0) {
+        let updateResult = await client.from("users")
+          .update({ credits: nextCredits })
+          .eq("id", user.id)
+          .eq("credits", previousCredits)
+          .select("credits")
+          .single();
+
+        // توافق مع المشروع الحالي إذا كانت النقاط ما زالت في profiles.
+        if (updateResult.error) {
+          updateResult = await client.from("profiles")
+            .update({ credits: nextCredits })
+            .eq("id", user.id)
+            .eq("credits", previousCredits)
+            .select("credits")
+            .single();
+        }
+        if (updateResult.error) throw new Error("تعذّر تحديث رصيد النقاط. لم يتم اعتماد التوليد، حاول مرة أخرى.");
+        setCredits(Number(updateResult.data.credits));
+      }
+
       setHistory([result]); setHistoryIdx(0); setStep("preview");
     } catch (err) {
       setError(err.message || "حدث خطأ أثناء التوليد، حاول مرة أخرى.");
@@ -874,7 +1041,9 @@ function App() {
           canUndo={historyIdx > 0} canRedo={historyIdx < history.length - 1} onUndo={undo} onRedo={redo}
           onCopy={copyHTML} onDownload={downloadHTML} copyStatus={copyStatus} error={error}
           onShuffleDesign={handleShuffleDesign}
-          onBack={() => setStep("form")} />
+          onBack={() => setStep("form")}
+          onBuyCredits={onBuyCredits}
+          onPreviewChange={onPreviewChange} />
       )}
     </div>
   );
@@ -965,69 +1134,101 @@ function LoadingScreen({ stepIdx }) {
 }
 
 function PreviewScreen(props) {
-  const { data, tokens, images, form, country, previewMode, setPreviewMode, editCmd, setEditCmd, onApplyEdit, editing, canUndo, canRedo, onUndo, onRedo, onDownload, error, onBack, onShuffleDesign } = props;
+  const {
+    data, tokens, images, form, country, previewMode, setPreviewMode,
+    editCmd, setEditCmd, onApplyEdit, editing, canUndo, canRedo,
+    onUndo, onRedo, onDownload, error, onBack, onShuffleDesign,
+    onBuyCredits, onPreviewChange
+  } = props;
+
   const captureRef = useRef(null);
-  const [jpgLoading, setJpgLoading] = useState(false);
-
-  // شريط الأدوات (الأزرار + حقل التعديل) يختفي للأعلى أثناء النزول في الصفحة، ويظهر من جديد عند الصعود لأعلى
-  const headerRef = useRef(null);
-  const [headerHeight, setHeaderHeight] = useState(0);
-  const [headerVisible, setHeaderVisible] = useState(true);
-  const lastScrollY = useRef(0);
+  const [imageLoading, setImageLoading] = useState(false);
+  const [previewOnly, setPreviewOnly] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   useEffect(() => {
-    function measure() { if (headerRef.current) setHeaderHeight(headerRef.current.offsetHeight); }
-    measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, []);
+    if (onPreviewChange) onPreviewChange(previewOnly);
+    return () => { if (onPreviewChange) onPreviewChange(false); };
+  }, [previewOnly]);
 
-  useEffect(() => {
-    lastScrollY.current = window.scrollY || 0;
-    function onScroll() {
-      const y = window.scrollY || 0;
-      const goingDown = y > lastScrollY.current;
-      const delta = Math.abs(y - lastScrollY.current);
-      if (y <= 4) { setHeaderVisible(true); lastScrollY.current = y; return; }
-      if (delta > 4) {
-        setHeaderVisible(goingDown && y > 80 ? false : !goingDown ? true : headerVisible);
-        lastScrollY.current = y;
-      }
-    }
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  async function exportJPG() {
+  async function exportImage() {
     if (!captureRef.current || !window.html2canvas) return;
-    setJpgLoading(true);
+    setImageLoading(true);
     try {
-      const canvas = await window.html2canvas(captureRef.current, { scale: 2, backgroundColor: tokens.bg, useCORS: true });
+      const el = captureRef.current;
+      const canvas = await window.html2canvas(el, {
+        scale: Math.min(3, window.devicePixelRatio > 1 ? 3 : 2),
+        backgroundColor: tokens.bg,
+        useCORS: true,
+        allowTaint: false,
+        logging: false,
+        imageTimeout: 20000,
+        scrollX: 0,
+        scrollY: -window.scrollY,
+        width: el.scrollWidth,
+        height: el.scrollHeight,
+        windowWidth: el.scrollWidth,
+        windowHeight: el.scrollHeight
+      });
       const a = document.createElement("a");
-      a.href = canvas.toDataURL("image/jpeg", 0.95);
-      a.download = (form.name || "landing-page").trim().replace(/\s+/g, "-") + ".jpg";
+      a.href = canvas.toDataURL("image/png");
+      a.download = (form.name || "landing-page").trim().replace(/\s+/g, "-") + ".png";
       document.body.appendChild(a); a.click(); a.remove();
-    } catch (e) { }
-    setJpgLoading(false);
+    } catch (e) {
+      console.error("Image export failed", e);
+    } finally {
+      setImageLoading(false);
+    }
   }
-  return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      <div ref={headerRef} style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 50, background: "#0E1526", transform: headerVisible ? "translateY(0)" : "translateY(-100%)", transition: "transform .3s ease", boxShadow: "0 6px 18px rgba(0,0,0,.35)" }}>
-        <div style={{ borderBottom: "1px solid #1D2740", padding: "10px 16px", display: "flex", alignItems: "center", gap: 8, overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-          <button onClick={onBack} style={Object.assign({}, toolBtn, { flexShrink: 0 })}><SvgIcon name="back" size={14} /> مشروع جديد</button>
-          <button onClick={onShuffleDesign} style={Object.assign({}, toolBtn, { flexShrink: 0, background: "#7C3AED", color: "#fff", borderColor: "#7C3AED" })}><SvgIcon name="shuffle" size={14} /> ولّد تصميم مختلف</button>
-          <button onClick={onUndo} disabled={!canUndo} style={Object.assign({}, toolBtn, { flexShrink: 0, opacity: canUndo ? 1 : 0.4 })}><SvgIcon name="undo" size={14} /></button>
-          <button onClick={onRedo} disabled={!canRedo} style={Object.assign({}, toolBtn, { flexShrink: 0, opacity: canRedo ? 1 : 0.4 })}><SvgIcon name="redo" size={14} /></button>
-          <div style={{ display: "flex", background: "#131A2A", borderRadius: 8, padding: 3, gap: 2, flexShrink: 0 }}>
-            <button onClick={() => setPreviewMode("mobile")} style={Object.assign({}, segBtn, { background: previewMode === "mobile" ? "#22D3EE" : "transparent", color: previewMode === "mobile" ? "#04101C" : "#B7C0D4" })}><SvgIcon name="mobile" size={14} /></button>
-            <button onClick={() => setPreviewMode("desktop")} style={Object.assign({}, segBtn, { background: previewMode === "desktop" ? "#22D3EE" : "transparent", color: previewMode === "desktop" ? "#04101C" : "#B7C0D4" })}><SvgIcon name="desktop" size={14} /></button>
-          </div>
-          <button onClick={exportJPG} disabled={jpgLoading} style={Object.assign({}, toolBtn, { flexShrink: 0, opacity: jpgLoading ? 0.6 : 1 })}><SvgIcon name="image" size={14} /> {jpgLoading ? "..." : "تحميل كصورة"}</button>
-          <button onClick={onDownload} style={{ display: "flex", alignItems: "center", gap: 7, flexShrink: 0, background: "linear-gradient(135deg,#22D3EE,#3B82F6)", border: "none", color: "#04101C", fontSize: 12.5, fontWeight: 800, padding: "9px 15px", borderRadius: 999, cursor: "pointer", boxShadow: "0 10px 22px -6px #22D3EEaa" }}>
-            <SvgIcon name="cloudDownload" size={15} strokeWidth={2.4} /> تحميل HTML
-          </button>
+
+  if (previewOnly) {
+    return (
+      <div dir="rtl" style={{ minHeight: "100vh", background: "#05070C" }}>
+        <div ref={captureRef}>
+          <LandingPage data={data} tokens={tokens} images={images} form={form} country={country} />
         </div>
-        <div style={{ background: "#0E1526", borderBottom: "1px solid #1D2740", padding: "10px 16px", display: "flex", gap: 8 }}>
+        <button
+          className="floating-editor-back"
+          onClick={() => setPreviewOnly(false)}
+          aria-label="العودة للمحرر"
+        >
+          ← العودة للمحرر
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div dir="rtl" style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#05070C" }}>
+      <div className="editor-toolbar">
+        <div className="toolbar-main">
+          <button onClick={onBack} className="editor-tool"><SvgIcon name="back" size={14} /><span>رجوع</span></button>
+          <button onClick={onBack} className="editor-tool"><span style={{fontSize:16}}>＋</span><span>جديد</span></button>
+          <button onClick={onShuffleDesign} className="editor-tool editor-design"><span>✨</span><span>تصميم</span></button>
+          <button onClick={onDownload} className="editor-tool"><SvgIcon name="download" size={14} /><span>HTML</span></button>
+          <button onClick={exportImage} disabled={imageLoading} className="editor-tool"><SvgIcon name="image" size={14} /><span>{imageLoading ? "..." : "صورة"}</span></button>
+          <button onClick={() => setPreviewOnly(true)} className="editor-tool"><SvgIcon name="eye" size={14} /><span>معاينة</span></button>
+
+          <div className="toolbar-more-wrap">
+            <button className="editor-tool toolbar-more" onClick={() => setMoreOpen((v) => !v)}>⋮ <span>المزيد</span></button>
+            {moreOpen && (
+              <div className="toolbar-dropdown">
+                <button onClick={() => { setPreviewMode("mobile"); setMoreOpen(false); }}>📱 عرض Mobile</button>
+                <button onClick={() => { setPreviewMode("desktop"); setMoreOpen(false); }}>🖥️ عرض Desktop</button>
+                <button disabled={!canUndo} onClick={() => { onUndo(); setMoreOpen(false); }}>↩ تراجع</button>
+                <button disabled={!canRedo} onClick={() => { onRedo(); setMoreOpen(false); }}>↪ إعادة</button>
+                <button onClick={() => { onBuyCredits(); setMoreOpen(false); }}>⚡ شراء نقاط</button>
+              </div>
+            )}
+          </div>
+
+          <div className="device-switch">
+            <button onClick={() => setPreviewMode("mobile")} className={previewMode === "mobile" ? "active" : ""}><SvgIcon name="mobile" size={14} /></button>
+            <button onClick={() => setPreviewMode("desktop")} className={previewMode === "desktop" ? "active" : ""}><SvgIcon name="desktop" size={14} /></button>
+          </div>
+        </div>
+
+        <div className="editor-command-row">
           <div style={{ flex: 1, position: "relative" }}>
             <span style={{ position: "absolute", top: "50%", right: 12, transform: "translateY(-50%)" }}><SvgIcon name="wand" size={15} color="#5B6478" /></span>
             <input value={editCmd} onChange={(e) => setEditCmd(e.target.value)} onKeyDown={(e) => e.key === "Enter" && onApplyEdit()} placeholder='مثال: "غيّر العنوان ليكون أكثر إقناعاً" أو "احذف آراء العملاء"' style={Object.assign({}, inputStyle, { paddingRight: 34 })} disabled={editing} />
@@ -1038,8 +1239,8 @@ function PreviewScreen(props) {
         </div>
         {error && <div style={{ color: "#F87171", fontSize: 12, textAlign: "center", padding: "6px 0", background: "#0E1526" }}>{error}</div>}
       </div>
-      <div style={{ height: headerHeight }} />
-      <div style={{ flex: 1, background: "#05070C", padding: "28px 16px", display: "flex", justifyContent: "center" }}>
+
+      <div style={{ flex: 1, padding: "28px 16px", display: "flex", justifyContent: "center" }}>
         <div style={{ width: previewMode === "mobile" ? 390 : "100%", maxWidth: previewMode === "mobile" ? 390 : 1100, borderRadius: previewMode === "mobile" ? 30 : 16, overflow: "hidden", border: previewMode === "mobile" ? "8px solid #1B1F2B" : "1px solid #1D2740", boxShadow: "0 30px 60px rgba(0,0,0,.5)", height: "fit-content" }}>
           <div ref={captureRef}>
             <LandingPage data={data} tokens={tokens} images={images} form={form} country={country} />
@@ -1330,8 +1531,7 @@ function LandingPage({ data, tokens, images, form, country }) {
         <Section title={data.specs.title} tokens={tokens}>
           <div style={{ background: tokens.card, borderRadius: tokens.radius, overflow: "hidden" }}>
             {(data.specs.items || []).map((it, i) => (
-              <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "10px 14px", borderBottom: i < data.specs.items.length - 1 ? "1px solid " + tokens.bg : "none", fontSize: 12.5 }}>
-                <span style={{ color: tokens.muted }}>{it.label}</span><span style={{ fontWeight: 700 }}>{it.value}</span>
+              <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "10px 14px", borderBottom: i < data.specs.items.length - 1 ? "1px solid " + tokens.bg : "none", fontSize: 12.5 }}>                <span style={{ color: tokens.muted }}>{it.label}</span><span style={{ fontWeight: 700 }}>{it.value}</span>
               </div>
             ))}
           </div>
@@ -1687,3 +1887,5 @@ ReactDOM.createRoot(rootEl).render(<AuthGate />);
 </script>
 </body>
 </html>
+
+               
