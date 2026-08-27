@@ -49,19 +49,21 @@
   .orb { position: absolute; border-radius: 50%; filter: blur(60px); pointer-events: none; z-index: 0; }
   #api-warning { display:none; }
 
-  .account-bar{position:sticky;top:0;z-index:300;background:rgba(11,15,25,.94);backdrop-filter:blur(16px);border-bottom:1px solid rgba(148,180,220,.12);height:48px}
-  .account-bar-inner{max-width:1400px;margin:0 auto;height:100%;padding:0 14px;display:flex;align-items:center;justify-content:space-between}
-  .account-brand{font-size:12px;font-weight:800;color:#8fa2c1;letter-spacing:.2px}
-  .account-wrap{position:relative}
+  .account-bar{position:sticky;top:0;z-index:300;background:rgba(11,15,25,.96);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(148,180,220,.12);height:58px}
+  .account-bar-inner{max-width:1400px;margin:0 auto;height:100%;padding:0 14px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center}
+  .account-brand{grid-column:2;display:flex;width:36px;height:36px;border-radius:50%;align-items:center;justify-content:center;background:linear-gradient(135deg,#17233c,#243c67);border:1px solid #2d3b59;color:#fff;font-size:16px;font-weight:900;text-align:center;box-shadow:0 5px 16px rgba(0,0,0,.25)}
+  .account-wrap{position:relative;grid-column:3;justify-self:end;display:flex;align-items:center;gap:9px}
+  .balance-pill{display:flex;align-items:center;gap:5px;height:34px;padding:0 11px;border:1px solid #243653;border-radius:999px;background:#101827;color:#aebbd0;font-size:11px;font-weight:800;white-space:nowrap}
+  .balance-pill strong{color:#5eead4;font-size:12px}
   .account-avatar{width:34px;height:34px;border-radius:50%;border:1px solid #2d3b59;background:linear-gradient(135deg,#17233c,#243c67);color:#fff;font-weight:900;cursor:pointer;font-family:inherit;box-shadow:0 5px 16px rgba(0,0,0,.25)}
-  .account-dropdown{position:absolute;top:42px;left:0;width:245px;background:#101827;border:1px solid #263653;border-radius:14px;padding:10px;box-shadow:0 20px 50px rgba(0,0,0,.45);z-index:1000}
+  .account-dropdown{position:absolute;top:42px;right:0;left:auto;width:245px;background:#101827;border:1px solid #263653;border-radius:14px;padding:10px;box-shadow:0 20px 50px rgba(0,0,0,.45);z-index:1000}
   .account-email{padding:8px 9px 10px;color:#dce5f5;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid #202c43}
   .account-credit-row{display:flex;align-items:center;justify-content:space-between;padding:12px 9px;color:#9eabc0;font-size:12px}
   .account-credit-row strong{color:#5eead4}
   .account-buy,.account-logout{width:100%;border:0;border-radius:9px;padding:9px 10px;text-align:right;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer}
   .account-buy{background:#19334a;color:#67e8f9;margin-bottom:6px}.account-logout{background:#21181e;color:#fda4af}
-  .credits-modal-backdrop{position:fixed;inset:0;z-index:1200;background:rgba(2,6,15,.76);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:18px}
-  .credits-modal{position:relative;width:min(760px,100%);padding:24px;border-radius:22px;box-shadow:0 30px 90px rgba(0,0,0,.55)}
+  .credits-modal-backdrop{position:fixed;inset:0;z-index:1200;background:rgba(2,6,15,.76);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:14px;overflow-y:auto;overscroll-behavior:contain}
+  .credits-modal{position:relative;width:min(760px,100%);max-height:calc(100dvh - 28px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:22px;border-radius:22px;box-shadow:0 30px 90px rgba(0,0,0,.55)}
   .credits-modal-close{position:absolute;top:12px;left:12px;width:34px;height:34px;border-radius:50%;border:1px solid #2b3954;background:#131c2d;color:#b8c4d8;cursor:pointer}
   .credit-plans{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
   .credit-plan{position:relative;background:#111a2b;border:1px solid #24334f;border-radius:16px;padding:18px;text-align:center}
@@ -79,11 +81,11 @@
   .editor-command-row{max-width:1400px;margin:0 auto;padding:7px 12px;display:flex;gap:7px;border-top:1px solid #172137}
   .floating-editor-back{position:fixed;bottom:22px;right:22px;z-index:1000;border:1px solid #2d4f73;background:rgba(13,25,42,.94);color:#dffcff;border-radius:999px;padding:10px 15px;font-family:inherit;font-weight:800;font-size:12px;cursor:pointer;box-shadow:0 12px 30px rgba(0,0,0,.4)}
   @media(max-width:700px){
-    .account-brand{display:none}.account-bar-inner{justify-content:flex-start}.account-wrap{margin-right:auto}
+    .account-bar{height:56px}.account-brand{font-size:16px;display:flex;width:36px;height:36px;border-radius:50%;align-items:center;justify-content:center;background:linear-gradient(135deg,#17233c,#243c67);border:1px solid #2d3b59;color:#fff;box-shadow:0 5px 16px rgba(0,0,0,.25)}.account-bar-inner{grid-template-columns:1fr auto 1fr;padding:0 10px}.account-wrap{grid-column:3;gap:6px}.balance-pill{height:32px;padding:0 9px;font-size:10.5px}.balance-pill strong{font-size:11.5px}.account-avatar{width:32px;height:32px}
     .editor-toolbar{top:48px}.toolbar-main{padding:6px 8px;gap:5px;overflow:visible}.editor-tool{font-size:0;width:36px;height:34px;padding:0}.editor-tool span:first-child{font-size:15px}.editor-tool svg{width:14px;height:14px}.editor-tool:nth-child(1) span,.editor-tool:nth-child(2) span,.editor-tool:nth-child(3) span,.editor-tool:nth-child(4) span,.editor-tool:nth-child(5) span,.editor-tool:nth-child(6) span{display:none}
     .editor-tool:nth-child(1):after{content:"↩";font-size:15px}.editor-tool:nth-child(2):after{content:"＋";font-size:17px}.editor-tool:nth-child(3):after{content:"✨";font-size:15px}.editor-tool:nth-child(4):after{content:"↓";font-size:17px}.editor-tool:nth-child(5):after{content:"🖼";font-size:14px}.editor-tool:nth-child(6):after{content:"👁";font-size:14px}
     .toolbar-more-wrap{display:block}.toolbar-more{width:auto!important;padding:0 10px!important;font-size:0!important}.toolbar-more:after{content:"⋮";font-size:19px}.toolbar-more span{display:none}.device-switch{display:none}
-    .editor-command-row{padding:6px 8px}.credit-plans{grid-template-columns:1fr}.credits-modal{padding:20px 14px}
+    .editor-command-row{padding:6px 8px}.credit-plans{grid-template-columns:1fr}.credits-modal-backdrop{align-items:flex-start;padding:10px}.credits-modal{padding:20px 14px;max-height:calc(100dvh - 20px);margin:0 auto}.credit-plan{padding:14px}.credit-plan-number{font-size:27px}.credit-plan-price{font-size:17px;margin-bottom:9px}
   }
 </style>
 </head>
@@ -639,8 +641,8 @@ function ResetPasswordScreen({ onReset, busy, error, msg }) {
 }
 
 const CREDIT_PLANS = [
-  { name: "البداية", credits: 3, price: "$4", variantId: "YOUR_VARIANT_ID_3" },
-  { name: "المحترف", credits: 15, price: "$10", variantId: "YOUR_VARIANT_ID_15", popular: true },
+  { name: "البداية", credits: 5, price: "$4.5", variantId: "YOUR_VARIANT_ID_5" },
+  { name: "المحترف", credits: 15, price: "$11", variantId: "YOUR_VARIANT_ID_15", popular: true },
   { name: "المتقدم", credits: 30, price: "$20", variantId: "YOUR_VARIANT_ID_30" },
 ];
 
@@ -698,8 +700,12 @@ function TopBar({ email, credits, loading, onLogout, onBuy }) {
   return (
     <div className="account-bar">
       <div className="account-bar-inner">
-        <div className="account-brand">Arabic Landing AI</div>
-        <AccountMenu email={email} credits={credits} loading={loading} onLogout={onLogout} onBuy={onBuy} />
+        <div aria-hidden="true" />
+        <div className="account-brand" title="Arabic Landing AI">L</div>
+        <div className="account-wrap" dir="rtl">
+          <button className="balance-pill" onClick={onBuy} title="شراء نقاط">⚡ <strong>{loading ? "..." : Number(credits ?? 0)}</strong> نقطة</button>
+          <AccountMenu email={email} credits={credits} loading={loading} onLogout={onLogout} onBuy={onBuy} />
+        </div>
       </div>
     </div>
   );
@@ -745,7 +751,7 @@ function AuthGate() {
   async function handleBuyCredits(variantId) {
     if (!session || !session.user) return;
     if (!variantId || String(variantId).indexOf("YOUR_VARIANT_ID") === 0) {
-      setError("أضف Variant ID الخاص بكل خطة في CREDIT_PLANS أولاً.");
+      setError("أضف Variant ID الخاص بكل خطة في CREDIT_PLANS أولاً (5 / 15 / 30).");
       return;
     }
     setBuying(true);
@@ -1503,6 +1509,7 @@ function LandingPage({ data, tokens, images, form, country }) {
         <Section title={data.benefits.title} tokens={tokens}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             {(data.benefits.items || []).map((it, i) => (
+              <div key={i} style={{ background: tokens.card, borderRadius: tokens.            {(data.benefits.items || []).map((it, i) => (
               <div key={i} style={{ background: tokens.card, borderRadius: tokens.radius, padding: 14, textAlign: "center" }}>
                 <ContentIcon name={it.icon} size={20} color={tokens.accent} style={{ margin: "0 auto 8px" }} />
                 <div style={{ fontWeight: 700, fontSize: 13 }}>{it.title}</div>
@@ -1531,7 +1538,8 @@ function LandingPage({ data, tokens, images, form, country }) {
         <Section title={data.specs.title} tokens={tokens}>
           <div style={{ background: tokens.card, borderRadius: tokens.radius, overflow: "hidden" }}>
             {(data.specs.items || []).map((it, i) => (
-              <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "10px 14px", borderBottom: i < data.specs.items.length - 1 ? "1px solid " + tokens.bg : "none", fontSize: 12.5 }}>                <span style={{ color: tokens.muted }}>{it.label}</span><span style={{ fontWeight: 700 }}>{it.value}</span>
+              <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "10px 14px", borderBottom: i < data.specs.items.length - 1 ? "1px solid " + tokens.bg : "none", fontSize: 12.5 }}>
+                <span style={{ color: tokens.muted }}>{it.label}</span><span style={{ fontWeight: 700 }}>{it.value}</span>
               </div>
             ))}
           </div>
@@ -1887,5 +1895,3 @@ ReactDOM.createRoot(rootEl).render(<AuthGate />);
 </script>
 </body>
 </html>
-
-               
