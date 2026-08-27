@@ -1511,7 +1511,8 @@ function LandingPage({ data, tokens, images, form, country }) {
         <Section title={data.beforeAfter.title} tokens={tokens}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             <div style={{ background: tokens.bg, border: "1px solid " + tokens.muted + "33", borderRadius: tokens.radius, padding: 14, textAlign: "center" }}>
-              <div style={{ fontSize: 11, fontWeight: 800, color: tokens.muted, marginBottom: 6 }}>{data.beforeAfter.beforeLabel || "قبل              <div style={{ fontSize: 12, color: tokens.muted, lineHeight: 1.7 }}>{data.beforeAfter.beforeText}</div>
+              <div style={{ fontSize: 11, fontWeight: 800, color: tokens.muted, marginBottom: 6 }}>{data.beforeAfter.beforeLabel || "قبل"}</div> 
+              <div style={{ fontSize: 12, color: tokens.muted, lineHeight: 1.7 }}>{data.beforeAfter.beforeText}</div>
             </div>
             <div style={{ background: tokens.card, border: "1px solid " + tokens.primary, borderRadius: tokens.radius, padding: 14, textAlign: "center" }}>
               <div style={{ fontSize: 11, fontWeight: 800, color: tokens.primary, marginBottom: 6 }}>{data.beforeAfter.afterLabel || "بعد"}</div>
