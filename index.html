@@ -1508,9 +1508,7 @@ function LandingPage({ data, tokens, images, form, country }) {
       {sections.includes("benefits") && data.benefits && (
         <Section title={data.benefits.title} tokens={tokens}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            {(data.benefits.items || []).map((it, i) => (
-              <div key={i} style={{ background: tokens.card, borderRadius: tokens.            {(data.benefits.items || []).map((it, i) => (
-              <div key={i} style={{ background: tokens.card, borderRadius: tokens.radius, padding: 14, textAlign: "center" }}>
+            {(data.benefits.items || []).map((it, i) => (<div key={i} style={{ background: tokens.card, borderRadius: tokens.radius, padding: 14, textAlign: "center" }}>
                 <ContentIcon name={it.icon} size={20} color={tokens.accent} style={{ margin: "0 auto 8px" }} />
                 <div style={{ fontWeight: 700, fontSize: 13 }}>{it.title}</div>
                 <div style={{ fontSize: 11.5, color: tokens.muted, marginTop: 4, lineHeight: 1.6 }}>{it.desc}</div>
@@ -1895,3 +1893,4 @@ ReactDOM.createRoot(rootEl).render(<AuthGate />);
 </script>
 </body>
 </html>
+  
