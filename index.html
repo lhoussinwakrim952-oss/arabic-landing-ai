@@ -681,7 +681,7 @@ function CreditsModal({ open, onClose, onBuy, buying }) {
   );
 }
 
-function AccountMenu({ email, credits, loading, onLogout, onBuy }) {
+function AccountMenu({ email, credits, loading, isAdmin, onLogout, onBuy }) {
   const [open, setOpen] = useState(false);
   const initial = ((email || "U").trim().charAt(0) || "U").toUpperCase();
   const wrapRef = useRef(null);
@@ -710,11 +710,20 @@ function AccountMenu({ email, credits, loading, onLogout, onBuy }) {
       {open && (
         <div className="account-dropdown">
           <div className="account-email">{email || "حساب المستخدم"}</div>
-          <div className="account-credit-row">
-            <span>⚡ الرصيد</span>
-            <strong>{loading ? "..." : (credits ?? 0) + " نقطة"}</strong>
-          </div>
-          <button type="button" className="account-buy" onClick={() => { setOpen(false); onBuy(); }}>＋ شراء نقاط</button>
+          {isAdmin ? (
+            <div className="account-credit-row">
+              <span>👑 Admin</span>
+              <strong>وضع الاختبار</strong>
+            </div>
+          ) : (
+            <div className="account-credit-row">
+              <span>⚡ الرصيد</span>
+              <strong>{loading ? "..." : (credits ?? 0) + " نقطة"}</strong>
+            </div>
+          )}
+          {!isAdmin && (
+            <button type="button" className="account-buy" onClick={() => { setOpen(false); onBuy(); }}>＋ شراء نقاط</button>
+          )}
           <button type="button" className="account-logout" onClick={() => { setOpen(false); onLogout(); }}>🚪 تسجيل الخروج</button>
         </div>
       )}
@@ -722,12 +731,12 @@ function AccountMenu({ email, credits, loading, onLogout, onBuy }) {
   );
 }
 
-function TopBar({ email, credits, loading, onLogout, onBuy }) {
+function TopBar({ email, credits, loading, isAdmin, onLogout, onBuy }) {
   return (
     <div className="account-bar">
       <div className="account-bar-inner">
         <div className="topbar-account-left">
-          <AccountMenu email={email} credits={credits} loading={loading} onLogout={onLogout} onBuy={onBuy} />
+          <AccountMenu email={email} credits={credits} loading={loading} isAdmin={isAdmin} onLogout={onLogout} onBuy={onBuy} />
         </div>
 
         <div className="account-brand" title="Arabic Landing AI">
@@ -735,7 +744,11 @@ function TopBar({ email, credits, loading, onLogout, onBuy }) {
         </div>
 
         <div className="topbar-balance-right">
-          <button type="button" className="balance-pill" onClick={onBuy} title="شراء نقاط">⚡ <strong>{loading ? "..." : Number(credits ?? 0)}</strong> نقطة</button>
+          {isAdmin ? (
+            <span className="balance-pill" title="حساب Admin — توليد بلا خصم نقاط">👑 <strong>Admin</strong> وضع الاختبار</span>
+          ) : (
+            <button type="button" className="balance-pill" onClick={onBuy} title="شراء نقاط">⚡ <strong>{loading ? "..." : Number(credits ?? 0)}</strong> نقطة</button>
+          )}
         </div>
       </div>
     </div>
@@ -767,10 +780,18 @@ function AuthGate() {
       if (result.error) {
         result = await client.from("profiles").select("email, credits").eq("id", userId).single();
       }
+      // role مزيدة فـ profiles فقط (عمود الصلاحيات لي زدناه بالـ SQL) — نجيبها بطلب منفصل،
+      // "best effort": إذا فشلت (مثلاً العمود ماكاينش) ما كتأثرش على الرصيد أو باقي المنصة.
+      let role = "user";
+      try {
+        const roleResult = await client.from("profiles").select("role").eq("id", userId).single();
+        if (!roleResult.error && roleResult.data && roleResult.data.role) role = roleResult.data.role;
+      } catch (e3) {}
       if (!result.error && result.data) {
-        setProfile(result.data);
+        setProfile({ ...result.data, role });
         setCredits(Number(result.data.credits || 0));
       } else {
+        setProfile({ role });
         setCredits(0);
       }
     } catch (e) {
@@ -866,6 +887,10 @@ function AuthGate() {
   if (configError) return <ConfigErrorScreen />;
   if (recoveryMode) return <ResetPasswordScreen onReset={handleReset} busy={busy} error={error} msg={msg} />;
 
+  // Admin = صاحب المنصة (role = 'admin' فـ profiles). كيسمح ليه بالتوليد بلا خصم نقاط.
+  // هاد التحقق واجهي بحت (UX فقط) — الحماية الحقيقية خاصها تكون فالـ Backend (شوف الملاحظة تحت handleGenerate).
+  const isAdmin = !!(profile && profile.role === "admin");
+
   if (!session) {
     if (view === "signup") return <SignUpScreen onSignUp={handleSignUp} onSwitch={switchView} busy={busy} error={error} msg={msg} />;
     if (view === "forgot") return <ForgotPasswordScreen onForgot={handleForgot} onSwitch={switchView} busy={busy} error={error} msg={msg} />;
@@ -879,6 +904,7 @@ function AuthGate() {
           email={(profile && profile.email) || session.user.email}
           credits={credits}
           loading={profileLoading}
+          isAdmin={isAdmin}
           onLogout={handleLogout}
           onBuy={() => setShowBuyModal(true)}
         />
@@ -887,6 +913,7 @@ function AuthGate() {
         credits={credits}
         setCredits={setCredits}
         user={session.user}
+        isAdmin={isAdmin}
         onBuyCredits={() => setShowBuyModal(true)}
         onPreviewChange={setEditorPreview}
       />
@@ -902,7 +929,7 @@ function AuthGate() {
 
 /* ============================== GENERATOR (لم يتغيّر) ============================== */
 
-function App({ credits, setCredits, user, onBuyCredits, onPreviewChange }) {
+function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange }) {
   const [step, setStep] = useState("form");
   const [form, setForm] = useState({ name: "", price: "", priceOld: "", description: "", countryCode: "SA", dialect: "auto", whatsapp: "", showOrderForm: true });
   const [images, setImages] = useState([]);
@@ -964,7 +991,8 @@ function App({ credits, setCredits, user, onBuyCredits, onPreviewChange }) {
 
   async function handleGenerate() {
     setError("");
-    if (credits <= 0) {
+    // Admin (صاحب المنصة) كيتوليد بلا قيد رصيد. المستخدم العادي كيبقى محتاج نقاط كيفما كان.
+    if (!isAdmin && credits <= 0) {
       onBuyCredits();
       return;
     }
@@ -986,10 +1014,11 @@ function App({ credits, setCredits, user, onBuyCredits, onPreviewChange }) {
       result._heroLayout = pickHeroLayout();
 
       // خصم نقطة واحدة بعد نجاح التوليد فقط. شرط credits يمنع خصماً سالباً.
+      // Admin مستثنى تماماً من الخصم — التوليد عندو مجاني ومايبانش عليه أي تغيير فالرصيد.
       const previousCredits = Number(credits || 0);
       const nextCredits = Math.max(0, previousCredits - 1);
       const client = await getSupabaseClient();
-      if (client && user && previousCredits > 0) {
+      if (!isAdmin && client && user && previousCredits > 0) {
         let updateResult = await client.from("users")
           .update({ credits: nextCredits })
           .eq("id", user.id)
