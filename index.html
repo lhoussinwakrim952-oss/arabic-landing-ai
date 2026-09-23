@@ -80,7 +80,7 @@
   .editor-tool{display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap;background:#131a2a;border:1px solid #202a42;color:#e2e8f5;font-size:11.5px;font-weight:700;padding:7px 9px;border-radius:8px;cursor:pointer;font-family:inherit}
   .editor-tool:hover{border-color:#3a4d72;background:#18223a}.editor-design{background:#6339bd;border-color:#7c3aed;color:#fff}
   .toolbar-more-wrap{display:none;position:relative}.toolbar-dropdown{position:absolute;top:40px;right:0;width:190px;background:#101827;border:1px solid #263653;border-radius:12px;padding:6px;box-shadow:0 20px 50px rgba(0,0,0,.45)}
-  .toolbar-dropdown button{width:100%;background:transparent;border:0;color:#dce5f5;text-align:right;padding:9px;border-radius:8px;font-family:inherit;font-size:12px;cursor:pointer}.toolbar-dropdown button:hover{background:#19243a}.toolbar-dropdown button:disabled{opacity:.35;cursor:default}
+  .toolbar-dropdown button{width:100%;display:flex;align-items:center;gap:8px;background:transparent;border:0;color:#dce5f5;text-align:right;padding:9px;border-radius:8px;font-family:inherit;font-size:12px;cursor:pointer}.toolbar-dropdown button:hover{background:#19243a}.toolbar-dropdown button:disabled{opacity:.35;cursor:default}.toolbar-dropdown button svg{flex-shrink:0}
   .device-switch{display:flex;background:#131a2a;border-radius:8px;padding:2px;margin-right:auto}.device-switch button{border:0;background:transparent;color:#9aa7bd;border-radius:6px;padding:6px 8px;cursor:pointer;display:flex}.device-switch button.active{background:#22d3ee;color:#04101c}
   .editor-command-row{max-width:1400px;margin:0 auto;padding:7px 12px;display:flex;gap:7px;border-top:1px solid #172137}
   .account-bar + div{padding-top:64px;box-sizing:border-box;}
@@ -88,9 +88,8 @@
   @media(max-width:700px){
     .account-bar{height:58px}
     .account-bar + div{padding-top:58px;}.account-brand{width:40px;height:40px}.account-bar-inner{grid-template-columns:1fr auto 1fr;padding:0 10px}.topbar-account-left{grid-column:1}.topbar-balance-right{grid-column:3}.account-wrap{gap:6px}.balance-pill{height:32px;padding:0 9px;font-size:10.5px}.balance-pill strong{font-size:11.5px}.account-avatar{width:36px;height:36px;font-size:16px}.account-dropdown{top:calc(100% + 8px);width:min(285px,calc(100vw - 20px))}
-    .editor-toolbar{top:58px}.toolbar-main{padding:6px 8px;gap:5px;overflow:visible}.editor-tool{font-size:0;width:36px;height:34px;padding:0}.editor-tool span:first-child{font-size:15px}.editor-tool svg{width:14px;height:14px}.editor-tool:nth-child(1) span,.editor-tool:nth-child(2) span,.editor-tool:nth-child(3) span,.editor-tool:nth-child(4) span,.editor-tool:nth-child(5) span,.editor-tool:nth-child(6) span{display:none}
-    .editor-tool:nth-child(1):after{content:"↩";font-size:15px}.editor-tool:nth-child(2):after{content:"＋";font-size:17px}.editor-tool:nth-child(3):after{content:"✨";font-size:15px}.editor-tool:nth-child(4):after{content:"↓";font-size:17px}.editor-tool:nth-child(5):after{content:"🖼";font-size:14px}.editor-tool:nth-child(6):after{content:"👁";font-size:14px}
-    .toolbar-more-wrap{display:block}.toolbar-more{width:auto!important;padding:0 10px!important;font-size:0!important}.toolbar-more:after{content:"⋮";font-size:19px}.toolbar-more span{display:none}.device-switch{display:none}
+    .editor-toolbar{top:58px}.toolbar-main{padding:6px 8px;gap:5px;overflow:visible}.editor-tool{font-size:0;width:36px;height:34px;padding:0}.editor-tool svg{width:16px;height:16px}.editor-tool span{display:none}
+    .toolbar-more-wrap{display:block}.toolbar-more{width:auto!important;padding:0 10px!important}.toolbar-more span{display:none}.device-switch{display:none}
     .editor-command-row{padding:6px 8px}.credit-plans{grid-template-columns:1fr}.credits-modal-backdrop{align-items:flex-start;padding:10px}.credits-modal{padding:20px 14px;max-height:calc(100dvh - 20px);margin:0 auto}.credit-plan{padding:14px}.credit-plan-number{font-size:27px}.credit-plan-price{font-size:17px;margin-bottom:9px}
   }
 </style>
@@ -261,6 +260,11 @@ const SVG_PATHS = {
   eye: "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z",
   close: "M18 6 6 18M6 6l12 12",
   cloudDownload: "M7 18a4.5 4.5 0 0 1-1.2-8.84A6 6 0 0 1 17.5 8H18a4 4 0 0 1 .5 7.97M12 11v9m0 0-3.5-3.5M12 20l3.5-3.5",
+  plus: "M12 5v14M5 12h14",
+  sparkle: "M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18",
+  dots: "M5 12h.01M12 12h.01M19 12h.01",
+  bolt: "M13 2 4 14h6l-1 8 9-12h-6l1-8z",
+  publish: "M4 12a8 8 0 1 0 16 0 8 8 0 0 0-16 0zM9 12l2 2 4-4",
 };
 function SvgIcon({ name, size, color, strokeWidth, style }) {
   const d = SVG_PATHS[name];
@@ -647,9 +651,9 @@ function ResetPasswordScreen({ onReset, busy, error, msg }) {
 }
 
 const CREDIT_PLANS = [
-  { name: "البداية", credits: 5, price: "$4.5", variantId: "YOUR_VARIANT_ID_5" },
-  { name: "المحترف", credits: 15, price: "$11", variantId: "YOUR_VARIANT_ID_15", popular: true },
-  { name: "المتقدم", credits: 30, price: "$20", variantId: "YOUR_VARIANT_ID_30" },
+  { name: "البداية", credits: 5, price: "$4.5", variantId: "pri_01m2rr88016xc9sjgc83517qvm" },
+  { name: "المحترف", credits: 15, price: "$11", variantId: "pri_01m2rramtt2v9b051q9bm7edy7", popular: true },
+  { name: "المتقدم", credits: 30, price: "$20", variantId: "pri_01m2rrd0c2h9zpk9xr9py26fyv" },
 ];
 
 function CreditsModal({ open, onClose, onBuy, buying }) {
@@ -1269,21 +1273,21 @@ function PreviewScreen(props) {
       <div className="editor-toolbar">
         <div className="toolbar-main">
           <button onClick={onBack} className="editor-tool"><SvgIcon name="back" size={14} /><span>رجوع</span></button>
-          <button onClick={onBack} className="editor-tool"><span style={{fontSize:16}}>＋</span><span>جديد</span></button>
-          <button onClick={onShuffleDesign} className="editor-tool editor-design"><span>✨</span><span>تصميم</span></button>
+          <button onClick={onBack} className="editor-tool"><SvgIcon name="plus" size={14} /><span>جديد</span></button>
+          <button onClick={onShuffleDesign} className="editor-tool editor-design"><SvgIcon name="sparkle" size={14} /><span>تصميم</span></button>
           <button onClick={onDownload} className="editor-tool"><SvgIcon name="download" size={14} /><span>HTML</span></button>
           <button onClick={exportImage} disabled={imageLoading} className="editor-tool"><SvgIcon name="image" size={14} /><span>{imageLoading ? "..." : "صورة"}</span></button>
           <button onClick={() => setPreviewOnly(true)} className="editor-tool"><SvgIcon name="eye" size={14} /><span>معاينة</span></button>
 
           <div className="toolbar-more-wrap">
-            <button className="editor-tool toolbar-more" onClick={() => setMoreOpen((v) => !v)}>⋮ <span>المزيد</span></button>
+            <button className="editor-tool toolbar-more" onClick={() => setMoreOpen((v) => !v)}><SvgIcon name="dots" size={14} /><span>المزيد</span></button>
             {moreOpen && (
               <div className="toolbar-dropdown">
-                <button onClick={() => { setPreviewMode("mobile"); setMoreOpen(false); }}>📱 عرض Mobile</button>
-                <button onClick={() => { setPreviewMode("desktop"); setMoreOpen(false); }}>🖥️ عرض Desktop</button>
-                <button disabled={!canUndo} onClick={() => { onUndo(); setMoreOpen(false); }}>↩ تراجع</button>
-                <button disabled={!canRedo} onClick={() => { onRedo(); setMoreOpen(false); }}>↪ إعادة</button>
-                <button onClick={() => { onBuyCredits(); setMoreOpen(false); }}>⚡ شراء نقاط</button>
+                <button onClick={() => { setPreviewMode("mobile"); setMoreOpen(false); }}><SvgIcon name="mobile" size={14} /> عرض Mobile</button>
+                <button onClick={() => { setPreviewMode("desktop"); setMoreOpen(false); }}><SvgIcon name="desktop" size={14} /> عرض Desktop</button>
+                <button disabled={!canUndo} onClick={() => { onUndo(); setMoreOpen(false); }}><SvgIcon name="undo" size={14} /> تراجع</button>
+                <button disabled={!canRedo} onClick={() => { onRedo(); setMoreOpen(false); }}><SvgIcon name="redo" size={14} /> إعادة</button>
+                <button onClick={() => { onBuyCredits(); setMoreOpen(false); }}><SvgIcon name="bolt" size={14} /> شراء نقاط</button>
               </div>
             )}
           </div>
