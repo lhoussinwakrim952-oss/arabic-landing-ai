@@ -78,8 +78,8 @@
   .editor-toolbar{position:sticky;top:64px;z-index:250;background:#0e1526;border-bottom:1px solid #1d2740;box-shadow:0 8px 25px rgba(0,0,0,.22)}
   .toolbar-main{max-width:1400px;margin:0 auto;padding:7px 12px;display:flex;align-items:center;gap:6px;min-height:46px}
   .editor-tool{display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap;background:#131a2a;border:1px solid #202a42;color:#e2e8f5;font-size:11.5px;font-weight:700;padding:7px 9px;border-radius:8px;cursor:pointer;font-family:inherit}
-  .editor-tool:hover{border-color:#3a4d72;background:#18223a}.editor-design{background:#6339bd;border-color:#7c3aed;color:#fff}.tool-dl{background:#0f3a4a;border-color:#22d3ee;color:#e6fbff}
-  .toolbar-more-wrap{display:none;position:relative}.toolbar-dropdown{position:absolute;top:42px;left:0;right:auto;z-index:1500;width:min(210px,calc(100vw - 20px));background:#101827;border:1px solid #263653;border-radius:12px;padding:6px;box-shadow:0 20px 50px rgba(0,0,0,.45)}
+  .editor-tool:hover{border-color:#3a4d72;background:#18223a}.editor-design{background:#6339bd;border-color:#7c3aed;color:#fff}
+  .toolbar-more-wrap{display:none;position:relative}.toolbar-dropdown{position:absolute;top:40px;right:0;width:190px;background:#101827;border:1px solid #263653;border-radius:12px;padding:6px;box-shadow:0 20px 50px rgba(0,0,0,.45)}
   .toolbar-dropdown button{width:100%;display:flex;align-items:center;gap:8px;background:transparent;border:0;color:#dce5f5;text-align:right;padding:9px;border-radius:8px;font-family:inherit;font-size:12px;cursor:pointer}.toolbar-dropdown button:hover{background:#19243a}.toolbar-dropdown button:disabled{opacity:.35;cursor:default}.toolbar-dropdown button svg{flex-shrink:0}
   .device-switch{display:flex;background:#131a2a;border-radius:8px;padding:2px;margin-right:auto}.device-switch button{border:0;background:transparent;color:#9aa7bd;border-radius:6px;padding:6px 8px;cursor:pointer;display:flex}.device-switch button.active{background:#22d3ee;color:#04101c}
   .editor-command-row{max-width:1400px;margin:0 auto;padding:7px 12px;display:flex;gap:7px;border-top:1px solid #172137}
@@ -88,7 +88,7 @@
   @media(max-width:700px){
     .account-bar{height:58px}
     .account-bar + div{padding-top:58px;}.account-brand{width:40px;height:40px}.account-bar-inner{grid-template-columns:1fr auto 1fr;padding:0 10px}.topbar-account-left{grid-column:1}.topbar-balance-right{grid-column:3}.account-wrap{gap:6px}.balance-pill{height:32px;padding:0 9px;font-size:10.5px}.balance-pill strong{font-size:11.5px}.account-avatar{width:36px;height:36px;font-size:16px}.account-dropdown{top:calc(100% + 8px);width:min(285px,calc(100vw - 20px))}
-    .editor-toolbar{top:58px}.toolbar-main{padding:6px 8px;gap:5px;overflow:visible}.editor-tool{font-size:0;width:36px;height:34px;padding:0}.editor-tool svg{width:16px;height:16px}.editor-tool span{display:none}.editor-tool.tool-dl{width:auto;padding:0 8px;gap:4px;font-size:10.5px;background:#0f3a4a;border-color:#22d3ee;color:#e6fbff}.editor-tool.tool-dl span{display:inline;font-size:10.5px;font-weight:800}.editor-tool.tool-dl svg{width:14px;height:14px}
+    .editor-toolbar{top:58px}.toolbar-main{padding:6px 8px;gap:5px;overflow:visible}.editor-tool{font-size:0;width:36px;height:34px;padding:0}.editor-tool svg{width:16px;height:16px}.editor-tool span{display:none}
     .toolbar-more-wrap{display:block}.toolbar-more{width:auto!important;padding:0 10px!important}.toolbar-more span{display:none}.device-switch{display:none}
     .editor-command-row{padding:6px 8px}.credit-plans{grid-template-columns:1fr}.credits-modal-backdrop{align-items:flex-start;padding:10px}.credits-modal{padding:20px 14px;max-height:calc(100dvh - 20px);margin:0 auto}.credit-plan{padding:14px}.credit-plan-number{font-size:27px}.credit-plan-price{font-size:17px;margin-bottom:9px}
   }
@@ -1222,56 +1222,28 @@ function PreviewScreen(props) {
   }, [previewOnly]);
 
   async function exportImage() {
-    if (!captureRef.current || !window.html2canvas || imageLoading) return;
+    if (!captureRef.current || !window.html2canvas) return;
     setImageLoading(true);
     try {
       const el = captureRef.current;
-      try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (e) {}
-      // Use the real visible width of the page (NOT scrollWidth, which includes fixed/overflowing
-      // elements and caused the blank margin) and a full-page height.
-      const W = Math.round(el.getBoundingClientRect().width);
-      const H = Math.ceil(el.scrollHeight);
-      // High quality, but keep the canvas within mobile browser limits.
-      const maxSide = 16000, maxArea = 40e6;
-      let scale = 3;
-      scale = Math.min(scale, maxSide / H, Math.sqrt(maxArea / (W * H)));
-      scale = Math.max(1, scale);
       const canvas = await window.html2canvas(el, {
-        scale: scale,
+        scale: Math.min(3, window.devicePixelRatio > 1 ? 3 : 2),
         backgroundColor: tokens.bg,
         useCORS: true,
         allowTaint: false,
         logging: false,
         imageTimeout: 20000,
-        x: 0, y: 0,
-        scrollX: 0, scrollY: 0,
-        width: W,
-        height: H,
-        windowWidth: W,
-        windowHeight: H,
-        onclone: (doc, cloned) => {
-          // Flatten sticky/fixed elements so they render in normal flow, once, at the right width
-          const all = cloned.querySelectorAll("*");
-          all.forEach((n) => {
-            const cs = doc.defaultView.getComputedStyle(n);
-            if (cs.position === "fixed") { n.style.display = "none"; }
-            else if (cs.position === "sticky") { n.style.position = "relative"; n.style.top = "auto"; }
-            n.style.animation = "none";
-            n.style.transition = "none";
-          });
-          cloned.style.width = W + "px";
-          cloned.style.maxWidth = W + "px";
-          cloned.style.margin = "0";
-          cloned.style.overflow = "hidden";
-        }
+        scrollX: 0,
+        scrollY: -window.scrollY,
+        width: el.scrollWidth,
+        height: el.scrollHeight,
+        windowWidth: el.scrollWidth,
+        windowHeight: el.scrollHeight
       });
-      const blob = await new Promise((res) => canvas.toBlob(res, "image/png"));
-      const url = blob ? URL.createObjectURL(blob) : canvas.toDataURL("image/png");
       const a = document.createElement("a");
-      a.href = url;
+      a.href = canvas.toDataURL("image/png");
       a.download = (form.name || "landing-page").trim().replace(/\s+/g, "-") + ".png";
       document.body.appendChild(a); a.click(); a.remove();
-      if (blob) setTimeout(() => URL.revokeObjectURL(url), 4000);
     } catch (e) {
       console.error("Image export failed", e);
     } finally {
@@ -1303,8 +1275,8 @@ function PreviewScreen(props) {
           <button onClick={onBack} className="editor-tool"><SvgIcon name="back" size={14} /><span>رجوع</span></button>
           <button onClick={onBack} className="editor-tool"><SvgIcon name="plus" size={14} /><span>جديد</span></button>
           <button onClick={onShuffleDesign} className="editor-tool editor-design"><SvgIcon name="sparkle" size={14} /><span>تصميم</span></button>
-          <button onClick={onDownload} className="editor-tool tool-dl" title="تنزيل كملف HTML"><SvgIcon name="download" size={14} /><span>HTML</span></button>
-          <button onClick={exportImage} disabled={imageLoading} className="editor-tool tool-dl" title="تنزيل كصورة PNG"><SvgIcon name="download" size={14} /><SvgIcon name="image" size={14} /><span>{imageLoading ? "..." : "PNG"}</span></button>
+          <button onClick={onDownload} className="editor-tool"><SvgIcon name="download" size={14} /><span>HTML</span></button>
+          <button onClick={exportImage} disabled={imageLoading} className="editor-tool"><SvgIcon name="image" size={14} /><span>{imageLoading ? "..." : "صورة"}</span></button>
           <button onClick={() => setPreviewOnly(true)} className="editor-tool"><SvgIcon name="eye" size={14} /><span>معاينة</span></button>
 
           <div className="toolbar-more-wrap">
