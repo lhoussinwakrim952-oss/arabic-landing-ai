@@ -544,6 +544,7 @@ function AuthShell({ children }) {
         <div className="glass" style={{ borderRadius: 20, padding: 24, boxShadow: "0 30px 70px rgba(0,0,0,.45)" }}>
           {children}
         </div>
+        <LegalFooter />
       </div>
     </div>
   );
@@ -759,6 +760,111 @@ function TopBar({ email, credits, loading, isAdmin, onLogout, onBuy }) {
   );
 }
 
+/* ============================== الصفحات القانونية (Terms / Privacy / Refund / Contact) ============================== */
+/* ملاحظة: لم يتم العثور على بريد دعم فعلي داخل المشروع، فتم وضع بريد مؤقت أدناه.
+   يجب على صاحب المنصة استبداله ببريد الدعم الحقيقي قبل النشر. */
+const SUPPORT_EMAIL = "chatst820@gmail.com";
+
+const LEGAL_CONTENT = {
+  terms: {
+    title: "الشروط والأحكام",
+    updated: "آخر تحديث: " + new Date().toISOString().slice(0, 10),
+    sections: [
+      { h: "1. طبيعة الخدمة", p: "منصة Arabic Landing AI هي خدمة برمجية كخدمة (SaaS) تتيح للمستخدمين إنشاء صفحات هبوط (Landing Pages) باللغة العربية باستخدام الذكاء الاصطناعي، بناءً على المعلومات والصور التي يُدخلها المستخدم بنفسه." },
+      { h: "2. الحساب", p: "لاستخدام المنصة يجب إنشاء حساب عبر البريد الإلكتروني وكلمة المرور. المستخدم مسؤول عن الحفاظ على سرية بيانات الدخول الخاصة به وعن أي نشاط يتم عبر حسابه، ويجب تقديم بيانات صحيحة عند التسجيل." },
+      { h: "3. نظام النقاط (Credits)", p: "يعتمد استخدام المنصة على نظام نقاط، حيث تُخصم نقطة واحدة مقابل كل عملية توليد لصفحة هبوط. يمكن للمستخدم شراء نقاط إضافية عبر الباقات المتاحة داخل المنصة، وهذه النقاط مرتبطة بالحساب ولا يمكن تحويلها إلى حساب آخر." },
+      { h: "4. الدفع والاشتراكات", p: "تتم عمليات شراء النقاط عبر مزود دفع خارجي، وتخضع هذه العمليات لشروط وسياسات ذلك المزود بالإضافة إلى هذه الشروط. المنصة لا تقوم بتخزين بيانات البطاقة البنكية للمستخدم، لأن معالجة الدفع تتم بالكامل لدى مزود الدفع." },
+      { h: "5. الاستخدام المقبول", p: "يُمنع استخدام المنصة لإنشاء محتوى مخالف للقانون، أو منتحل لهوية طرف آخر، أو يحتوي على احتيال، أو ينتهك حقوق الملكية الفكرية لطرف ثالث. كما يُمنع أي محاولة لإساءة استخدام النظام التقني للمنصة، مثل الوصول غير المصرح به أو استغلال الثغرات." },
+      { h: "6. حقوق المستخدم والمنصة", p: "يحتفظ المستخدم بحقوقه على المحتوى (النصوص والصور) الذي يُدخله بنفسه، وتمنحه المنصة حق استخدام صفحة الهبوط التي يتم توليدها لأغراضه الخاصة. في المقابل، تحتفظ المنصة بجميع الحقوق المتعلقة بالتقنية والتصميم والكود الخاص بالخدمة نفسها." },
+      { h: "7. إيقاف أو تعليق الحساب", p: "يحق للمنصة تعليق أو إيقاف أي حساب يخالف هذه الشروط أو يُستخدم بشكل يضر بالخدمة أو بمستخدمين آخرين، وذلك دون الإخلال بحق المستخدم في التواصل مع الدعم لتوضيح الأمر." },
+      { h: "8. حدود المسؤولية", p: "تُقدَّم الخدمة \"كما هي\" دون ضمانات بعدم انقطاعها أو خلوها التام من الأخطاء. لا تتحمل المنصة مسؤولية أي أضرار غير مباشرة قد تنتج عن استخدام المحتوى الذي تم توليده، ويبقى المستخدم مسؤولاً عن مراجعة المحتوى قبل نشره واستخدامه فعلياً." },
+      { h: "9. التعديلات على الخدمة والشروط", p: "يجوز تحديث هذه الشروط أو تعديل مزايا الخدمة من وقت لآخر. سيتم نشر أي تحديث على هذه الصفحة، ويُعتبر استمرار استخدام المنصة بعد التحديث موافقة ضمنية على الشروط الجديدة." },
+      { h: "10. التواصل", p: "لأي استفسار يتعلق بهذه الشروط، يمكن التواصل معنا عبر صفحة \"تواصل معنا\" أو عبر البريد الإلكتروني: " + SUPPORT_EMAIL + "." },
+    ],
+  },
+  privacy: {
+    title: "سياسة الخصوصية",
+    updated: "آخر تحديث: " + new Date().toISOString().slice(0, 10),
+    sections: [
+      { h: "1. البيانات التي نجمعها", p: "عند إنشاء حساب، نقوم بجمع البريد الإلكتروني وكلمة المرور (مخزّنة بشكل مشفّر عبر مزود المصادقة) اللازمين لتشغيل الحساب. كما نخزّن بيانات صفحات الهبوط التي ينشئها المستخدم (كالنصوص، الأسعار، والصور المرفوعة) ورصيد النقاط المرتبط بحسابه." },
+      { h: "2. بيانات الاستخدام", p: "قد يتم تسجيل بيانات تقنية أساسية متعلقة باستخدام المنصة، مثل عمليات توليد صفحات الهبوط وأوقاتها، وذلك لأغراض تشغيل الخدمة وتحسينها ودعم المستخدمين." },
+      { h: "3. كيفية استخدام البيانات", p: "تُستخدم البيانات المجمّعة فقط لتشغيل الخدمة وإدارة الحساب ورصيد النقاط، والتواصل مع المستخدم عند الحاجة (مثل تأكيد البريد الإلكتروني أو استعادة كلمة المرور)، وتحسين أداء المنصة." },
+      { h: "4. التخزين والحماية", p: "يتم تخزين بيانات الحساب وبيانات المنصة عبر Supabase، الذي يوفّر بنية تحتية لقواعد البيانات والمصادقة. نتخذ إجراءات معقولة لحماية هذه البيانات، مع العلم أنه لا يمكن ضمان أمان مطلق لأي نظام متصل بالإنترنت." },
+      { h: "5. مزود الدفع", p: "عند شراء نقاط، تتم معالجة عملية الدفع بالكامل عبر مزود دفع خارجي، والذي يخضع لسياسة الخصوصية الخاصة به. لا تصل المنصة إلى بيانات البطاقة البنكية للمستخدم أو تقوم بتخزينها." },
+      { h: "6. عدم بيع البيانات", p: "لا تقوم المنصة ببيع أو تأجير البيانات الشخصية للمستخدمين لأي طرف ثالث لأغراض تسويقية." },
+      { h: "7. ملفات تعريف الارتباط والتخزين المحلي", p: "قد تستخدم المنصة أو مزود المصادقة آليات تخزين أساسية (مثل بيانات الجلسة) لإبقاء المستخدم مسجّلاً للدخول. لا تستخدم المنصة حالياً أدوات تتبع أو تحليلات إعلانية من طرف ثالث." },
+      { h: "8. حقوق المستخدم", p: "يحق للمستخدم طلب الاطلاع على بياناته أو تصحيحها، أو طلب حذف حسابه وبياناته المرتبطة به، وذلك بالتواصل مع الدعم." },
+      { h: "9. التواصل", p: "لأي استفسار يتعلق بالخصوصية، يمكن التواصل معنا عبر صفحة \"تواصل معنا\" أو عبر البريد الإلكتروني: " + SUPPORT_EMAIL + "." },
+    ],
+  },
+  refund: {
+    title: "سياسة الاسترجاع والإلغاء",
+    updated: "آخر تحديث: " + new Date().toISOString().slice(0, 10),
+    sections: [
+      { h: "1. طبيعة الخدمة", p: "النقاط (Credits) التي يتم شراؤها عبر المنصة هي رصيد رقمي يُستهلك فور استخدامه في توليد صفحة هبوط. باستخدام النقطة، تُعتبر الخدمة المرتبطة بها قد قُدّمت بالكامل." },
+      { h: "2. النقاط المستهلكة", p: "لا يتم استرجاع قيمة النقاط التي تم استهلاكها بالفعل في عمليات توليد ناجحة." },
+      { h: "3. الأخطاء التقنية أو مشاكل الدفع", p: "في حال حدوث خطأ تقني من جهة المنصة أدى إلى خصم نقاط دون إتمام عملية التوليد بنجاح، أو في حال وجود مشكلة واضحة في عملية الدفع (كخصم مكرر)، يمكن للمستخدم التواصل مع الدعم لمراجعة الحالة، سواء بإعادة النقاط إلى الحساب أو باسترجاع المبلغ، بحسب ما يتناسب مع الحالة." },
+      { h: "4. تقييم الطلبات", p: "تتم مراجعة كل طلب استرجاع بشكل فردي، ولا تضمن المنصة استرجاعاً تلقائياً لكل الحالات، وذلك حرصاً على العدالة بين المستخدمين." },
+      { h: "5. طريقة تقديم الطلب", p: "لتقديم طلب استرجاع أو الإبلاغ عن مشكلة في الدفع، يرجى التواصل عبر صفحة \"تواصل معنا\" أو عبر البريد الإلكتروني: " + SUPPORT_EMAIL + "، مع توضيح تفاصيل العملية (البريد الإلكتروني المستخدم في الحساب وتاريخ الشراء)." },
+      { h: "6. ملاحظة", p: "هذه السياسة لا تُعد بديلاً عن أي حقوق أساسية للمستهلك قد تنطبق وفق القوانين المعمول بها في بلد المستخدم." },
+    ],
+  },
+  contact: {
+    title: "تواصل معنا",
+    updated: "",
+    sections: [
+      { h: "الدعم الفني والاستفسارات العامة", p: "للتواصل مع فريق الدعم بخصوص الحساب، النقاط، عمليات الدفع، أو أي استفسار قانوني (الشروط، الخصوصية، الاسترجاع)، يرجى مراسلتنا عبر البريد الإلكتروني التالي:\n\n" + SUPPORT_EMAIL } ,
+      { h: "مدة الرد", p: "نحرص على الرد على الاستفسارات خلال مدة معقولة. للحصول على رد أسرع بخصوص مشكلة في عملية دفع، يُرجى إرفاق البريد الإلكتروني المستخدم في الحساب وتفاصيل العملية (مثل تاريخ الشراء والباقة المشتراة)." },
+    ],
+  },
+};
+
+function goToLegal(page) {
+  window.location.hash = "legal/" + page;
+}
+
+const footerLinkStyle = { background: "none", border: "none", color: "#8B96AC", fontSize: 12, fontWeight: 600, cursor: "pointer", padding: 0, fontFamily: "inherit", textDecoration: "underline", textUnderlineOffset: 3 };
+
+function LegalFooter() {
+  return (
+    <footer dir="rtl" style={{ textAlign: "center", padding: "18px 16px 30px", position: "relative", zIndex: 1 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center", gap: "7px 14px" }}>
+        <button style={footerLinkStyle} onClick={() => goToLegal("terms")}>الشروط والأحكام</button>
+        <span style={{ color: "#2A3346" }}>|</span>
+        <button style={footerLinkStyle} onClick={() => goToLegal("privacy")}>سياسة الخصوصية</button>
+        <span style={{ color: "#2A3346" }}>|</span>
+        <button style={footerLinkStyle} onClick={() => goToLegal("refund")}>سياسة الاسترجاع</button>
+        <span style={{ color: "#2A3346" }}>|</span>
+        <button style={footerLinkStyle} onClick={() => goToLegal("contact")}>تواصل معنا</button>
+      </div>
+      <div style={{ marginTop: 10, color: "#3E4863", fontSize: 11 }}>© {new Date().getFullYear()} Arabic Landing AI</div>
+    </footer>
+  );
+}
+
+function LegalPage({ type, onBack }) {
+  const content = LEGAL_CONTENT[type];
+  if (!content) return null;
+  return (
+    <div dir="rtl" style={{ minHeight: "100vh", background: "#0B0F19", color: "#E2E8F0", fontFamily: "'Cairo', sans-serif" }} className="fade-in">
+      <div style={{ maxWidth: 760, margin: "0 auto", padding: "36px 20px 60px" }}>
+        <button onClick={onBack} style={{ background: "none", border: "1px solid #243653", color: "#8B96AC", borderRadius: 999, padding: "8px 16px", fontSize: 12.5, cursor: "pointer", fontFamily: "inherit", marginBottom: 26 }}>→ العودة للمنصة</button>
+        <h1 style={{ fontSize: 23, fontWeight: 800, color: "#F1F5F9", margin: "0 0 6px" }}>{content.title}</h1>
+        {content.updated && <p style={{ fontSize: 12, color: "#5B6478", margin: "0 0 26px" }}>{content.updated}</p>}
+        {content.sections.map((s, i) => (
+          <div key={i} style={{ marginBottom: 22 }}>
+            <h2 style={{ fontSize: 15.5, fontWeight: 700, color: "#67e8f9", margin: "0 0 8px" }}>{s.h}</h2>
+            <p style={{ fontSize: 13.5, lineHeight: 2, color: "#B7C1D6", margin: 0, whiteSpace: "pre-line" }}>{s.p}</p>
+          </div>
+        ))}
+        <p style={{ fontSize: 11.5, color: "#4B5670", marginTop: 34, lineHeight: 1.9 }}>
+          هذه الصفحة تقدّم معلومات عامة حول استخدام المنصة، ولا تُغني عن استشارة قانونية متخصصة عند الحاجة.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function AuthGate() {
   const [ready, setReady] = useState(false);
   const [configError, setConfigError] = useState(false);
@@ -771,6 +877,7 @@ function AuthGate() {
   const [editorPreview, setEditorPreview] = useState(false);
   const [view, setView] = useState("login");
   const [recoveryMode, setRecoveryMode] = useState(false);
+  const [legalPage, setLegalPage] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
@@ -817,6 +924,16 @@ function AuthGate() {
       "?checkout%5Bcustom%5D%5Buser_id%5D=" + encodeURIComponent(session.user.id);
     window.location.href = checkoutUrl;
   }
+
+  useEffect(() => {
+    function syncLegalHash() {
+      const h = window.location.hash.replace("#", "");
+      setLegalPage(h.indexOf("legal/") === 0 ? h.slice(6) : null);
+    }
+    syncLegalHash();
+    window.addEventListener("hashchange", syncLegalHash);
+    return () => window.removeEventListener("hashchange", syncLegalHash);
+  }, []);
 
   useEffect(() => {
     let subscription = null;
@@ -887,6 +1004,10 @@ function AuthGate() {
 
   function switchView(v) { setView(v); setError(""); setMsg(""); }
 
+  if (legalPage && LEGAL_CONTENT[legalPage]) {
+    return <LegalPage type={legalPage} onBack={() => { window.location.hash = ""; }} />;
+  }
+
   if (!ready) return <SplashLoader />;
   if (configError) return <ConfigErrorScreen />;
   if (recoveryMode) return <ResetPasswordScreen onReset={handleReset} busy={busy} error={error} msg={msg} />;
@@ -921,6 +1042,7 @@ function AuthGate() {
         onBuyCredits={() => setShowBuyModal(true)}
         onPreviewChange={setEditorPreview}
       />
+      {!editorPreview && <LegalFooter />}
       <CreditsModal
         open={showBuyModal}
         onClose={() => setShowBuyModal(false)}
