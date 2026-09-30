@@ -11,6 +11,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js" onerror="this.onerror=null;this.src='https://unpkg.com/@babel/standalone@7.23.5/babel.min.js'"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" onerror="this.onerror=null;this.src='https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js'"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" onerror="this.onerror=null;this.src='https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js'"></script>
+<script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
 <script>
   window.__loadWatchdog = setTimeout(function () {
     if (typeof React === "undefined" || typeof ReactDOM === "undefined" || typeof Babel === "undefined") {
@@ -74,6 +75,7 @@
   .credit-plan.popular{border-color:#22d3ee;box-shadow:0 0 0 1px #22d3ee33,0 15px 35px #22d3ee12}
   .credit-popular{position:absolute;top:-10px;right:50%;transform:translateX(50%);white-space:nowrap;background:#22d3ee;color:#06202b;border-radius:999px;padding:3px 10px;font-size:10px;font-weight:900}
   .credit-plan-name{color:#9ba9c1;font-size:12px;font-weight:700}.credit-plan-number{color:#f1f5f9;font-size:30px;font-weight:900;margin:6px 0}.credit-plan-number small{font-size:11px;color:#7f8da7}.credit-plan-price{color:#5eead4;font-size:18px;font-weight:900;margin-bottom:12px}
+  .credit-plan-desc{color:#8b96ac;font-size:12px;line-height:1.7;margin:0 0 10px}.credit-plan-features{list-style:none;margin:0 0 14px;padding:0;text-align:right;color:#b8c4d8;font-size:12px;line-height:1.9}.credit-plan-features li:before{content:"✓ ";color:#5eead4;font-weight:900}.credit-plan-price.muted{color:#5b6478}.credit-plans-error{margin:14px 0 0;color:#fca5a5;font-size:12px;text-align:center;line-height:1.7}
   .credit-plan button{width:100%;padding:10px;border:0;border-radius:9px;background:linear-gradient(90deg,#3b82f6,#22d3ee);color:#04101c;font-family:inherit;font-weight:900;cursor:pointer}
   .editor-toolbar{position:sticky;top:64px;z-index:250;background:#0e1526;border-bottom:1px solid #1d2740;box-shadow:0 8px 25px rgba(0,0,0,.22)}
   .toolbar-main{max-width:1400px;margin:0 auto;padding:7px 12px;display:flex;align-items:center;gap:6px;min-height:46px}
@@ -651,14 +653,89 @@ function ResetPasswordScreen({ onReset, busy, error, msg }) {
   );
 }
 
+/* ============================== PADDLE (LIVE) ============================== */
+/* Token/environment come from /api/paddle-config (env vars on Vercel). Nothing hard-coded. */
+let __paddleReady = null;
+function getPaddle() {
+  if (__paddleReady) return __paddleReady;
+  __paddleReady = fetch("/api/paddle-config")
+    .then(async (r) => {
+      const cfg = await r.json().catch(() => null);
+      if (!r.ok || !cfg || !cfg.token) throw new Error((cfg && cfg.error) || "Paddle config request failed.");
+      if (typeof window.Paddle === "undefined") throw new Error("Paddle.js failed to load.");
+      if (cfg.environment !== "production" || !/^live_/.test(cfg.token)) {
+        throw new Error("Paddle must run in the live environment with a live_ token.");
+      }
+      window.Paddle.Environment.set("production");
+      window.Paddle.Initialize({
+        token: cfg.token,
+        eventCallback: (ev) => {
+          if (ev && ev.name === "checkout.completed") window.location.href = "/welcome";
+        },
+      });
+      return { country: cfg.country || null };
+    })
+    .catch((e) => { __paddleReady = null; throw e; });
+  return __paddleReady;
+}
+
+// Returns { [priceId]: formattedTotals.total } exactly as Paddle formats it (no frontend math/formatting).
+async function loadPaddlePrices(tiers) {
+  const { country } = await getPaddle();
+  const req = { items: tiers.map((t) => ({ priceId: t.priceId, quantity: 1 })) };
+  if (country) req.address = { countryCode: country }; // else Paddle auto-detects from IP
+  const res = await window.Paddle.PricePreview(req);
+  const out = {};
+  res.data.details.lineItems.forEach((li) => { out[li.price.id] = li.formattedTotals.total; });
+  return out;
+}
+
+async function openPaddleCheckout(priceId, email, userId) {
+  await getPaddle();
+  const payload = {
+    items: [{ priceId: priceId, quantity: 1 }],
+    settings: { displayMode: "overlay", variant: "one-page" },
+  };
+  if (email) payload.customer = { email: email };
+  if (userId) payload.customData = { userId: userId }; // webhook.js reads custom_data.userId
+  window.Paddle.Checkout.open(payload);
+}
+
+/* Easy-to-edit tiers. One-time credit purchase (NOT a subscription). Price IDs = Paddle live. */
 const CREDIT_PLANS = [
-  { name: "البداية", credits: 5, price: "$4.5", variantId: "pri_01m2rr88016xc9sjgc83517qvm" },
-  { name: "المحترف", credits: 15, price: "$11", variantId: "pri_01m2rramtt2v9b051q9bm7edy7", popular: true },
-  { name: "المتقدم", credits: 30, price: "$20", variantId: "pri_01m2rrd0c2h9zpk9xr9py26fyv" },
+  {
+    name: "البداية", credits: 5,
+    description: "ابدأ بتجربة المنصة وولّد أولى صفحاتك.",
+    features: ["5 نقاط توليد", "كل نقطة = صفحة هبوط واحدة", "دفعة واحدة بدون اشتراك"],
+    priceId: "pri_01m2rr88016xc9sjgc83517qvm",
+  },
+  {
+    name: "المحترف", credits: 15, popular: true,
+    description: "الخيار الأنسب للمشاريع المتعددة.",
+    features: ["15 نقطة توليد", "كل نقطة = صفحة هبوط واحدة", "دفعة واحدة بدون اشتراك"],
+    priceId: "pri_01m2rramtt2v9b051q9bm7edy7",
+  },
+  {
+    name: "المتقدم", credits: 30,
+    description: "لأصحاب الاستخدام المكثّف والوكالات.",
+    features: ["30 نقطة توليد", "كل نقطة = صفحة هبوط واحدة", "دفعة واحدة بدون اشتراك"],
+    priceId: "pri_01m2rrd0c2h9zpk9xr9py26fyv",
+  },
 ];
 
-function CreditsModal({ open, onClose, onBuy, buying }) {
+function CreditsModal({ open, onClose, onBuy, buying, buyError }) {
+  const [prices, setPrices] = useState(null);
+  const [priceError, setPriceError] = useState("");
+  useEffect(() => {
+    if (!open || prices) return;
+    let cancelled = false;
+    loadPaddlePrices(CREDIT_PLANS)
+      .then((p) => { if (!cancelled) { setPrices(p); setPriceError(""); } })
+      .catch((e) => { if (!cancelled) setPriceError(e && e.message ? e.message : "تعذّر تحميل الأسعار."); });
+    return () => { cancelled = true; };
+  }, [open, prices]);
   if (!open) return null;
+  const err = buyError || priceError;
   return (
     <div className="credits-modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="credits-modal glass" dir="rtl">
@@ -669,18 +746,26 @@ function CreditsModal({ open, onClose, onBuy, buying }) {
           <p style={{ margin: 0, color: "#8B96AC", fontSize: 12.5 }}>كل صفحة هبوط يتم توليدها تستهلك نقطة واحدة.</p>
         </div>
         <div className="credit-plans">
-          {CREDIT_PLANS.map((plan) => (
-            <div key={plan.variantId} className={"credit-plan " + (plan.popular ? "popular" : "")}>
-              {plan.popular && <span className="credit-popular">الأكثر طلباً</span>}
-              <div className="credit-plan-name">{plan.name}</div>
-              <div className="credit-plan-number">{plan.credits} <small>نقطة</small></div>
-              <div className="credit-plan-price">{plan.price}</div>
-              <button onClick={() => onBuy(plan.variantId)} disabled={buying}>
-                {buying ? "جاري التحويل..." : "شراء النقاط"}
-              </button>
-            </div>
-          ))}
+          {CREDIT_PLANS.map((plan) => {
+            const price = prices && prices[plan.priceId];
+            return (
+              <div key={plan.priceId} className={"credit-plan " + (plan.popular ? "popular" : "")}>
+                {plan.popular && <span className="credit-popular">الأكثر طلباً</span>}
+                <div className="credit-plan-name">{plan.name}</div>
+                <div className="credit-plan-number">{plan.credits} <small>نقطة</small></div>
+                <div className={"credit-plan-price" + (price ? "" : " muted")}>{price || (priceError ? "—" : "...")}</div>
+                <p className="credit-plan-desc">{plan.description}</p>
+                <ul className="credit-plan-features">
+                  {plan.features.map((f) => <li key={f}>{f}</li>)}
+                </ul>
+                <button onClick={() => onBuy(plan.priceId)} disabled={buying}>
+                  {buying ? "جاري الفتح..." : "شراء النقاط"}
+                </button>
+              </div>
+            );
+          })}
         </div>
+        {err && <p className="credit-plans-error" dir="ltr">{err}</p>}
       </div>
     </div>
   );
@@ -874,6 +959,7 @@ function AuthGate() {
   const [credits, setCredits] = useState(0);
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [buying, setBuying] = useState(false);
+  const [buyError, setBuyError] = useState("");
   const [editorPreview, setEditorPreview] = useState(false);
   const [view, setView] = useState("login");
   const [recoveryMode, setRecoveryMode] = useState(false);
@@ -911,18 +997,15 @@ function AuthGate() {
     setProfileLoading(false);
   }
 
-  async function handleBuyCredits(variantId) {
+  async function handleBuyCredits(priceId) {
     if (!session || !session.user) return;
-    if (!variantId || String(variantId).indexOf("YOUR_VARIANT_ID") === 0) {
-      setError("أضف Variant ID الخاص بكل خطة في CREDIT_PLANS أولاً (5 / 15 / 30).");
-      return;
+    setBuying(true); setBuyError("");
+    try {
+      await openPaddleCheckout(priceId, session.user.email, session.user.id);
+    } catch (e) {
+      setBuyError(e && e.message ? e.message : "تعذّر فتح صفحة الدفع.");
     }
-    setBuying(true);
-    const store = "yourstore";
-    const checkoutUrl = "https://" + store + ".lemonsqueezy.com/checkout/buy/" +
-      encodeURIComponent(variantId) +
-      "?checkout%5Bcustom%5D%5Buser_id%5D=" + encodeURIComponent(session.user.id);
-    window.location.href = checkoutUrl;
+    setBuying(false);
   }
 
   useEffect(() => {
@@ -1048,6 +1131,7 @@ function AuthGate() {
         onClose={() => setShowBuyModal(false)}
         onBuy={handleBuyCredits}
         buying={buying}
+        buyError={buyError}
       />
     </React.Fragment>
   );
