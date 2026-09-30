@@ -5,7 +5,8 @@ module.exports = (req, res) => {
   res.setHeader("Cache-Control", "no-store"); // country differs per visitor
 
   const environment = process.env.PADDLE_ENVIRONMENT;
-  const token = process.env.PADDLE_CLIENT_TOKEN;
+  // Accepts PADDLE_CLIENT_TOKEN, or the existing NEXT_PUBLIC_PADDLE_CLIENT_TOKEN already set on Vercel.
+  const token = process.env.PADDLE_CLIENT_TOKEN || process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
 
   if (!environment) {
     return res.status(500).json({ error: "PADDLE_ENVIRONMENT is not set (must be 'production')." });
@@ -14,7 +15,7 @@ module.exports = (req, res) => {
     return res.status(500).json({ error: "PADDLE_ENVIRONMENT must be 'production' (live). Got: " + environment });
   }
   if (!token) {
-    return res.status(500).json({ error: "PADDLE_CLIENT_TOKEN is not set." });
+    return res.status(500).json({ error: "PADDLE_CLIENT_TOKEN (or NEXT_PUBLIC_PADDLE_CLIENT_TOKEN) is not set." });
   }
   if (!token.startsWith("live_")) {
     return res.status(500).json({ error: "PADDLE_CLIENT_TOKEN must be a live client-side token (starts with live_)." });
