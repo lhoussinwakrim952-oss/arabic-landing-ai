@@ -1,5 +1,4 @@
 import crypto from 'crypto';
-import { supabase } from './supabase-config.js';
 
 // مهم: نوقف bodyParser باش نقرا الـ raw body الأصلي
 export const config = { api: { bodyParser: false } };
@@ -17,6 +16,37 @@ async function readRawBody(req) {
   const chunks = [];
   for await (const chunk of req) chunks.push(chunk);
   return Buffer.concat(chunks).toString('utf8');
+}
+
+// كنتصل بـ Supabase مباشرة (REST) بالـ service role key (سري، السيرفر فقط).
+// ما محتاجش مكتبة @supabase/supabase-js.
+async function grantCredits(transactionId, userId, credits) {
+  const url = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  if (!url || !key) {
+    throw new Error('SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set on Vercel');
+  }
+
+  const headers = { 'Content-Type': 'application/json', apikey: key };
+  // المفاتيح القديمة (JWT) كتبدا بـ eyJ وكتحتاج Authorization، الجداد (sb_secret_) لا
+  if (key.startsWith('eyJ')) headers.Authorization = `Bearer ${key}`;
+
+  const resp = await fetch(`${url}/rest/v1/rpc/grant_credits`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      p_transaction_id: transactionId,
+      p_user_id: userId,
+      p_credits: credits,
+    }),
+  });
+
+  const text = await resp.text();
+  if (!resp.ok) return { error: { status: resp.status, body: text } };
+
+  let result = text;
+  try { result = JSON.parse(text); } catch (_) { /* نخليه نص */ }
+  return { result };
 }
 
 function verifyPaddleSignature(signatureHeader, rawBody, secret) {
@@ -91,12 +121,8 @@ export default async function handler(req, res) {
       return res.status(200).json({ status: 'skipped' });
     }
 
-    // 3. إضافة ذرّية + idempotent (SQL function فـ supabase-setup.sql)
-    const { data: result, error } = await supabase.rpc('grant_credits', {
-      p_transaction_id: data.id,
-      p_user_id: userId,
-      p_credits: creditsToAdd,
-    });
+    // 3. إضافة ذرّية + idempotent (SQL function grant_credits فـ Supabase)
+    const { result, error } = await grantCredits(data.id, userId, creditsToAdd);
 
     if (error) {
       console.error('grant_credits failed:', error);
@@ -111,7 +137,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ status: 'user_not_found' });
     }
 
-    console.log(`Added ${creditsToAdd} credits to user ${userId} (tx ${data.id})`);
+    console.log(`Added ${creditsToAdd} credits to user ${userId} (tx ${data.id}), result: ${JSON.stringify(result)}`);
     return res.status(200).json({ status: 'success' });
   } catch (err) {
     console.error('Webhook Error:', err);
