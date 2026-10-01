@@ -182,7 +182,7 @@
   .hp-ph.l{transform:translateX(calc(var(--off) * -1)) rotateY(26deg) scale(.8);z-index:1;opacity:.72;filter:brightness(.8);cursor:pointer}
   .hp-cap{color:#F1F5F9;font-weight:800;font-size:16px;animation:fadeIn .5s ease both;position:relative;z-index:1}
   @media (min-width:821px){.hp-hero{grid-template-columns:1fr 1fr}}
-  @media (max-width:820px){.hp-stage{--off:112px;height:480px}}
+  @media (max-width:820px){.hp-hero{padding-top:14px;gap:6px}.hp-phonewrap{order:-1}.hp-stage{--off:112px;height:480px}}
   @media (max-width:380px){.hp-stage{--off:96px}}
 </style>
 </head>
@@ -1178,7 +1178,7 @@ function PhoneShowcase() {
   const [active, setActive] = useState(0);
   const drag = useRef(null);
   useEffect(() => {
-    const t = setTimeout(() => setActive((a) => (a + 1) % n), 9000);
+    const t = setTimeout(() => setActive((a) => (a + 1) % n), 5000);
     return () => clearTimeout(t);
   }, [active, n]);
   const down = (e) => { drag.current = e.clientX; };
