@@ -74,9 +74,11 @@ export default async function handler(req, res) {
     const userId = data.custom_data?.userId;
 
     // مجموع الكريديت (كل الـ items * quantity)
+    // فـ payload ديال Paddle الـ ID كاين فـ item.price.id
     let creditsToAdd = 0;
     for (const item of data.items || []) {
-      const credits = CREDITS_BY_PRICE[item.price_id] || 0;
+      const priceId = item.price?.id || item.price_id;
+      const credits = CREDITS_BY_PRICE[priceId] || 0;
       creditsToAdd += credits * (item.quantity || 1);
     }
 
@@ -84,6 +86,7 @@ export default async function handler(req, res) {
       console.warn('Webhook skipped: missing userId or unknown price', {
         transactionId: data.id,
         userId,
+        priceIds: (data.items || []).map((i) => i.price?.id || i.price_id),
       });
       return res.status(200).json({ status: 'skipped' });
     }
