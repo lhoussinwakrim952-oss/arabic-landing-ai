@@ -30,7 +30,7 @@
 </script>
 <style>
   * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; background: #0B0F19; overflow-x: hidden; }
+  html, body { margin: 0; padding: 0; background: #0B0F19; overflow-x: hidden; overflow-x: clip; }
   body { font-family: 'Cairo', sans-serif; }
   ::-webkit-scrollbar { width: 8px; height: 8px; }
   ::-webkit-scrollbar-thumb { background: #2A3346; border-radius: 8px; }
@@ -183,6 +183,16 @@
   .hp-cap{color:#F1F5F9;font-weight:800;font-size:16px;animation:fadeIn .5s ease both;position:relative;z-index:1}
   .hp-logo-sm{font-size:12px;gap:6px;white-space:nowrap}.hp-logo-sm .hp-logo-img{width:24px;height:24px}
   .hp-nav-btns .hp-ghost{padding:7px 12px;font-size:12px;white-space:nowrap}.hp-nav-btns .hp-cta{padding:8px 14px;font-size:12px;white-space:nowrap}
+  .hp-nav{background:rgba(11,15,25,.94);box-shadow:0 6px 24px rgba(0,0,0,.35)}
+  .hp-nav-in{padding:8px 14px}
+  .hp-logo-sm{font-size:13px;gap:8px;white-space:nowrap;line-height:1.15;font-weight:900;letter-spacing:.2px}
+  .hp-logo-sm .hp-logo-img{width:40px;height:40px;border:1.5px solid #2f4d86;box-shadow:0 0 14px rgba(34,211,238,.28)}
+  .hp-logo-name{display:block;text-align:left;direction:ltr;background:linear-gradient(90deg,#67e8f9,#60a5fa);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hp-nav-btns{gap:6px}
+  .hp-nav-btns .hp-ghost{padding:7px 11px;font-size:12px}.hp-nav-btns .hp-cta{padding:8px 13px;font-size:12.5px;box-shadow:0 4px 14px rgba(34,211,238,.35)}
+  .account-avatar{display:flex;align-items:center;justify-content:center;position:relative;color:#e6fbff;background:linear-gradient(135deg,#1d4ed8,#0891b2);border:1.5px solid #67e8f9;box-shadow:0 0 0 3px rgba(34,211,238,.12),0 5px 16px rgba(8,145,178,.4);transition:transform .15s}
+  .account-avatar:active{transform:scale(.94)}
+  .account-avatar::after{content:"";position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;background:#22c55e;border:2px solid #0B0F19}
   .editor-tool.editor-design{background:linear-gradient(135deg,#7c3aed,#ec4899 55%,#f59e0b);border:1px solid #f0abfc;color:#fff;font-weight:900;box-shadow:0 0 0 2px rgba(236,72,153,.25),0 4px 16px rgba(168,85,247,.55);animation:designPulse 2.2s ease-in-out infinite}
   .editor-tool.editor-design:hover{filter:brightness(1.12)}
   @keyframes designPulse{0%,100%{box-shadow:0 0 0 2px rgba(236,72,153,.25),0 4px 16px rgba(168,85,247,.5)}50%{box-shadow:0 0 0 5px rgba(236,72,153,.12),0 4px 24px rgba(236,72,153,.75)}}
@@ -893,7 +903,7 @@ function AccountMenu({ email, credits, loading, isAdmin, onLogout, onBuy }) {
 
   return (
     <div className="account-wrap" dir="rtl" ref={wrapRef}>
-      <button type="button" className="account-avatar" onClick={() => setOpen((v) => !v)} aria-label="حساب المستخدم" aria-expanded={open}>{initial}</button>
+      <button type="button" className="account-avatar" onClick={() => setOpen((v) => !v)} aria-label="حساب المستخدم" aria-expanded={open}><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4.5 20.5c0-3.9 3.4-6.5 7.5-6.5s7.5 2.6 7.5 6.5" /></svg></button>
       {open && (
         <div className="account-dropdown">
           <div className="account-email">{email || "حساب المستخدم"}</div>
@@ -1224,7 +1234,7 @@ function HomePage({ onLogin, onSignup }) {
           <button className="hp-ghost" onClick={onLogin}>تسجيل الدخول</button>
           <button className="hp-cta" onClick={onSignup}>إنشاء حساب</button>
         </div>
-        <span className="hp-logo hp-logo-sm"><img src="https://i.ibb.co/spZLnqzb/file-00000000da0c81f4a4088e7d66ce8dc8.png" alt="" className="hp-logo-img" />Arabic Landing AI</span>
+        <span className="hp-logo hp-logo-sm"><img src="https://i.ibb.co/spZLnqzb/file-00000000da0c81f4a4088e7d66ce8dc8.png" alt="Arabic Landing AI" className="hp-logo-img" /><span className="hp-logo-name">Arabic<br />Landing AI</span></span>
       </div></nav>
 
       <header className="hp-hero">
