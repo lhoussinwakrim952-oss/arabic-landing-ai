@@ -188,7 +188,6 @@
   .hp-nav-in{padding:8px 14px}
   .hp-logo-sm{font-size:13px;gap:8px;white-space:nowrap;line-height:1.15;font-weight:900;letter-spacing:.2px}
   .hp-logo-sm .hp-logo-img{width:40px;height:40px;border:1.5px solid #2f4d86;box-shadow:0 0 14px rgba(34,211,238,.28)}
-  .hp-logo.hp-logo-sm{direction:ltr;flex-direction:row;justify-content:flex-start}
   .hp-logo-name{display:block;text-align:left;direction:ltr;background:linear-gradient(90deg,#67e8f9,#60a5fa);-webkit-background-clip:text;background-clip:text;color:transparent}
   .hp-nav-btns{gap:6px}
   .hp-nav-btns .hp-ghost{padding:7px 11px;font-size:12px}.hp-nav-btns .hp-cta{padding:8px 13px;font-size:12.5px;box-shadow:0 4px 14px rgba(34,211,238,.35)}
@@ -294,6 +293,19 @@ const DESIGN_SYSTEMS = {
     { bg: "#1A0505", surface: "#2A0A0A", card: "#340D0D", primary: "#EF4444", primaryDeep: "#B91C1C", accent: "#FBBF24", accent2: "#FFFFFF", text: "#FFF5F5", muted: "#D19999", radius: "8px", mood: "dark" },
     { bg: "#FFF9E6", surface: "#FFFFFF", card: "#FFF3CC", primary: "#DC2626", primaryDeep: "#991B1B", accent: "#111827", accent2: "#FBBF24", text: "#1F1400", muted: "#8A7A50", radius: "8px", mood: "light" },
   ],
+  // ===== أنظمة مستوحاة من القوالب الثلاثة (إلهام للشكل فقط، بلا نسخ محتوى) =====
+  Emerald: [
+    { bg: "#F8FFFE", surface: "#FFFFFF", card: "#E0FAF5", primary: "#009E82", primaryDeep: "#007A66", accent: "#C9A84C", accent2: "#00C6A2", text: "#0D1A16", muted: "#6B8F82", radius: "20px", mood: "light" },
+    { bg: "#0D1A16", surface: "#1A2E26", card: "#20382E", primary: "#00C6A2", primaryDeep: "#009E82", accent: "#C9A84C", accent2: "#F5E8C0", text: "#F8FFFE", muted: "#8FB5A8", radius: "20px", mood: "dark" },
+  ],
+  BlackGold: [
+    { bg: "#0A0A0A", surface: "#111111", card: "#1A1A1A", primary: "#C9A84C", primaryDeep: "#9C7F2E", accent: "#E8C96A", accent2: "#44DD77", text: "#F5F0E8", muted: "#A39D8F", radius: "14px", mood: "dark" },
+    { bg: "#F5F0E8", surface: "#FFFFFF", card: "#FBF7EE", primary: "#A8862F", primaryDeep: "#7D6320", accent: "#0A0A0A", accent2: "#C9A84C", text: "#111111", muted: "#7A7466", radius: "12px", mood: "light" },
+  ],
+  NavyGlass: [
+    { bg: "#0B1220", surface: "#16233D", card: "#13203A", primary: "#2563EB", primaryDeep: "#060912", accent: "#38BDF8", accent2: "#FBBF24", text: "#F4F7FB", muted: "#94A3B8", radius: "28px", mood: "dark" },
+    { bg: "#F4F7FB", surface: "#FFFFFF", card: "#EEF2F7", primary: "#2563EB", primaryDeep: "#1D4ED8", accent: "#38BDF8", accent2: "#FBBF24", text: "#0B1220", muted: "#475569", radius: "24px", mood: "light" },
+  ],
 };
 
 function pickDesignTokens(systemName) {
@@ -318,6 +330,9 @@ const STYLE_DNA = {
   Neon:      { heading: "Alexandria",         body: "Cairo",               button: "pill",  shadow: "glow", badge: "pill", faq: "dark" },
   Corporate: { heading: "IBM Plex Sans Arabic", body: "IBM Plex Sans Arabic", button: "square", shadow: "soft", badge: "outline", faq: "bordered" },
   BoldSales: { heading: "Noto Kufi Arabic",   body: "Cairo",               button: "square", shadow: "glow", badge: "ribbon", faq: "numbered" },
+  Emerald:   { heading: "Cairo",              body: "Tajawal",             button: "soft",  shadow: "soft", badge: "pill", faq: "cards" },
+  BlackGold: { heading: "Cairo",              body: "Cairo",               button: "pill",  shadow: "glow", badge: "outline", faq: "bordered" },
+  NavyGlass: { heading: "Tajawal",            body: "Tajawal",             button: "pill",  shadow: "glow", badge: "pill", faq: "glass" },
 };
 function styleDNA(systemName) { return STYLE_DNA[systemName] || STYLE_DNA.Lifestyle; }
 
@@ -504,7 +519,7 @@ async function runQualityControl(data) {
     return data;
   }
 }
-async function callClaude(content, raw) {
+async function callClaude(content) {
   // يتصل بالـ Backend الخاص بنا (api/generate.js) بدل الاتصال المباشر بـ Anthropic.
   // مفتاح الـ API مخبّأ فالسيرفر (Environment Variable) وما ظاهرش هنا فالفرونت-إند.
   let response;
@@ -537,33 +552,7 @@ async function callClaude(content, raw) {
   }
   if (!response.ok) throw new Error(data.error || "تعذّر الاتصال بمحرك الذكاء الاصطناعي (كود " + response.status + ").");
   if (!data.text) throw new Error("لم يصل رد نصي من المحرك");
-  let parsed;
-  try { parsed = stripToJSON(data.text); }
-  catch (jsonErr) {
-    if (data.stop_reason === "max_tokens" || data.truncated) throw new Error("توقف التوليد لأن المحتوى طويل جداً.");
-    throw new Error("رد غير مكتمل من المحرك، حاول مرة أخرى.");
-  }
-  return raw ? parsed : validateGeneratedData(parsed);
-}
-
-/* ===== حل مشكلة "المحتوى طويل جداً": تقسيم + إعادة محاولة تلقائية ===== */
-function isTooLongError(e) {
-  return /طويل جد|max_tokens|truncat|too long|غير مكتمل/i.test((e && e.message) || "");
-}
-// استدعاء عادي (صفحة كاملة) مع إعادة محاولة تلقائية بتعليمات اختصار إذا طال الرد
-async function callClaudeAuto(content) {
-  try { return await callClaude(content); }
-  catch (e) {
-    if (!isTooLongError(e)) throw e;
-    const note = "\n\nتنبيه مهم: الرد السابق طال وانقطع. اجعل كل نص مختصراً (جملة أو جملتين)، وكل قائمة 3 عناصر فقط، واختر 6 أقسام كحد أقصى، وأعد JSON مكتملاً وصحيحاً فقط.";
-    const shorter = content.map((c, i) => (i === 0 && c.type === "text") ? { type: "text", text: c.text + note } : c);
-    try { return await callClaude(shorter); }
-    catch (e2) {
-      if (!isTooLongError(e2)) throw e2;
-      const note2 = "\n\nأقصى اختصار: 4 أقسام فقط، 3 عناصر لكل قائمة، نص كل عنصر لا يزيد عن 12 كلمة.";
-      return await callClaude(shorter.map((c, i) => (i === 0 && c.type === "text") ? { type: "text", text: c.text + note2 } : c));
-    }
-  }
+  return validateGeneratedData(stripToJSON(data.text));
 }
 
 const SCHEMA_INSTRUCTIONS = `
@@ -572,7 +561,7 @@ const SCHEMA_INSTRUCTIONS = `
 
 الشكل المطلوب بالضبط:
 {
-  "designSystem": "one of: Tech|Beauty|Health|Home|Fashion|Kids|Car|Gadgets|Tools|Lifestyle|Luxury|Minimal|Glass|Neon|Corporate|BoldSales",
+  "designSystem": "one of: Tech|Beauty|Health|Home|Fashion|Kids|Car|Gadgets|Tools|Lifestyle|Luxury|Minimal|Glass|Neon|Corporate|BoldSales|Emerald|BlackGold|NavyGlass",
   "sections": ["array subset/order from: problem,solution,features,benefits,beforeAfter,howToUse,specs,compare,whatsIncluded,testimonials,guarantee,faq,urgency"],
   "hero": { "eyebrow": "...", "headline": "...", "subheadline": "...", "ctaText": "...", "badges": ["..."] },
   "problem": { "title": "...", "text": "وصف المشكلة التي يعاني منها العميل قبل استخدام المنتج" },
@@ -595,6 +584,8 @@ const SCHEMA_INSTRUCTIONS = `
 
 قواعد مهمة:
 - ترتيب sections يجب أن يعكس استراتيجية بيع مناسبة لنوع المنتج فعلاً.
+- أنظمة جديدة: Emerald (أخضر زمردي + ذهبي، للصحة والعناية والراحة)، BlackGold (أسود + ذهبي فاخر، للتجميل والمنتجات الراقية)، NavyGlass (كحلي + أزرق زجاجي ناعم بحواف دائرية كبيرة، للإلكترونيات والتقنية). اختر ما يناسب المنتج فعلاً.
+- نوّع في ترتيب الأقسام وعدد الأقسام (من 5 إلى 9) ولا تكرر نفس التركيبة في كل صفحة؛ لا تقلّد أي صفحة جاهزة، ابنِ الصفحة من الصفر حسب المنتج.
 - اختيار designSystem يجب أن يعكس طبيعة المنتج الحقيقية الظاهرة في الصور، وليس اختياراً افتراضياً متكرراً.
 - اختر فقط الأقسام المناسبة فعلاً لطبيعة هذا المنتج تحديدا، لا تُدرج قسماً لا داعي له.
 - استخدم problem+solution+beforeAfter فقط للمنتجات التي تحل مشكلة واضحة (تنظيف، عناية، صحة).
@@ -1408,26 +1399,6 @@ function AuthGate() {
     setBuying(false);
   }
 
-  const sessionRef = useRef(null);
-  useEffect(() => { sessionRef.current = session; }, [session]);
-
-  // زر الرجوع/الأمام ديال المتصفح: كنرجّعو الشاشة الصحيحة (home/login/signup/forgot) بدل ما يخرج من الموقع
-  useEffect(() => {
-    try { if (!window.history.state) window.history.replaceState({ view: "home" }, ""); } catch (e) {}
-    function onPop(e) {
-      const st = e.state;
-      if (!st || !st.view) return;
-      if (sessionRef.current) {
-        // مستخدم داخل: ماكنرجعوش لشاشات الدخول القديمة، كنتخطاوها
-        if (st.view !== "home") window.history.back();
-        return;
-      }
-      setView(st.view); setError(""); setMsg("");
-    }
-    window.addEventListener("popstate", onPop);
-    return () => window.removeEventListener("popstate", onPop);
-  }, []);
-
   useEffect(() => {
     function syncLegalHash() {
       const h = window.location.hash.replace("#", "");
@@ -1453,15 +1424,13 @@ function AuthGate() {
       const { data } = await client.auth.getSession();
       if (cancelled) return;
       setSession(data.session);
-      if (data.session) { try { const hs = window.history.state; if (!hs || !hs.app) window.history.replaceState({ app: true, step: "form" }, ""); } catch (e) {} }
       setReady(true);
       if (data.session) fetchProfile(client, data.session.user.id);
 
       const sub = client.auth.onAuthStateChange((event, newSession) => {
         setSession(newSession);
-        if (event === "SIGNED_IN" && newSession) { try { const hs = window.history.state; if (!hs || !hs.app) window.history.replaceState({ app: true, step: "form" }, ""); } catch (e) {} }
         if (event === "PASSWORD_RECOVERY") setRecoveryMode(true);
-        if (event === "SIGNED_OUT") { setProfile(null); setRecoveryMode(false); setView("home"); try { window.history.replaceState({ view: "home" }, ""); } catch (e) {} }
+        if (event === "SIGNED_OUT") { setProfile(null); setRecoveryMode(false); setView("home"); }
         if (newSession) fetchProfile(client, newSession.user.id);
       });
       subscription = sub.data.subscription;
@@ -1483,7 +1452,6 @@ function AuthGate() {
     if (err) { setError(mapAuthError(err)); return; }
     setMsg("تم إنشاء الحساب بنجاح. إذا طُلب تأكيد البريد الإلكتروني، تحقق من بريدك ثم سجّل الدخول.");
     setView("login");
-    try { window.history.replaceState({ view: "login" }, ""); } catch (e) {}
   }
 
   async function handleForgot(email) {
@@ -1506,18 +1474,10 @@ function AuthGate() {
   }
 
   async function handleLogout() {
-    try { const uid = session && session.user && session.user.id; if (uid) await idbDel("lp:" + uid); } catch (e) {}
     if (clientRef.current) await clientRef.current.auth.signOut();
   }
 
-  function switchView(v) {
-    setView(v); setError(""); setMsg("");
-    // نسجّل كل شاشة (login/signup/forgot) فتاريخ المتصفح باش زر الرجوع يرجع للشاشة اللي قبلها وماكيخرجش من الموقع
-    try {
-      const cur = window.history.state;
-      if (!cur || cur.view !== v) window.history.pushState({ view: v }, "");
-    } catch (e) {}
-  }
+  function switchView(v) { setView(v); setError(""); setMsg(""); }
 
   if (legalPage && LEGAL_CONTENT[legalPage]) {
     return <LegalPage type={legalPage} onBack={() => { window.location.hash = ""; }} />;
@@ -1587,236 +1547,7 @@ function AuthGate() {
   );
 }
 
-/* ============================== تخزين محلي (IndexedDB) لحفظ الصفحة المولّدة عند التحديث ============================== */
-function idbOpen() {
-  return new Promise((res, rej) => {
-    const r = indexedDB.open("alai-store", 1);
-    r.onupgradeneeded = () => { r.result.createObjectStore("kv"); };
-    r.onsuccess = () => res(r.result);
-    r.onerror = () => rej(r.error);
-  });
-}
-async function idbSet(key, value) {
-  try {
-    const db = await idbOpen();
-    await new Promise((res, rej) => { const tx = db.transaction("kv", "readwrite"); tx.objectStore("kv").put(value, key); tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
-    db.close();
-  } catch (e) {}
-}
-async function idbGet(key) {
-  try {
-    const db = await idbOpen();
-    const v = await new Promise((res, rej) => { const tx = db.transaction("kv", "readonly"); const q = tx.objectStore("kv").get(key); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
-    db.close();
-    return v;
-  } catch (e) { return null; }
-}
-async function idbDel(key) {
-  try {
-    const db = await idbOpen();
-    await new Promise((res, rej) => { const tx = db.transaction("kv", "readwrite"); tx.objectStore("kv").delete(key); tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
-    db.close();
-  } catch (e) {}
-}
-
-/* ============================== GENERATOR ============================== */
-
-/* ===== TEMPLATES PATCH (random template selection) ===== */
-
-function tplSource(key) { return decodeLP(window.__LP[key]); } // قراءة فقط
-
-function tplExtract(html) {
-  const doc = new DOMParser().parseFromString(html, "text/html");
-  const items = [];
-  const w = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
-  let n;
-  while ((n = w.nextNode())) {
-    const p = n.parentElement;
-    if (!p || /^(SCRIPT|STYLE|NOSCRIPT|OPTION)$/.test(p.tagName)) continue;
-    if (p.closest("#countdown,#hours,#minutes,#seconds,#cdText,#toastText")) continue;
-    const t = n.nodeValue.trim();
-    if (t.length < 2 || !/[A-Za-z\u0600-\u06FF]/.test(t)) continue;
-    items.push({ node: n, text: t });
-  }
-  return { doc, items };
-}
-
-function buildTplPrompt(items, form, country, extra, keys) {
-  const map = {};
-  items.forEach((it, i) => { map[keys ? keys[i] : i] = it.text; });
-  const priceOld = form.priceOld && Number(form.priceOld) > Number(form.price) ? formatPrice(form.priceOld, country) : "(لا يوجد)";
-  return "أنت كاتب إعلانات لصفحات هبوط COD عربية. عندك نصوص صفحة هبوط جاهزة لمنتج آخر، أعد كتابتها لتناسب المنتج الجديد (من الصور والبيانات).\n\n" +
-    "المنتج: " + form.name + "\nالسعر الحالي: " + formatPrice(form.price, country) + "\nالسعر القديم: " + priceOld +
-    "\nالدولة: " + country.name + " | اللهجة: " + (form.dialect === "auto" ? country.dialect : form.dialect) +
-    "\nوصف: " + (form.description || "(استنتج من الصور)") +
-    (extra || "") +
-    "\n\nالقواعد:\n- أعد JSON فقط: {\"title\":\"عنوان الصفحة\",\"texts\":{\"0\":\"...\",\"1\":\"...\"}} بنفس المفاتيح بالضبط، بدون Markdown.\n" +
-    "- احتفظ بنفس الدور والطول التقريبي لكل نص (عنوان يبقى عنوان، زر يبقى زر).\n" +
-    "- استبدل كل ما يخص المنتج القديم (أسماء، مواصفات، أرقام، مكونات، ادعاءات، أوصاف) بما يناسب المنتج الجديد فقط.\n" +
-    "- الأسعار: استعمل السعر الحالي حرفياً بالعملة. السعر القديم والخصم: إن لم يوجد أرجع نصاً فارغاً \"\" لذلك المفتاح.\n" +
-    "- لا تخترع ادعاءات طبية أو ضمانات بأرقام أو علامات تجارية. آراء العملاء تبقى تجريبية بأسماء شائعة.\n" +
-    "- نصوص الأزرار والتنقل (اطلب الآن، واتساب...) تبقى بنفس المعنى.\n\n" +
-    "النصوص الحالية:\n" + JSON.stringify(map);
-}
-
-// يعيد كتابة نصوص مجموعة (chunk) واحدة؛ إذا طال الرد تنقسم المجموعة نصفين تلقائياً
-async function rewriteTplChunk(chunk, form, country, images, extra) {
-  const content = [
-    { type: "text", text: buildTplPrompt(chunk.map((c) => ({ text: c.text })), form, country, extra, chunk.map((c) => c.i)) },
-    ...images.map((img) => ({ type: "image", source: { type: "base64", media_type: img.mediaType, data: img.base64 } })),
-  ];
-  try {
-    const out = await callClaude(content, true);
-    return { title: out.title, texts: out.texts || {} };
-  } catch (e) {
-    if (chunk.length > 1 && (isTooLongError(e) || /JSON|Unexpected|position/i.test(e.message || ""))) {
-      const mid = Math.ceil(chunk.length / 2);
-      const fewer = images.slice(0, 2);
-      const ex = "\n(هذه جزء من نصوص صفحة أطول؛ حافظ على نفس الأسلوب والمعلومات.)";
-      const a = await rewriteTplChunk(chunk.slice(0, mid), form, country, fewer, ex);
-      const b = await rewriteTplChunk(chunk.slice(mid), form, country, fewer, ex);
-      return { title: a.title || b.title, texts: Object.assign({}, a.texts, b.texts) };
-    }
-    throw e;
-  }
-}
-
-async function generateFromTemplate(key, form, country, images) {
-  const { items } = tplExtract(tplSource(key));
-  // طلب واحد لكل النصوص (نفس التكلفة القديمة). التقسيم لا يحصل إلا إذا طال الرد فعلاً (داخل rewriteTplChunk).
-  const all = items.map((it, i) => ({ i, text: it.text }));
-  const r = await rewriteTplChunk(all, form, country, images.slice(0, 5), "");
-  const title = r.title || form.name;
-  return { designSystem: "Tech", sections: [], hero: { headline: title }, _template: key, _title: title, _texts: r.texts };
-}
-
-async function editTemplatePage(data, instruction, form, country) {
-  const { items } = tplExtract(tplSource(data._template));
-  const cur = {};
-  items.forEach((it, i) => { cur[i] = data._texts[i] != null ? data._texts[i] : it.text; });
-  const prompt = "هذه نصوص صفحة هبوط حالية (JSON). طبّق طلب المستخدم وعدّل فقط ما يلزم، وأعد {\"title\":\"...\",\"texts\":{...}} وفي texts فقط المفاتيح التي عدّلتها فعلاً (لا تُعد النصوص التي لم تتغير)، بدون Markdown.\n" +
-    "الدولة: " + country.name + " | العملة: " + country.currency + "\nطلب التعديل: \"" + instruction + "\"\n\nعنوان الصفحة: " + data._title + "\nالنصوص:\n" + JSON.stringify(cur);
-  const out = await callClaude([{ type: "text", text: prompt }], true);
-  return Object.assign({}, data, { _title: out.title || data._title, _texts: Object.assign({}, data._texts || {}, out.texts || {}) });
-}
-
-/* ===== تغيير ألوان القالب مجاناً (بدون أي استدعاء للذكاء الاصطناعي) ===== */
-function __hexToHsl(hex) {
-  let h = hex.replace("#", "");
-  if (h.length <= 4) h = h.split("").map((c) => c + c).join("");
-  const r = parseInt(h.slice(0, 2), 16) / 255, g = parseInt(h.slice(2, 4), 16) / 255, bl = parseInt(h.slice(4, 6), 16) / 255;
-  const alpha = h.length === 8 ? h.slice(6, 8) : "";
-  const mx = Math.max(r, g, bl), mn = Math.min(r, g, bl), l = (mx + mn) / 2;
-  let hh = 0, ss = 0;
-  if (mx !== mn) {
-    const d = mx - mn;
-    ss = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
-    if (mx === r) hh = ((g - bl) / d + (g < bl ? 6 : 0)); else if (mx === g) hh = (bl - r) / d + 2; else hh = (r - g) / d + 4;
-    hh *= 60;
-  }
-  return { h: hh, s: ss, l, alpha };
-}
-function __hslToHex(h, s, l, alpha) {
-  h = ((h % 360) + 360) % 360;
-  const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs(((h / 60) % 2) - 1)), m = l - c / 2;
-  let r = 0, g = 0, b = 0;
-  if (h < 60) { r = c; g = x; } else if (h < 120) { r = x; g = c; } else if (h < 180) { g = c; b = x; }
-  else if (h < 240) { g = x; b = c; } else if (h < 300) { r = x; b = c; } else { r = c; b = x; }
-  const t = (v) => Math.round((v + m) * 255).toString(16).padStart(2, "0");
-  return "#" + t(r) + t(g) + t(b) + (alpha || "");
-}
-function __rotateColors(css, deg) {
-  return css.replace(/#([0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})(?![0-9a-zA-Z_-])/g, (m) => {
-    const c = __hexToHsl(m);
-    if (c.s < 0.15) return m; // نترك الأبيض/الأسود/الرمادي كما هو
-    return __hslToHex(c.h + deg, c.s, c.l, c.alpha);
-  });
-}
-function tplRecolor(doc, deg) {
-  if (!deg) return;
-  doc.querySelectorAll("style").forEach((st) => {
-    st.textContent = st.textContent.replace(/\{[^{}]*\}/g, (blk) => __rotateColors(blk, deg));
-  });
-  doc.querySelectorAll("[style]").forEach((el) => el.setAttribute("style", __rotateColors(el.getAttribute("style") || "", deg)));
-  doc.querySelectorAll("[fill],[stroke],[stop-color]").forEach((el) => {
-    ["fill", "stroke", "stop-color"].forEach((a) => { if (el.hasAttribute(a)) el.setAttribute(a, __rotateColors(el.getAttribute(a), deg)); });
-  });
-}
-
-/* ===== تبديل هيكل القالب مجاناً: إعادة ترتيب أقسام الصفحة (بدون أي استدعاء للذكاء الاصطناعي) ===== */
-function __seedRand(seed) {
-  let a = (seed >>> 0) || 1;
-  return function () { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
-}
-function tplShuffleSections(doc, seed) {
-  if (!seed || !doc.body) return;
-  const secs = Array.from(doc.body.children).filter((el) => el.tagName === "SECTION");
-  if (secs.length < 4) return;
-  // نترك ثابتاً: أول قسم (الواجهة)، آخر قسم، وأي قسم فيه فورم/أزرار طلب/عدّاد
-  const movable = secs.slice(1, -1).filter((el) => !el.querySelector("form,input,textarea,select,script,[id*='countdown'],[id*='order'],[id*='checkout']") && !/order|checkout|form|hero|countdown/i.test(el.id || ""));
-  if (movable.length < 2) return;
-  const rnd = __seedRand(seed);
-  const order = movable.slice();
-  for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); const t = order[i]; order[i] = order[j]; order[j] = t; }
-  const slots = movable.map((n) => { const ph = doc.createComment(""); n.replaceWith(ph); return ph; });
-  order.forEach((n, i) => slots[i].replaceWith(n));
-}
-
-function tplApply(data, images, form, country) {
-  const key = data._template;
-  const { doc, items } = tplExtract(tplSource(key));
-  const texts = data._texts || {};
-  items.forEach((it, i) => { if (texts[i] != null) it.node.nodeValue = String(texts[i]); });
-  if (data._title) doc.title = data._title;
-  if (data._hue) tplRecolor(doc, data._hue);
-  if (data._seed) tplShuffleSections(doc, data._seed);
-
-  // الصور
-  let k = 0;
-  doc.querySelectorAll("img").forEach((img) => {
-    if (!images.length || !img.getAttribute("src")) return;
-    img.setAttribute("src", images[k % images.length].dataUrl); k++;
-  });
-
-  // واتساب / اتصال
-  const num = form.whatsapp ? country.phoneCode.replace("+", "") + form.whatsapp : "";
-  doc.querySelectorAll('a[href*="wa.me"],a[href^="tel:"]').forEach((a) => {
-    if (!num) { a.remove(); return; }
-    a.setAttribute("href", (a.getAttribute("href") || "").indexOf("tel:") === 0 ? "tel:+" + num : "https://wa.me/" + num);
-  });
-
-  // منع أي إرسال خارجي (YouCan/abi3o القديم)
-  doc.querySelectorAll("form").forEach((f) => {
-    f.removeAttribute("action"); f.removeAttribute("method");
-    f.querySelectorAll('input[type="hidden"]').forEach((h) => h.remove());
-  });
-  doc.querySelectorAll("script").forEach((s) => { if (/yc-form|abi3o/.test(s.textContent)) s.remove(); });
-
-  const add = (code) => { const s = doc.createElement("script"); s.textContent = code; doc.body.appendChild(s); };
-  const MSG = "الرجاء إدخال الاسم ورقم الهاتف على الأقل.";
-
-  if (key === "chair") {
-    add('(function(){var b=document.getElementById("yc-btn");if(!b)return;b.addEventListener("click",function(){var n=document.getElementById("yc-name"),p=document.getElementById("yc-phone");if(!n.value.trim()||!p.value.trim()){alert("' + MSG + '");return;}document.getElementById("yc-form").style.display="none";var s=document.getElementById("yc-success");if(s)s.style.display="block";});})();');
-  }
-  if (key === "hair") {
-    const host = doc.getElementById("express-checkout-form");
-    if (host) {
-      const inp = 'style="width:100%;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:10px;padding:12px;color:#fff;font-family:inherit;font-size:14px;margin-bottom:10px"';
-      host.innerHTML = '<div style="max-width:400px;margin:0 auto;text-align:right"><div id="hf-wrap"><h3 style="color:#C9A84C;font-size:20px;font-weight:900;margin-bottom:14px;text-align:center">أكمل طلبك الآن</h3>' +
-        '<input id="hf-n" placeholder="الاسم الكامل" ' + inp + '><input id="hf-p" placeholder="رقم الهاتف" ' + inp + '><input id="hf-c" placeholder="المدينة" ' + inp + '><input id="hf-a" placeholder="العنوان بالتفصيل" ' + inp + '>' +
-        '<button id="hf-b" style="width:100%;background:linear-gradient(135deg,#C9A84C,#E8C96A);color:#0A0A0A;font-weight:900;font-size:17px;padding:15px;border:none;border-radius:50px;cursor:pointer;font-family:inherit">اطلب الآن</button></div>' +
-        '<div id="hf-ok" style="display:none;text-align:center;color:#C9A84C;font-weight:800;padding:20px">✅ تم استلام طلبك! سنتواصل معك قريباً.</div></div>';
-      add('(function(){var b=document.getElementById("hf-b");if(!b)return;b.addEventListener("click",function(){if(!document.getElementById("hf-n").value.trim()||!document.getElementById("hf-p").value.trim()){alert("' + MSG + '");return;}document.getElementById("hf-wrap").style.display="none";document.getElementById("hf-ok").style.display="block";});})();');
-    }
-  }
-  return "<!DOCTYPE html>" + doc.documentElement.outerHTML;
-}
-
-function TemplateFrame({ html, height }) {
-  return <iframe title="landing" srcDoc={html} style={{ width: "100%", height: height, border: 0, display: "block", background: "#fff" }} />;
-}
-
-/* ===== END TEMPLATES PATCH ===== */
+/* ============================== GENERATOR (لم يتغيّر) ============================== */
 
 function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange }) {
   const [step, setStep] = useState("form");
@@ -1837,73 +1568,6 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
   const country = COUNTRIES.find((c) => c.code === form.countryCode) || COUNTRIES[0];
   const tokens = data && data._paletteVariant ? data._paletteVariant : DESIGN_SYSTEMS.Tech[0];
   const heroLayout = data && data._heroLayout ? data._heroLayout : "split";
-
-  // ---- حفظ/استرجاع الحالة (باش التحديث ماكيمسحش الصفحة المولّدة) + زر الرجوع ----
-  const [hydrated, setHydrated] = useState(false);
-  const stepRef = useRef(step);
-  const dataRef = useRef(null);
-  useEffect(() => { stepRef.current = step; }, [step]);
-  dataRef.current = data;
-
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      const saved = user ? await idbGet("lp:" + user.id) : null;
-      if (!alive) return;
-      const hs = window.history.state;
-      let showPreview = false;
-      if (saved) {
-        if (saved.form) setForm((f) => Object.assign({}, f, saved.form));
-        if (Array.isArray(saved.images)) setImages(saved.images);
-        if (Array.isArray(saved.history) && saved.history.length) {
-          setHistory(saved.history);
-          const idx = Math.min(Math.max(Number(saved.historyIdx) || 0, 0), saved.history.length - 1);
-          setHistoryIdx(idx);
-          const onPreviewEntry = !!(hs && hs.app && hs.step === "preview");
-          showPreview = onPreviewEntry || saved.step === "preview";
-          if (showPreview && !onPreviewEntry) {
-            try {
-              window.history.replaceState({ app: true, step: "form" }, "");
-              window.history.pushState({ app: true, step: "preview" }, "");
-            } catch (e) {}
-          }
-        }
-      }
-      if (showPreview) setStep("preview");
-      else if (hs && hs.app && hs.step !== "form") { try { window.history.replaceState({ app: true, step: "form" }, ""); } catch (e) {} }
-      setHydrated(true);
-    })();
-    return () => { alive = false; };
-  }, []);
-
-  useEffect(() => {
-    if (!hydrated || !user) return;
-    const t = setTimeout(() => {
-      idbSet("lp:" + user.id, { form, images, history, historyIdx, step: step === "preview" ? "preview" : "form", savedAt: Date.now() });
-    }, 500);
-    return () => clearTimeout(t);
-  }, [hydrated, form, images, history, historyIdx, step]);
-
-  useEffect(() => {
-    function onPop(e) {
-      const st = e.state;
-      if (stepRef.current === "loading") {
-        // أثناء التوليد: ماكنخليوش المستخدم يخرج، كنرجعوه لنفس الشاشة
-        try { window.history.pushState({ app: true, step: "loading" }, ""); } catch (er) {}
-        return;
-      }
-      if (st && st.app && st.step === "preview" && dataRef.current) setStep("preview");
-      else if (st && (st.app || st.view)) setStep("form");
-    }
-    window.addEventListener("popstate", onPop);
-    return () => window.removeEventListener("popstate", onPop);
-  }, []);
-
-  function goBackToForm() {
-    const hs = window.history.state;
-    if (hs && hs.app && hs.step === "preview") window.history.back();
-    else setStep("form");
-  }
 
   const genTimer = useRef(null);
   useEffect(() => {
@@ -1956,8 +1620,6 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
     if (!form.price) return setError("أدخل سعر المنتج أولاً.");
     if (images.length === 0) return setError("ارفع صورة واحدة على الأقل للمنتج.");
     setStep("loading");
-    stepRef.current = "loading";
-    try { window.history.pushState({ app: true, step: "loading" }, ""); } catch (e) {}
     try {
       // نرسل بحد أقصى 5 صور فقط لمحرك التوليد (كافية لتحليل جيد للمنتج) لتقليل حجم الطلب،
       // بينما جميع الصور المرفوعة (حتى 8) تبقى متوفرة فمعرض الصفحة النهائية
@@ -1966,20 +1628,10 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
         { type: "text", text: buildGeneratePrompt(form, country) },
         ...imagesForAI.map((img) => ({ type: "image", source: { type: "base64", media_type: img.mediaType, data: img.base64 } })),
       ];
-      // اختيار عشوائي للقالب (بلا اختيار من المستخدم)
-      const tplPool = ["original", "chair", "hair", "tablet"];
-      const tpl = tplPool[Math.floor(Math.random() * tplPool.length)];
-      let result;
-      if (tpl !== "original") {
-        result = await generateFromTemplate(tpl, form, country, images);
-        result._paletteVariant = DESIGN_SYSTEMS.Tech[0];
-        result._heroLayout = "split";
-      } else {
-        const generated = await callClaudeAuto(content);
-        result = await runQualityControl(generated);
-        result._paletteVariant = pickDesignTokens(result.designSystem);
-        result._heroLayout = pickHeroLayout();
-      }
+      const generated = await callClaude(content);
+      const result = await runQualityControl(generated);
+      result._paletteVariant = pickDesignTokens(result.designSystem);
+      result._heroLayout = pickHeroLayout();
 
       // خصم نقطة واحدة بعد نجاح التوليد فقط. شرط credits يمنع خصماً سالباً.
       // Admin مستثنى تماماً من الخصم — التوليد عندو مجاني ومايبانش عليه أي تغيير فالرصيد.
@@ -2008,13 +1660,9 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
       }
 
       setHistory([result]); setHistoryIdx(0); setStep("preview");
-      stepRef.current = "preview";
-      try { window.history.replaceState({ app: true, step: "preview" }, ""); } catch (e) {}
     } catch (err) {
       setError(err.message || "حدث خطأ أثناء التوليد، حاول مرة أخرى.");
       setStep("form");
-      stepRef.current = "form";
-      try { const hs = window.history.state; if (hs && hs.step === "loading") window.history.back(); } catch (e) {}
     }
   }
 
@@ -2022,17 +1670,11 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
     if (!editCmd.trim() || !data) return;
     setEditing(true); setError("");
     try {
-      let result;
-      if (data._template) {
-        result = await editTemplatePage(data, editCmd.trim(), form, country);
-        result._paletteVariant = data._paletteVariant; result._heroLayout = data._heroLayout;
-      } else {
-        const content = [{ type: "text", text: buildEditPrompt(data, editCmd.trim(), country) }];
-        result = await callClaudeAuto(content);
-        const designChanged = result.designSystem !== data.designSystem;
-        result._paletteVariant = designChanged ? pickDesignTokens(result.designSystem) : data._paletteVariant;
-        result._heroLayout = designChanged ? pickHeroLayout() : data._heroLayout;
-      }
+      const content = [{ type: "text", text: buildEditPrompt(data, editCmd.trim(), country) }];
+      const result = await callClaude(content);
+      const designChanged = result.designSystem !== data.designSystem;
+      result._paletteVariant = designChanged ? pickDesignTokens(result.designSystem) : data._paletteVariant;
+      result._heroLayout = designChanged ? pickHeroLayout() : data._heroLayout;
       const truncated = history.slice(0, historyIdx + 1);
       const nextHistory = [...truncated, result];
       setHistory(nextHistory); setHistoryIdx(nextHistory.length - 1); setEditCmd("");
@@ -2044,17 +1686,8 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
   function undo() { if (historyIdx > 0) setHistoryIdx(historyIdx - 1); }
   function redo() { if (historyIdx < history.length - 1) setHistoryIdx(historyIdx + 1); }
 
-  async function handleShuffleDesign() {
+  function handleShuffleDesign() {
     if (!data) return;
-    if (data._template) {
-      // مجاني: ألوان جديدة + ترتيب أقسام جديد (الواجهة وقسم الطلب يبقاو في مكانهم)
-      const hue = 40 + Math.floor(Math.random() * 280);
-      const seed = 1 + Math.floor(Math.random() * 2147483000);
-      const r = Object.assign({}, data, { _hue: hue, _seed: seed });
-      const nh = [...history.slice(0, historyIdx + 1), r];
-      setHistory(nh); setHistoryIdx(nh.length - 1);
-      return;
-    }
     const allSystems = Object.keys(DESIGN_SYSTEMS);
     const otherSystems = allSystems.filter((s) => s !== data.designSystem);
     const nextSystem = otherSystems[Math.floor(Math.random() * otherSystems.length)] || data.designSystem;
@@ -2068,10 +1701,7 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
     setHistory(nextHistory); setHistoryIdx(nextHistory.length - 1);
   }
 
-  const htmlString = React.useMemo(() => {
-    if (!data) return "";
-    return data._template ? tplApply(data, images, form, country) : buildStandaloneHTML(data, tokens, images, form, country);
-  }, [data, images, form.name, form.price, form.priceOld, form.whatsapp, form.countryCode, form.showOrderForm]);
+  const htmlString = data ? buildStandaloneHTML(data, tokens, images, form, country) : "";
 
   async function copyHTML() {
     try { await navigator.clipboard.writeText(htmlString); setCopyStatus("تم نسخ الكود ✓"); }
@@ -2086,8 +1716,6 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
     document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
   }
 
-  if (!hydrated) return <SplashLoader />;
-
   return (
     <div dir="rtl" style={{ fontFamily: "'Cairo', sans-serif", minHeight: "100vh", background: "#0B0F19" }}>
       {step === "form" && <FormScreen form={form} setForm={setForm} images={images} onUpload={handleImageUpload} onRemoveImage={removeImage} onEnhanceImage={handleEnhanceImage} enhancingIdx={enhancingIdx} error={error} onGenerate={handleGenerate} />}
@@ -2099,8 +1727,7 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
           canUndo={historyIdx > 0} canRedo={historyIdx < history.length - 1} onUndo={undo} onRedo={redo}
           onCopy={copyHTML} onDownload={downloadHTML} copyStatus={copyStatus} error={error}
           onShuffleDesign={handleShuffleDesign}
-          tplHtml={htmlString}
-          onBack={goBackToForm}
+          onBack={() => setStep("form")}
           onBuyCredits={onBuyCredits}
           onPreviewChange={onPreviewChange} />
       )}
@@ -2197,7 +1824,7 @@ function PreviewScreen(props) {
     data, tokens, images, form, country, previewMode, setPreviewMode,
     editCmd, setEditCmd, onApplyEdit, editing, canUndo, canRedo,
     onUndo, onRedo, onDownload, error, onBack, onShuffleDesign,
-    onBuyCredits, onPreviewChange, tplHtml
+    onBuyCredits, onPreviewChange
   } = props;
 
   const captureRef = useRef(null);
@@ -2214,15 +1841,7 @@ function PreviewScreen(props) {
     if (!captureRef.current || !window.html2canvas || imageLoading) return;
     setImageLoading(true);
     try {
-      let el = captureRef.current;
-      const fr = el.querySelector("iframe");
-      if (fr && fr.contentDocument) {
-        const d = fr.contentDocument;
-        const st = d.createElement("style");
-        st.textContent = ".rev,.reveal{opacity:1!important;transform:none!important}";
-        d.head.appendChild(st);
-        el = d.body;
-      }
+      const el = captureRef.current;
       try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (e) {}
       // Use the real visible width of the page (NOT scrollWidth, which includes fixed/overflowing
       // elements and caused the blank margin) and a full-page height.
@@ -2280,9 +1899,7 @@ function PreviewScreen(props) {
     return (
       <div dir="rtl" style={{ minHeight: "100vh", background: "#05070C" }}>
         <div ref={captureRef}>
-          {data._template
-            ? <TemplateFrame html={tplHtml} height="100vh" />
-            : <LandingPage data={data} tokens={tokens} images={images} form={form} country={country} />}
+          <LandingPage data={data} tokens={tokens} images={images} form={form} country={country} />
         </div>
         <button
           className="floating-editor-back"
@@ -2330,9 +1947,7 @@ function PreviewScreen(props) {
       <div style={{ flex: 1, padding: "28px 16px", display: "flex", justifyContent: "center" }}>
         <div style={{ width: previewMode === "mobile" ? 390 : "100%", maxWidth: previewMode === "mobile" ? 390 : 1100, borderRadius: previewMode === "mobile" ? 30 : 16, overflow: "hidden", border: previewMode === "mobile" ? "8px solid #1B1F2B" : "1px solid #1D2740", boxShadow: "0 30px 60px rgba(0,0,0,.5)", height: "fit-content" }}>
           <div ref={captureRef}>
-            {data._template
-              ? <TemplateFrame html={tplHtml} height="calc(100vh - 150px)" />
-              : <LandingPage data={data} tokens={tokens} images={images} form={form} country={country} />}
+            <LandingPage data={data} tokens={tokens} images={images} form={form} country={country} />
           </div>
         </div>
       </div>
