@@ -1,46 +1,14 @@
 // api/generate.js
+// خاص تزيد هاد الـ config باش ترفع حد حجم الـ body عند Next.js من 1mb الافتراضي إلى 10mb.
+// بدون هاد السطر، Next.js كيرفض أي طلب كبير قبل ما يوصل للكود تاعك تحت، ويرجع رد نصي
+// (Request Entity Too Large) بدل JSON — وهو بالضبط الخطأ لي كنت كتشوف فالواجهة.
 export const config = {
-  maxDuration: 300, // مهلة أطول للصفحات الطويلة (على Vercel Hobby الحد الأقصى قد يكون أقل، النظام ياخد الأقصى المسموح)
   api: {
     bodyParser: {
       sizeLimit: "10mb",
     },
   },
 };
-
-const MODEL = "claude-sonnet-5";
-const MAX_TOKENS = 16000;      // كان 8000 → رفعناه حتى ما يتقطع الرد على الصفحات الطويلة
-const MAX_CONTINUATIONS = 2;   // إذا بقى الرد يتقطع، نكمّلو تلقائياً بدل ما نرجعو خطأ
-const TIME_BUDGET_MS = 240000; // ما نبداوش متابعة جديدة إذا قرب انتهاء المهلة
-
-async function callAnthropic(messages) {
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": process.env.ANTHROPIC_API_KEY,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({ model: MODEL, max_tokens: MAX_TOKENS, messages }),
-  });
-
-  const rawText = await response.text();
-  let data;
-  try {
-    data = JSON.parse(rawText);
-  } catch (e) {
-    const err = new Error("رد غير صالح من Anthropic API (كود " + response.status + "): " + rawText.slice(0, 200));
-    err.status = 502;
-    throw err;
-  }
-  if (!response.ok) {
-    const err = new Error((data.error && data.error.message) || "خطأ من Anthropic API");
-    err.status = response.status;
-    throw err;
-  }
-  const block = (data.content || []).find((b) => b.type === "text");
-  return { text: block ? block.text : "", stopReason: data.stop_reason };
-}
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -49,40 +17,58 @@ export default async function handler(req, res) {
 
   try {
     const { content } = req.body || {};
+
+    // تحقق بسيط من صحة البيانات قبل الإرسال لـ Anthropic — كيفادي رسائل خطأ غامضة لاحقاً
     if (!content || !Array.isArray(content) || content.length === 0) {
       return res.status(400).json({ error: "لم يصل محتوى صالح إلى السيرفر (content فارغ أو غير موجود)." });
     }
 
-    const started = Date.now();
-    const messages = [{ role: "user", content }];
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.ANTHROPIC_API_KEY, // المفتاح مخبّأ هنا فالسيرفر فقط
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-5",
+        // 4000 توكن ما كافيش لصفحة كاملة (hero+features+benefits+testimonials+faq+specs...)
+        // فكان كيتقطع الرد فالنص ويبقى JSON غير مكتمل = صفحة فارغة. 8000 كافية لصفحة غنية بالمحتوى.
+        max_tokens: 8000,
+        messages: [{ role: "user", content }],
+      }),
+    });
 
-    let { text, stopReason } = await callAnthropic(messages);
-
-    // إذا انقطع الرد بسبب حد التوكنز: نطلب من النموذج يكمل من نفس النقطة ونلصق الأجزاء
-    let tries = 0;
-    while (stopReason === "max_tokens" && tries < MAX_CONTINUATIONS && Date.now() - started < TIME_BUDGET_MS) {
-      tries++;
-      const next = await callAnthropic([
-        { role: "user", content },
-        { role: "assistant", content: text.trimEnd() },
-        {
-          role: "user",
-          content:
-            "انقطع ردك بسبب الطول. أكمل من الحرف الذي توقفت عنده بالضبط، بدون تكرار أي جزء سابق وبدون أي مقدمة أو Markdown، حتى ينتهي الرد كاملاً.",
-        },
-      ]);
-      text = text.trimEnd() + next.text;
-      stopReason = next.stopReason;
+    // نقرا الرد كنص أولاً، لأن Anthropic (أو أي بروكسي فالطريق) ممكن يرجع رد ماشي JSON
+    // فحالات نادرة (مثلاً خطأ 502/504 من الشبكة) — هادشي كيفادي كراش JSON.parse غامض.
+    const rawText = await response.text();
+    let data;
+    try {
+      data = JSON.parse(rawText);
+    } catch (parseErr) {
+      return res.status(502).json({
+        error: "رد غير صالح من Anthropic API (كود " + response.status + "): " + rawText.slice(0, 200),
+      });
     }
 
-    if (stopReason === "max_tokens") {
+    if (!response.ok) {
+      return res.status(response.status).json({
+        error: (data.error && data.error.message) || "خطأ من Anthropic API",
+      });
+    }
+
+    // إذا توقف التوليد بسبب حد التوكنز (stop_reason === "max_tokens")، الرد ناقص أكيد.
+    // نرجع خطأ واضح بدل ما نرجع JSON مقطوع يفشل فالـ parsing على الواجهة.
+    if (data.stop_reason === "max_tokens") {
       return res.status(422).json({
         error: "توقف التوليد لأن المحتوى طويل جداً. جرّب تبسيط وصف المنتج أو أعد المحاولة.",
       });
     }
 
-    return res.status(200).json({ text });
+    const textBlock = (data.content || []).find((b) => b.type === "text");
+    return res.status(200).json({ text: textBlock ? textBlock.text : "" });
   } catch (err) {
-    return res.status(err.status || 500).json({ error: err.message || "خطأ غير متوقع فالسيرفر." });
+    // أي خطأ غير متوقع (شبكة، انقطاع، إلخ) — نرجعو دايماً JSON صالح، أبداً نص خام
+    return res.status(500).json({ error: err.message || "خطأ غير متوقع فالسيرفر." });
   }
 }
