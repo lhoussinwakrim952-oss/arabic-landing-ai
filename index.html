@@ -537,8 +537,33 @@ async function callClaude(content, raw) {
   }
   if (!response.ok) throw new Error(data.error || "تعذّر الاتصال بمحرك الذكاء الاصطناعي (كود " + response.status + ").");
   if (!data.text) throw new Error("لم يصل رد نصي من المحرك");
-  const parsed = stripToJSON(data.text);
+  let parsed;
+  try { parsed = stripToJSON(data.text); }
+  catch (jsonErr) {
+    if (data.stop_reason === "max_tokens" || data.truncated) throw new Error("توقف التوليد لأن المحتوى طويل جداً.");
+    throw new Error("رد غير مكتمل من المحرك، حاول مرة أخرى.");
+  }
   return raw ? parsed : validateGeneratedData(parsed);
+}
+
+/* ===== حل مشكلة "المحتوى طويل جداً": تقسيم + إعادة محاولة تلقائية ===== */
+function isTooLongError(e) {
+  return /طويل جد|max_tokens|truncat|too long|غير مكتمل/i.test((e && e.message) || "");
+}
+// استدعاء عادي (صفحة كاملة) مع إعادة محاولة تلقائية بتعليمات اختصار إذا طال الرد
+async function callClaudeAuto(content) {
+  try { return await callClaude(content); }
+  catch (e) {
+    if (!isTooLongError(e)) throw e;
+    const note = "\n\nتنبيه مهم: الرد السابق طال وانقطع. اجعل كل نص مختصراً (جملة أو جملتين)، وكل قائمة 3 عناصر فقط، واختر 6 أقسام كحد أقصى، وأعد JSON مكتملاً وصحيحاً فقط.";
+    const shorter = content.map((c, i) => (i === 0 && c.type === "text") ? { type: "text", text: c.text + note } : c);
+    try { return await callClaude(shorter); }
+    catch (e2) {
+      if (!isTooLongError(e2)) throw e2;
+      const note2 = "\n\nأقصى اختصار: 4 أقسام فقط، 3 عناصر لكل قائمة، نص كل عنصر لا يزيد عن 12 كلمة.";
+      return await callClaude(shorter.map((c, i) => (i === 0 && c.type === "text") ? { type: "text", text: c.text + note2 } : c));
+    }
+  }
 }
 
 const SCHEMA_INSTRUCTIONS = `
@@ -1616,9 +1641,9 @@ function tplExtract(html) {
   return { doc, items };
 }
 
-function buildTplPrompt(items, form, country, extra) {
+function buildTplPrompt(items, form, country, extra, keys) {
   const map = {};
-  items.forEach((it, i) => { map[i] = it.text; });
+  items.forEach((it, i) => { map[keys ? keys[i] : i] = it.text; });
   const priceOld = form.priceOld && Number(form.priceOld) > Number(form.price) ? formatPrice(form.priceOld, country) : "(لا يوجد)";
   return "أنت كاتب إعلانات لصفحات هبوط COD عربية. عندك نصوص صفحة هبوط جاهزة لمنتج آخر، أعد كتابتها لتناسب المنتج الجديد (من الصور والبيانات).\n\n" +
     "المنتج: " + form.name + "\nالسعر الحالي: " + formatPrice(form.price, country) + "\nالسعر القديم: " + priceOld +
@@ -1634,24 +1659,107 @@ function buildTplPrompt(items, form, country, extra) {
     "النصوص الحالية:\n" + JSON.stringify(map);
 }
 
+// يعيد كتابة نصوص مجموعة (chunk) واحدة؛ إذا طال الرد تنقسم المجموعة نصفين تلقائياً
+async function rewriteTplChunk(chunk, form, country, images, extra) {
+  const content = [
+    { type: "text", text: buildTplPrompt(chunk.map((c) => ({ text: c.text })), form, country, extra, chunk.map((c) => c.i)) },
+    ...images.map((img) => ({ type: "image", source: { type: "base64", media_type: img.mediaType, data: img.base64 } })),
+  ];
+  try {
+    const out = await callClaude(content, true);
+    return { title: out.title, texts: out.texts || {} };
+  } catch (e) {
+    if (chunk.length > 1 && (isTooLongError(e) || /JSON|Unexpected|position/i.test(e.message || ""))) {
+      const mid = Math.ceil(chunk.length / 2);
+      const fewer = images.slice(0, 2);
+      const ex = "\n(هذه جزء من نصوص صفحة أطول؛ حافظ على نفس الأسلوب والمعلومات.)";
+      const a = await rewriteTplChunk(chunk.slice(0, mid), form, country, fewer, ex);
+      const b = await rewriteTplChunk(chunk.slice(mid), form, country, fewer, ex);
+      return { title: a.title || b.title, texts: Object.assign({}, a.texts, b.texts) };
+    }
+    throw e;
+  }
+}
+
 async function generateFromTemplate(key, form, country, images) {
   const { items } = tplExtract(tplSource(key));
-  const content = [
-    { type: "text", text: buildTplPrompt(items, form, country) },
-    ...images.slice(0, 5).map((img) => ({ type: "image", source: { type: "base64", media_type: img.mediaType, data: img.base64 } })),
-  ];
-  const out = await callClaude(content, true);
-  return { designSystem: "Tech", sections: [], hero: { headline: out.title || form.name }, _template: key, _title: out.title || form.name, _texts: out.texts || {} };
+  // طلب واحد لكل النصوص (نفس التكلفة القديمة). التقسيم لا يحصل إلا إذا طال الرد فعلاً (داخل rewriteTplChunk).
+  const all = items.map((it, i) => ({ i, text: it.text }));
+  const r = await rewriteTplChunk(all, form, country, images.slice(0, 5), "");
+  const title = r.title || form.name;
+  return { designSystem: "Tech", sections: [], hero: { headline: title }, _template: key, _title: title, _texts: r.texts };
 }
 
 async function editTemplatePage(data, instruction, form, country) {
   const { items } = tplExtract(tplSource(data._template));
   const cur = {};
   items.forEach((it, i) => { cur[i] = data._texts[i] != null ? data._texts[i] : it.text; });
-  const prompt = "هذه نصوص صفحة هبوط حالية (JSON). طبّق طلب المستخدم وعدّل فقط ما يلزم، وأعد {\"title\":\"...\",\"texts\":{...}} بنفس المفاتيح كلها، بدون Markdown.\n" +
+  const prompt = "هذه نصوص صفحة هبوط حالية (JSON). طبّق طلب المستخدم وعدّل فقط ما يلزم، وأعد {\"title\":\"...\",\"texts\":{...}} وفي texts فقط المفاتيح التي عدّلتها فعلاً (لا تُعد النصوص التي لم تتغير)، بدون Markdown.\n" +
     "الدولة: " + country.name + " | العملة: " + country.currency + "\nطلب التعديل: \"" + instruction + "\"\n\nعنوان الصفحة: " + data._title + "\nالنصوص:\n" + JSON.stringify(cur);
   const out = await callClaude([{ type: "text", text: prompt }], true);
-  return Object.assign({}, data, { _title: out.title || data._title, _texts: out.texts || data._texts });
+  return Object.assign({}, data, { _title: out.title || data._title, _texts: Object.assign({}, data._texts || {}, out.texts || {}) });
+}
+
+/* ===== تغيير ألوان القالب مجاناً (بدون أي استدعاء للذكاء الاصطناعي) ===== */
+function __hexToHsl(hex) {
+  let h = hex.replace("#", "");
+  if (h.length <= 4) h = h.split("").map((c) => c + c).join("");
+  const r = parseInt(h.slice(0, 2), 16) / 255, g = parseInt(h.slice(2, 4), 16) / 255, bl = parseInt(h.slice(4, 6), 16) / 255;
+  const alpha = h.length === 8 ? h.slice(6, 8) : "";
+  const mx = Math.max(r, g, bl), mn = Math.min(r, g, bl), l = (mx + mn) / 2;
+  let hh = 0, ss = 0;
+  if (mx !== mn) {
+    const d = mx - mn;
+    ss = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+    if (mx === r) hh = ((g - bl) / d + (g < bl ? 6 : 0)); else if (mx === g) hh = (bl - r) / d + 2; else hh = (r - g) / d + 4;
+    hh *= 60;
+  }
+  return { h: hh, s: ss, l, alpha };
+}
+function __hslToHex(h, s, l, alpha) {
+  h = ((h % 360) + 360) % 360;
+  const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs(((h / 60) % 2) - 1)), m = l - c / 2;
+  let r = 0, g = 0, b = 0;
+  if (h < 60) { r = c; g = x; } else if (h < 120) { r = x; g = c; } else if (h < 180) { g = c; b = x; }
+  else if (h < 240) { g = x; b = c; } else if (h < 300) { r = x; b = c; } else { r = c; b = x; }
+  const t = (v) => Math.round((v + m) * 255).toString(16).padStart(2, "0");
+  return "#" + t(r) + t(g) + t(b) + (alpha || "");
+}
+function __rotateColors(css, deg) {
+  return css.replace(/#([0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})(?![0-9a-zA-Z_-])/g, (m) => {
+    const c = __hexToHsl(m);
+    if (c.s < 0.15) return m; // نترك الأبيض/الأسود/الرمادي كما هو
+    return __hslToHex(c.h + deg, c.s, c.l, c.alpha);
+  });
+}
+function tplRecolor(doc, deg) {
+  if (!deg) return;
+  doc.querySelectorAll("style").forEach((st) => {
+    st.textContent = st.textContent.replace(/\{[^{}]*\}/g, (blk) => __rotateColors(blk, deg));
+  });
+  doc.querySelectorAll("[style]").forEach((el) => el.setAttribute("style", __rotateColors(el.getAttribute("style") || "", deg)));
+  doc.querySelectorAll("[fill],[stroke],[stop-color]").forEach((el) => {
+    ["fill", "stroke", "stop-color"].forEach((a) => { if (el.hasAttribute(a)) el.setAttribute(a, __rotateColors(el.getAttribute(a), deg)); });
+  });
+}
+
+/* ===== تبديل هيكل القالب مجاناً: إعادة ترتيب أقسام الصفحة (بدون أي استدعاء للذكاء الاصطناعي) ===== */
+function __seedRand(seed) {
+  let a = (seed >>> 0) || 1;
+  return function () { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+function tplShuffleSections(doc, seed) {
+  if (!seed || !doc.body) return;
+  const secs = Array.from(doc.body.children).filter((el) => el.tagName === "SECTION");
+  if (secs.length < 4) return;
+  // نترك ثابتاً: أول قسم (الواجهة)، آخر قسم، وأي قسم فيه فورم/أزرار طلب/عدّاد
+  const movable = secs.slice(1, -1).filter((el) => !el.querySelector("form,input,textarea,select,script,[id*='countdown'],[id*='order'],[id*='checkout']") && !/order|checkout|form|hero|countdown/i.test(el.id || ""));
+  if (movable.length < 2) return;
+  const rnd = __seedRand(seed);
+  const order = movable.slice();
+  for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); const t = order[i]; order[i] = order[j]; order[j] = t; }
+  const slots = movable.map((n) => { const ph = doc.createComment(""); n.replaceWith(ph); return ph; });
+  order.forEach((n, i) => slots[i].replaceWith(n));
 }
 
 function tplApply(data, images, form, country) {
@@ -1660,6 +1768,8 @@ function tplApply(data, images, form, country) {
   const texts = data._texts || {};
   items.forEach((it, i) => { if (texts[i] != null) it.node.nodeValue = String(texts[i]); });
   if (data._title) doc.title = data._title;
+  if (data._hue) tplRecolor(doc, data._hue);
+  if (data._seed) tplShuffleSections(doc, data._seed);
 
   // الصور
   let k = 0;
@@ -1865,7 +1975,7 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
         result._paletteVariant = DESIGN_SYSTEMS.Tech[0];
         result._heroLayout = "split";
       } else {
-        const generated = await callClaude(content);
+        const generated = await callClaudeAuto(content);
         result = await runQualityControl(generated);
         result._paletteVariant = pickDesignTokens(result.designSystem);
         result._heroLayout = pickHeroLayout();
@@ -1918,7 +2028,7 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
         result._paletteVariant = data._paletteVariant; result._heroLayout = data._heroLayout;
       } else {
         const content = [{ type: "text", text: buildEditPrompt(data, editCmd.trim(), country) }];
-        result = await callClaude(content);
+        result = await callClaudeAuto(content);
         const designChanged = result.designSystem !== data.designSystem;
         result._paletteVariant = designChanged ? pickDesignTokens(result.designSystem) : data._paletteVariant;
         result._heroLayout = designChanged ? pickHeroLayout() : data._heroLayout;
@@ -1937,16 +2047,12 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
   async function handleShuffleDesign() {
     if (!data) return;
     if (data._template) {
-      const others = ["chair", "hair", "tablet"].filter((t) => t !== data._template);
-      const nextKey = others[Math.floor(Math.random() * others.length)];
-      setEditing(true); setError("");
-      try {
-        const r = await generateFromTemplate(nextKey, form, country, images);
-        r._paletteVariant = DESIGN_SYSTEMS.Tech[0]; r._heroLayout = "split";
-        const nh = [...history.slice(0, historyIdx + 1), r];
-        setHistory(nh); setHistoryIdx(nh.length - 1);
-      } catch (err) { setError(err.message || "تعذّر تغيير القالب."); }
-      setEditing(false);
+      // مجاني: ألوان جديدة + ترتيب أقسام جديد (الواجهة وقسم الطلب يبقاو في مكانهم)
+      const hue = 40 + Math.floor(Math.random() * 280);
+      const seed = 1 + Math.floor(Math.random() * 2147483000);
+      const r = Object.assign({}, data, { _hue: hue, _seed: seed });
+      const nh = [...history.slice(0, historyIdx + 1), r];
+      setHistory(nh); setHistoryIdx(nh.length - 1);
       return;
     }
     const allSystems = Object.keys(DESIGN_SYSTEMS);
