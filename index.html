@@ -504,7 +504,7 @@ async function runQualityControl(data) {
     return data;
   }
 }
-async function callClaude(content) {
+async function callClaude(content, raw) {
   // يتصل بالـ Backend الخاص بنا (api/generate.js) بدل الاتصال المباشر بـ Anthropic.
   // مفتاح الـ API مخبّأ فالسيرفر (Environment Variable) وما ظاهرش هنا فالفرونت-إند.
   let response;
@@ -537,7 +537,8 @@ async function callClaude(content) {
   }
   if (!response.ok) throw new Error(data.error || "تعذّر الاتصال بمحرك الذكاء الاصطناعي (كود " + response.status + ").");
   if (!data.text) throw new Error("لم يصل رد نصي من المحرك");
-  return validateGeneratedData(stripToJSON(data.text));
+  const parsed = stripToJSON(data.text);
+  return raw ? parsed : validateGeneratedData(parsed);
 }
 
 const SCHEMA_INSTRUCTIONS = `
@@ -1595,6 +1596,118 @@ async function idbDel(key) {
 
 /* ============================== GENERATOR ============================== */
 
+/* ===== TEMPLATES PATCH (random template selection) ===== */
+
+function tplSource(key) { return decodeLP(window.__LP[key]); } // قراءة فقط
+
+function tplExtract(html) {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const items = [];
+  const w = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
+  let n;
+  while ((n = w.nextNode())) {
+    const p = n.parentElement;
+    if (!p || /^(SCRIPT|STYLE|NOSCRIPT|OPTION)$/.test(p.tagName)) continue;
+    if (p.closest("#countdown,#hours,#minutes,#seconds,#cdText,#toastText")) continue;
+    const t = n.nodeValue.trim();
+    if (t.length < 2 || !/[A-Za-z\u0600-\u06FF]/.test(t)) continue;
+    items.push({ node: n, text: t });
+  }
+  return { doc, items };
+}
+
+function buildTplPrompt(items, form, country, extra) {
+  const map = {};
+  items.forEach((it, i) => { map[i] = it.text; });
+  const priceOld = form.priceOld && Number(form.priceOld) > Number(form.price) ? formatPrice(form.priceOld, country) : "(لا يوجد)";
+  return "أنت كاتب إعلانات لصفحات هبوط COD عربية. عندك نصوص صفحة هبوط جاهزة لمنتج آخر، أعد كتابتها لتناسب المنتج الجديد (من الصور والبيانات).\n\n" +
+    "المنتج: " + form.name + "\nالسعر الحالي: " + formatPrice(form.price, country) + "\nالسعر القديم: " + priceOld +
+    "\nالدولة: " + country.name + " | اللهجة: " + (form.dialect === "auto" ? country.dialect : form.dialect) +
+    "\nوصف: " + (form.description || "(استنتج من الصور)") +
+    (extra || "") +
+    "\n\nالقواعد:\n- أعد JSON فقط: {\"title\":\"عنوان الصفحة\",\"texts\":{\"0\":\"...\",\"1\":\"...\"}} بنفس المفاتيح بالضبط، بدون Markdown.\n" +
+    "- احتفظ بنفس الدور والطول التقريبي لكل نص (عنوان يبقى عنوان، زر يبقى زر).\n" +
+    "- استبدل كل ما يخص المنتج القديم (أسماء، مواصفات، أرقام، مكونات، ادعاءات، أوصاف) بما يناسب المنتج الجديد فقط.\n" +
+    "- الأسعار: استعمل السعر الحالي حرفياً بالعملة. السعر القديم والخصم: إن لم يوجد أرجع نصاً فارغاً \"\" لذلك المفتاح.\n" +
+    "- لا تخترع ادعاءات طبية أو ضمانات بأرقام أو علامات تجارية. آراء العملاء تبقى تجريبية بأسماء شائعة.\n" +
+    "- نصوص الأزرار والتنقل (اطلب الآن، واتساب...) تبقى بنفس المعنى.\n\n" +
+    "النصوص الحالية:\n" + JSON.stringify(map);
+}
+
+async function generateFromTemplate(key, form, country, images) {
+  const { items } = tplExtract(tplSource(key));
+  const content = [
+    { type: "text", text: buildTplPrompt(items, form, country) },
+    ...images.slice(0, 5).map((img) => ({ type: "image", source: { type: "base64", media_type: img.mediaType, data: img.base64 } })),
+  ];
+  const out = await callClaude(content, true);
+  return { designSystem: "Tech", sections: [], hero: { headline: out.title || form.name }, _template: key, _title: out.title || form.name, _texts: out.texts || {} };
+}
+
+async function editTemplatePage(data, instruction, form, country) {
+  const { items } = tplExtract(tplSource(data._template));
+  const cur = {};
+  items.forEach((it, i) => { cur[i] = data._texts[i] != null ? data._texts[i] : it.text; });
+  const prompt = "هذه نصوص صفحة هبوط حالية (JSON). طبّق طلب المستخدم وعدّل فقط ما يلزم، وأعد {\"title\":\"...\",\"texts\":{...}} بنفس المفاتيح كلها، بدون Markdown.\n" +
+    "الدولة: " + country.name + " | العملة: " + country.currency + "\nطلب التعديل: \"" + instruction + "\"\n\nعنوان الصفحة: " + data._title + "\nالنصوص:\n" + JSON.stringify(cur);
+  const out = await callClaude([{ type: "text", text: prompt }], true);
+  return Object.assign({}, data, { _title: out.title || data._title, _texts: out.texts || data._texts });
+}
+
+function tplApply(data, images, form, country) {
+  const key = data._template;
+  const { doc, items } = tplExtract(tplSource(key));
+  const texts = data._texts || {};
+  items.forEach((it, i) => { if (texts[i] != null) it.node.nodeValue = String(texts[i]); });
+  if (data._title) doc.title = data._title;
+
+  // الصور
+  let k = 0;
+  doc.querySelectorAll("img").forEach((img) => {
+    if (!images.length || !img.getAttribute("src")) return;
+    img.setAttribute("src", images[k % images.length].dataUrl); k++;
+  });
+
+  // واتساب / اتصال
+  const num = form.whatsapp ? country.phoneCode.replace("+", "") + form.whatsapp : "";
+  doc.querySelectorAll('a[href*="wa.me"],a[href^="tel:"]').forEach((a) => {
+    if (!num) { a.remove(); return; }
+    a.setAttribute("href", (a.getAttribute("href") || "").indexOf("tel:") === 0 ? "tel:+" + num : "https://wa.me/" + num);
+  });
+
+  // منع أي إرسال خارجي (YouCan/abi3o القديم)
+  doc.querySelectorAll("form").forEach((f) => {
+    f.removeAttribute("action"); f.removeAttribute("method");
+    f.querySelectorAll('input[type="hidden"]').forEach((h) => h.remove());
+  });
+  doc.querySelectorAll("script").forEach((s) => { if (/yc-form|abi3o/.test(s.textContent)) s.remove(); });
+
+  const add = (code) => { const s = doc.createElement("script"); s.textContent = code; doc.body.appendChild(s); };
+  const MSG = "الرجاء إدخال الاسم ورقم الهاتف على الأقل.";
+
+  if (key === "chair") {
+    add('(function(){var b=document.getElementById("yc-btn");if(!b)return;b.addEventListener("click",function(){var n=document.getElementById("yc-name"),p=document.getElementById("yc-phone");if(!n.value.trim()||!p.value.trim()){alert("' + MSG + '");return;}document.getElementById("yc-form").style.display="none";var s=document.getElementById("yc-success");if(s)s.style.display="block";});})();');
+  }
+  if (key === "hair") {
+    const host = doc.getElementById("express-checkout-form");
+    if (host) {
+      const inp = 'style="width:100%;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:10px;padding:12px;color:#fff;font-family:inherit;font-size:14px;margin-bottom:10px"';
+      host.innerHTML = '<div style="max-width:400px;margin:0 auto;text-align:right"><div id="hf-wrap"><h3 style="color:#C9A84C;font-size:20px;font-weight:900;margin-bottom:14px;text-align:center">أكمل طلبك الآن</h3>' +
+        '<input id="hf-n" placeholder="الاسم الكامل" ' + inp + '><input id="hf-p" placeholder="رقم الهاتف" ' + inp + '><input id="hf-c" placeholder="المدينة" ' + inp + '><input id="hf-a" placeholder="العنوان بالتفصيل" ' + inp + '>' +
+        '<button id="hf-b" style="width:100%;background:linear-gradient(135deg,#C9A84C,#E8C96A);color:#0A0A0A;font-weight:900;font-size:17px;padding:15px;border:none;border-radius:50px;cursor:pointer;font-family:inherit">اطلب الآن</button></div>' +
+        '<div id="hf-ok" style="display:none;text-align:center;color:#C9A84C;font-weight:800;padding:20px">✅ تم استلام طلبك! سنتواصل معك قريباً.</div></div>';
+      add('(function(){var b=document.getElementById("hf-b");if(!b)return;b.addEventListener("click",function(){if(!document.getElementById("hf-n").value.trim()||!document.getElementById("hf-p").value.trim()){alert("' + MSG + '");return;}document.getElementById("hf-wrap").style.display="none";document.getElementById("hf-ok").style.display="block";});})();');
+    }
+  }
+  return "<!DOCTYPE html>" + doc.documentElement.outerHTML;
+}
+
+function TemplateFrame({ html, height }) {
+  return <iframe title="landing" srcDoc={html} style={{ width: "100%", height: height, border: 0, display: "block", background: "#fff" }} />;
+}
+
+/* ===== END TEMPLATES PATCH ===== */
+
 function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange }) {
   const [step, setStep] = useState("form");
   const [form, setForm] = useState({ name: "", price: "", priceOld: "", description: "", countryCode: "SA", dialect: "auto", whatsapp: "", showOrderForm: true });
@@ -1743,10 +1856,20 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
         { type: "text", text: buildGeneratePrompt(form, country) },
         ...imagesForAI.map((img) => ({ type: "image", source: { type: "base64", media_type: img.mediaType, data: img.base64 } })),
       ];
-      const generated = await callClaude(content);
-      const result = await runQualityControl(generated);
-      result._paletteVariant = pickDesignTokens(result.designSystem);
-      result._heroLayout = pickHeroLayout();
+      // اختيار عشوائي للقالب (بلا اختيار من المستخدم)
+      const tplPool = ["original", "chair", "hair", "tablet"];
+      const tpl = tplPool[Math.floor(Math.random() * tplPool.length)];
+      let result;
+      if (tpl !== "original") {
+        result = await generateFromTemplate(tpl, form, country, images);
+        result._paletteVariant = DESIGN_SYSTEMS.Tech[0];
+        result._heroLayout = "split";
+      } else {
+        const generated = await callClaude(content);
+        result = await runQualityControl(generated);
+        result._paletteVariant = pickDesignTokens(result.designSystem);
+        result._heroLayout = pickHeroLayout();
+      }
 
       // خصم نقطة واحدة بعد نجاح التوليد فقط. شرط credits يمنع خصماً سالباً.
       // Admin مستثنى تماماً من الخصم — التوليد عندو مجاني ومايبانش عليه أي تغيير فالرصيد.
@@ -1789,11 +1912,17 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
     if (!editCmd.trim() || !data) return;
     setEditing(true); setError("");
     try {
-      const content = [{ type: "text", text: buildEditPrompt(data, editCmd.trim(), country) }];
-      const result = await callClaude(content);
-      const designChanged = result.designSystem !== data.designSystem;
-      result._paletteVariant = designChanged ? pickDesignTokens(result.designSystem) : data._paletteVariant;
-      result._heroLayout = designChanged ? pickHeroLayout() : data._heroLayout;
+      let result;
+      if (data._template) {
+        result = await editTemplatePage(data, editCmd.trim(), form, country);
+        result._paletteVariant = data._paletteVariant; result._heroLayout = data._heroLayout;
+      } else {
+        const content = [{ type: "text", text: buildEditPrompt(data, editCmd.trim(), country) }];
+        result = await callClaude(content);
+        const designChanged = result.designSystem !== data.designSystem;
+        result._paletteVariant = designChanged ? pickDesignTokens(result.designSystem) : data._paletteVariant;
+        result._heroLayout = designChanged ? pickHeroLayout() : data._heroLayout;
+      }
       const truncated = history.slice(0, historyIdx + 1);
       const nextHistory = [...truncated, result];
       setHistory(nextHistory); setHistoryIdx(nextHistory.length - 1); setEditCmd("");
@@ -1805,8 +1934,21 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
   function undo() { if (historyIdx > 0) setHistoryIdx(historyIdx - 1); }
   function redo() { if (historyIdx < history.length - 1) setHistoryIdx(historyIdx + 1); }
 
-  function handleShuffleDesign() {
+  async function handleShuffleDesign() {
     if (!data) return;
+    if (data._template) {
+      const others = ["chair", "hair", "tablet"].filter((t) => t !== data._template);
+      const nextKey = others[Math.floor(Math.random() * others.length)];
+      setEditing(true); setError("");
+      try {
+        const r = await generateFromTemplate(nextKey, form, country, images);
+        r._paletteVariant = DESIGN_SYSTEMS.Tech[0]; r._heroLayout = "split";
+        const nh = [...history.slice(0, historyIdx + 1), r];
+        setHistory(nh); setHistoryIdx(nh.length - 1);
+      } catch (err) { setError(err.message || "تعذّر تغيير القالب."); }
+      setEditing(false);
+      return;
+    }
     const allSystems = Object.keys(DESIGN_SYSTEMS);
     const otherSystems = allSystems.filter((s) => s !== data.designSystem);
     const nextSystem = otherSystems[Math.floor(Math.random() * otherSystems.length)] || data.designSystem;
@@ -1820,7 +1962,10 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
     setHistory(nextHistory); setHistoryIdx(nextHistory.length - 1);
   }
 
-  const htmlString = data ? buildStandaloneHTML(data, tokens, images, form, country) : "";
+  const htmlString = React.useMemo(() => {
+    if (!data) return "";
+    return data._template ? tplApply(data, images, form, country) : buildStandaloneHTML(data, tokens, images, form, country);
+  }, [data, images, form.name, form.price, form.priceOld, form.whatsapp, form.countryCode, form.showOrderForm]);
 
   async function copyHTML() {
     try { await navigator.clipboard.writeText(htmlString); setCopyStatus("تم نسخ الكود ✓"); }
@@ -1848,6 +1993,7 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
           canUndo={historyIdx > 0} canRedo={historyIdx < history.length - 1} onUndo={undo} onRedo={redo}
           onCopy={copyHTML} onDownload={downloadHTML} copyStatus={copyStatus} error={error}
           onShuffleDesign={handleShuffleDesign}
+          tplHtml={htmlString}
           onBack={goBackToForm}
           onBuyCredits={onBuyCredits}
           onPreviewChange={onPreviewChange} />
@@ -1945,7 +2091,7 @@ function PreviewScreen(props) {
     data, tokens, images, form, country, previewMode, setPreviewMode,
     editCmd, setEditCmd, onApplyEdit, editing, canUndo, canRedo,
     onUndo, onRedo, onDownload, error, onBack, onShuffleDesign,
-    onBuyCredits, onPreviewChange
+    onBuyCredits, onPreviewChange, tplHtml
   } = props;
 
   const captureRef = useRef(null);
@@ -1962,7 +2108,15 @@ function PreviewScreen(props) {
     if (!captureRef.current || !window.html2canvas || imageLoading) return;
     setImageLoading(true);
     try {
-      const el = captureRef.current;
+      let el = captureRef.current;
+      const fr = el.querySelector("iframe");
+      if (fr && fr.contentDocument) {
+        const d = fr.contentDocument;
+        const st = d.createElement("style");
+        st.textContent = ".rev,.reveal{opacity:1!important;transform:none!important}";
+        d.head.appendChild(st);
+        el = d.body;
+      }
       try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (e) {}
       // Use the real visible width of the page (NOT scrollWidth, which includes fixed/overflowing
       // elements and caused the blank margin) and a full-page height.
@@ -2020,7 +2174,9 @@ function PreviewScreen(props) {
     return (
       <div dir="rtl" style={{ minHeight: "100vh", background: "#05070C" }}>
         <div ref={captureRef}>
-          <LandingPage data={data} tokens={tokens} images={images} form={form} country={country} />
+          {data._template
+            ? <TemplateFrame html={tplHtml} height="100vh" />
+            : <LandingPage data={data} tokens={tokens} images={images} form={form} country={country} />}
         </div>
         <button
           className="floating-editor-back"
@@ -2068,7 +2224,9 @@ function PreviewScreen(props) {
       <div style={{ flex: 1, padding: "28px 16px", display: "flex", justifyContent: "center" }}>
         <div style={{ width: previewMode === "mobile" ? 390 : "100%", maxWidth: previewMode === "mobile" ? 390 : 1100, borderRadius: previewMode === "mobile" ? 30 : 16, overflow: "hidden", border: previewMode === "mobile" ? "8px solid #1B1F2B" : "1px solid #1D2740", boxShadow: "0 30px 60px rgba(0,0,0,.5)", height: "fit-content" }}>
           <div ref={captureRef}>
-            <LandingPage data={data} tokens={tokens} images={images} form={form} country={country} />
+            {data._template
+              ? <TemplateFrame html={tplHtml} height="calc(100vh - 150px)" />
+              : <LandingPage data={data} tokens={tokens} images={images} form={form} country={country} />}
           </div>
         </div>
       </div>
