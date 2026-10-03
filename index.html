@@ -188,6 +188,7 @@
   .hp-nav-in{padding:8px 14px}
   .hp-logo-sm{font-size:13px;gap:8px;white-space:nowrap;line-height:1.15;font-weight:900;letter-spacing:.2px}
   .hp-logo-sm .hp-logo-img{width:40px;height:40px;border:1.5px solid #2f4d86;box-shadow:0 0 14px rgba(34,211,238,.28)}
+  .hp-logo.hp-logo-sm{direction:ltr;flex-direction:row;justify-content:flex-start}
   .hp-logo-name{display:block;text-align:left;direction:ltr;background:linear-gradient(90deg,#67e8f9,#60a5fa);-webkit-background-clip:text;background-clip:text;color:transparent}
   .hp-nav-btns{gap:6px}
   .hp-nav-btns .hp-ghost{padding:7px 11px;font-size:12px}.hp-nav-btns .hp-cta{padding:8px 13px;font-size:12.5px;box-shadow:0 4px 14px rgba(34,211,238,.35)}
@@ -1381,6 +1382,26 @@ function AuthGate() {
     setBuying(false);
   }
 
+  const sessionRef = useRef(null);
+  useEffect(() => { sessionRef.current = session; }, [session]);
+
+  // زر الرجوع/الأمام ديال المتصفح: كنرجّعو الشاشة الصحيحة (home/login/signup/forgot) بدل ما يخرج من الموقع
+  useEffect(() => {
+    try { if (!window.history.state) window.history.replaceState({ view: "home" }, ""); } catch (e) {}
+    function onPop(e) {
+      const st = e.state;
+      if (!st || !st.view) return;
+      if (sessionRef.current) {
+        // مستخدم داخل: ماكنرجعوش لشاشات الدخول القديمة، كنتخطاوها
+        if (st.view !== "home") window.history.back();
+        return;
+      }
+      setView(st.view); setError(""); setMsg("");
+    }
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
   useEffect(() => {
     function syncLegalHash() {
       const h = window.location.hash.replace("#", "");
@@ -1406,13 +1427,15 @@ function AuthGate() {
       const { data } = await client.auth.getSession();
       if (cancelled) return;
       setSession(data.session);
+      if (data.session) { try { const hs = window.history.state; if (!hs || !hs.app) window.history.replaceState({ app: true, step: "form" }, ""); } catch (e) {} }
       setReady(true);
       if (data.session) fetchProfile(client, data.session.user.id);
 
       const sub = client.auth.onAuthStateChange((event, newSession) => {
         setSession(newSession);
+        if (event === "SIGNED_IN" && newSession) { try { const hs = window.history.state; if (!hs || !hs.app) window.history.replaceState({ app: true, step: "form" }, ""); } catch (e) {} }
         if (event === "PASSWORD_RECOVERY") setRecoveryMode(true);
-        if (event === "SIGNED_OUT") { setProfile(null); setRecoveryMode(false); setView("home"); }
+        if (event === "SIGNED_OUT") { setProfile(null); setRecoveryMode(false); setView("home"); try { window.history.replaceState({ view: "home" }, ""); } catch (e) {} }
         if (newSession) fetchProfile(client, newSession.user.id);
       });
       subscription = sub.data.subscription;
@@ -1434,6 +1457,7 @@ function AuthGate() {
     if (err) { setError(mapAuthError(err)); return; }
     setMsg("تم إنشاء الحساب بنجاح. إذا طُلب تأكيد البريد الإلكتروني، تحقق من بريدك ثم سجّل الدخول.");
     setView("login");
+    try { window.history.replaceState({ view: "login" }, ""); } catch (e) {}
   }
 
   async function handleForgot(email) {
@@ -1456,10 +1480,18 @@ function AuthGate() {
   }
 
   async function handleLogout() {
+    try { const uid = session && session.user && session.user.id; if (uid) await idbDel("lp:" + uid); } catch (e) {}
     if (clientRef.current) await clientRef.current.auth.signOut();
   }
 
-  function switchView(v) { setView(v); setError(""); setMsg(""); }
+  function switchView(v) {
+    setView(v); setError(""); setMsg("");
+    // نسجّل كل شاشة (login/signup/forgot) فتاريخ المتصفح باش زر الرجوع يرجع للشاشة اللي قبلها وماكيخرجش من الموقع
+    try {
+      const cur = window.history.state;
+      if (!cur || cur.view !== v) window.history.pushState({ view: v }, "");
+    } catch (e) {}
+  }
 
   if (legalPage && LEGAL_CONTENT[legalPage]) {
     return <LegalPage type={legalPage} onBack={() => { window.location.hash = ""; }} />;
@@ -1529,7 +1561,39 @@ function AuthGate() {
   );
 }
 
-/* ============================== GENERATOR (لم يتغيّر) ============================== */
+/* ============================== تخزين محلي (IndexedDB) لحفظ الصفحة المولّدة عند التحديث ============================== */
+function idbOpen() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open("alai-store", 1);
+    r.onupgradeneeded = () => { r.result.createObjectStore("kv"); };
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+async function idbSet(key, value) {
+  try {
+    const db = await idbOpen();
+    await new Promise((res, rej) => { const tx = db.transaction("kv", "readwrite"); tx.objectStore("kv").put(value, key); tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
+    db.close();
+  } catch (e) {}
+}
+async function idbGet(key) {
+  try {
+    const db = await idbOpen();
+    const v = await new Promise((res, rej) => { const tx = db.transaction("kv", "readonly"); const q = tx.objectStore("kv").get(key); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
+    db.close();
+    return v;
+  } catch (e) { return null; }
+}
+async function idbDel(key) {
+  try {
+    const db = await idbOpen();
+    await new Promise((res, rej) => { const tx = db.transaction("kv", "readwrite"); tx.objectStore("kv").delete(key); tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
+    db.close();
+  } catch (e) {}
+}
+
+/* ============================== GENERATOR ============================== */
 
 function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange }) {
   const [step, setStep] = useState("form");
@@ -1550,6 +1614,73 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
   const country = COUNTRIES.find((c) => c.code === form.countryCode) || COUNTRIES[0];
   const tokens = data && data._paletteVariant ? data._paletteVariant : DESIGN_SYSTEMS.Tech[0];
   const heroLayout = data && data._heroLayout ? data._heroLayout : "split";
+
+  // ---- حفظ/استرجاع الحالة (باش التحديث ماكيمسحش الصفحة المولّدة) + زر الرجوع ----
+  const [hydrated, setHydrated] = useState(false);
+  const stepRef = useRef(step);
+  const dataRef = useRef(null);
+  useEffect(() => { stepRef.current = step; }, [step]);
+  dataRef.current = data;
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const saved = user ? await idbGet("lp:" + user.id) : null;
+      if (!alive) return;
+      const hs = window.history.state;
+      let showPreview = false;
+      if (saved) {
+        if (saved.form) setForm((f) => Object.assign({}, f, saved.form));
+        if (Array.isArray(saved.images)) setImages(saved.images);
+        if (Array.isArray(saved.history) && saved.history.length) {
+          setHistory(saved.history);
+          const idx = Math.min(Math.max(Number(saved.historyIdx) || 0, 0), saved.history.length - 1);
+          setHistoryIdx(idx);
+          const onPreviewEntry = !!(hs && hs.app && hs.step === "preview");
+          showPreview = onPreviewEntry || saved.step === "preview";
+          if (showPreview && !onPreviewEntry) {
+            try {
+              window.history.replaceState({ app: true, step: "form" }, "");
+              window.history.pushState({ app: true, step: "preview" }, "");
+            } catch (e) {}
+          }
+        }
+      }
+      if (showPreview) setStep("preview");
+      else if (hs && hs.app && hs.step !== "form") { try { window.history.replaceState({ app: true, step: "form" }, ""); } catch (e) {} }
+      setHydrated(true);
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated || !user) return;
+    const t = setTimeout(() => {
+      idbSet("lp:" + user.id, { form, images, history, historyIdx, step: step === "preview" ? "preview" : "form", savedAt: Date.now() });
+    }, 500);
+    return () => clearTimeout(t);
+  }, [hydrated, form, images, history, historyIdx, step]);
+
+  useEffect(() => {
+    function onPop(e) {
+      const st = e.state;
+      if (stepRef.current === "loading") {
+        // أثناء التوليد: ماكنخليوش المستخدم يخرج، كنرجعوه لنفس الشاشة
+        try { window.history.pushState({ app: true, step: "loading" }, ""); } catch (er) {}
+        return;
+      }
+      if (st && st.app && st.step === "preview" && dataRef.current) setStep("preview");
+      else if (st && (st.app || st.view)) setStep("form");
+    }
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  function goBackToForm() {
+    const hs = window.history.state;
+    if (hs && hs.app && hs.step === "preview") window.history.back();
+    else setStep("form");
+  }
 
   const genTimer = useRef(null);
   useEffect(() => {
@@ -1602,6 +1733,8 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
     if (!form.price) return setError("أدخل سعر المنتج أولاً.");
     if (images.length === 0) return setError("ارفع صورة واحدة على الأقل للمنتج.");
     setStep("loading");
+    stepRef.current = "loading";
+    try { window.history.pushState({ app: true, step: "loading" }, ""); } catch (e) {}
     try {
       // نرسل بحد أقصى 5 صور فقط لمحرك التوليد (كافية لتحليل جيد للمنتج) لتقليل حجم الطلب،
       // بينما جميع الصور المرفوعة (حتى 8) تبقى متوفرة فمعرض الصفحة النهائية
@@ -1642,9 +1775,13 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
       }
 
       setHistory([result]); setHistoryIdx(0); setStep("preview");
+      stepRef.current = "preview";
+      try { window.history.replaceState({ app: true, step: "preview" }, ""); } catch (e) {}
     } catch (err) {
       setError(err.message || "حدث خطأ أثناء التوليد، حاول مرة أخرى.");
       setStep("form");
+      stepRef.current = "form";
+      try { const hs = window.history.state; if (hs && hs.step === "loading") window.history.back(); } catch (e) {}
     }
   }
 
@@ -1698,6 +1835,8 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
     document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
   }
 
+  if (!hydrated) return <SplashLoader />;
+
   return (
     <div dir="rtl" style={{ fontFamily: "'Cairo', sans-serif", minHeight: "100vh", background: "#0B0F19" }}>
       {step === "form" && <FormScreen form={form} setForm={setForm} images={images} onUpload={handleImageUpload} onRemoveImage={removeImage} onEnhanceImage={handleEnhanceImage} enhancingIdx={enhancingIdx} error={error} onGenerate={handleGenerate} />}
@@ -1709,7 +1848,7 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
           canUndo={historyIdx > 0} canRedo={historyIdx < history.length - 1} onUndo={undo} onRedo={redo}
           onCopy={copyHTML} onDownload={downloadHTML} copyStatus={copyStatus} error={error}
           onShuffleDesign={handleShuffleDesign}
-          onBack={() => setStep("form")}
+          onBack={goBackToForm}
           onBuyCredits={onBuyCredits}
           onPreviewChange={onPreviewChange} />
       )}
