@@ -524,7 +524,7 @@ async function runQualityControl(data) {
     return data;
   }
 }
-async function callClaude(content, raw) {
+async function callClaude(content) {
   // يتصل بالـ Backend الخاص بنا (api/generate.js) بدل الاتصال المباشر بـ Anthropic.
   // مفتاح الـ API مخبّأ فالسيرفر (Environment Variable) وما ظاهرش هنا فالفرونت-إند.
   let response;
@@ -557,8 +557,7 @@ async function callClaude(content, raw) {
   }
   if (!response.ok) throw new Error(data.error || "تعذّر الاتصال بمحرك الذكاء الاصطناعي (كود " + response.status + ").");
   if (!data.text) throw new Error("لم يصل رد نصي من المحرك");
-  const parsed = stripToJSON(data.text);
-  return raw ? parsed : validateGeneratedData(parsed);
+  return validateGeneratedData(stripToJSON(data.text));
 }
 
 const SCHEMA_INSTRUCTIONS = `
@@ -1567,34 +1566,10 @@ function CheckRow({ checked, onChange, children, hint }) {
   );
 }
 
-/* ================= TEMPLATES ENGINE (3 هياكل + الأصلي) ================= */
-const TEMPLATE_OPTIONS = [
-  ["auto", "تلقائي (عشوائي بين الأربعة)"],
-  ["original", "الهيكل الأصلي"],
-  ["chair", "هيكل 1 — فاتح ونظيف"],
-  ["hair", "هيكل 2 — داكن فاخر"],
-  ["tablet", "هيكل 3 — عصري زجاجي"],
-];
+/* ================= STRUCTURES: الأصلي + 3 هياكل (تلقائي، بنفس محتوى المولّد الأصلي، بلا تكلفة إضافية) ================= */
+const STRUCTS = ["original", "chair", "hair", "tablet"];
 
-// إعدادات كل هيكل: الأقسام اللي كتتحرك/كتتخبى، ولون العلامة الأساسي (hue) لتدوير الألوان
-const TPL_CFG = {
-  chair:  { h0: 170, range: 35, sMin: 0.08, lMin: 0,    lMax: 1,    movable: [1,2,3,4,5,6,7,8], optional: [2,3,6,8], order: "#order",                sticky: "#sbar",       orderExtra: false },
-  hair:   { h0: 43,  range: 22, sMin: 0.30, lMin: 0.12, lMax: 0.85, movable: [1,2,3,4,5,6,7],   optional: [1,3,6,7], order: "#express-checkout-form", sticky: ".sticky-cta", orderExtra: true },
-  tablet: { h0: 215, range: 35, sMin: 0.08, lMin: 0,    lMax: 1,    movable: [1,2,3,4,5,6,7,8,9,10,11], optional: [5,6,7,8,9], order: "#order", sticky: "#stickyCta", orderExtra: false },
-};
-const TPL_HUES = [8, 24, 330, 350, 262, 282, 190, 160, 140, 205, 38, 300, 175, 225];
-const TPL_FONTS = ["Cairo", "Tajawal", "Almarai", "IBM Plex Sans Arabic", "El Messiri", "Readex Pro", "Changa", "Noto Kufi Arabic"];
-const TPL_ANGLES = [
-  "المشكلة ثم الحل.",
-  "الفوائد والنتيجة.",
-  "الندرة والاستعجال.",
-  "الثقة وراحة البال.",
-  "تجربة استخدام يومية.",
-];
-
-function tplSource(key) { return decodeLP(window.__LP[key]); } // قراءة فقط
-
-function tplRng(seed) {
+function sxRng(seed) {
   let a = seed >>> 0;
   return function () {
     a = (a + 0x6D2B79F5) >>> 0;
@@ -1604,288 +1579,205 @@ function tplRng(seed) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
-
-function makeVariant(key, hue) {
-  const h = typeof hue === "number" && isFinite(hue) ? ((Math.round(hue) % 360) + 360) % 360 : null;
-  return { seed: Math.floor(Math.random() * 4294967295), hue: h, font: Math.floor(Math.random() * TPL_FONTS.length), radius: Math.floor(Math.random() * 3) };
+function sxVariant() { return { seed: Math.floor(Math.random() * 4294967295) }; }
+function sxE(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;"); }
+function sxHex(c, f) { return /^#[0-9a-fA-F]{6}$/.test(c || "") ? c : f; }
+function sxLum(h) { const n = parseInt(h.slice(1, 7), 16); return (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255; }
+function sxMix(a, b, t) {
+  const pa = parseInt(a.slice(1, 7), 16), pb = parseInt(b.slice(1, 7), 16);
+  const c = (s) => Math.round(((pa >> s) & 255) * (1 - t) + ((pb >> s) & 255) * t);
+  return "#" + [16, 8, 0].map((s) => ("0" + c(s).toString(16)).slice(-2)).join("");
+}
+function sxAccent(t, dark) {
+  const c = [t.primary, t.accent, t.accent2, t.primaryDeep].map((x) => sxHex(x, "")).filter(Boolean);
+  const ok = c.find((x) => (dark ? sxLum(x) > 0.38 : sxLum(x) < 0.6 && sxLum(x) > 0.08));
+  return ok || (dark ? "#C9A84C" : "#0EA5A4");
 }
 
-function tplRgb2Hsl(r, g, b) {
-  r /= 255; g /= 255; b /= 255;
-  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
-  let h = 0, s = 0; const l = (mx + mn) / 2;
-  if (d) {
-    s = d / (1 - Math.abs(2 * l - 1));
-    if (mx === r) h = ((g - b) / d) % 6; else if (mx === g) h = (b - r) / d + 2; else h = (r - g) / d + 4;
-    h *= 60; if (h < 0) h += 360;
-  }
-  return [h, s, l];
-}
-function tplHsl2Rgb(h, s, l) {
-  const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs(((h / 60) % 2) - 1)), m = l - c / 2;
-  let r = 0, g = 0, b = 0;
-  if (h < 60) { r = c; g = x; } else if (h < 120) { r = x; g = c; } else if (h < 180) { g = c; b = x; }
-  else if (h < 240) { g = x; b = c; } else if (h < 300) { r = x; b = c; } else { r = c; b = x; }
-  return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
-}
-// تدوير ألوان العلامة فقط (الأخضر/الذهبي/الأحمر الوظيفي كيبقاو)
-function tplShiftColors(html, cfg, delta) {
-  if (!delta) return html;
-  const shift = (r, g, b) => {
-    const hsl = tplRgb2Hsl(r, g, b);
-    if (hsl[1] < cfg.sMin || hsl[2] < cfg.lMin || hsl[2] > cfg.lMax) return null;
-    const dist = ((hsl[0] - cfg.h0 + 540) % 360) - 180;
-    if (Math.abs(dist) > cfg.range) return null;
-    return tplHsl2Rgb((hsl[0] + delta + 360) % 360, hsl[1], hsl[2]);
-  };
-  html = html.replace(/#([0-9a-fA-F]{6})\b/g, (m, hx) => {
-    const n = parseInt(hx, 16);
-    const o = shift((n >> 16) & 255, (n >> 8) & 255, n & 255);
-    if (!o) return m;
-    return "#" + o.map((v) => ("0" + v.toString(16)).slice(-2)).join("");
-  });
-  html = html.replace(/(rgba?\()\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/g, (m, pre, r, g, b) => {
-    const o = shift(+r, +g, +b);
-    return o ? pre + o[0] + "," + o[1] + "," + o[2] : m;
-  });
-  return html;
-}
-
-function tplExtract(html) {
-  const doc = new DOMParser().parseFromString(html, "text/html");
-  const items = [];
-  const w = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
-  let n;
-  while ((n = w.nextNode())) {
-    const p = n.parentElement;
-    if (!p || /^(SCRIPT|STYLE|NOSCRIPT|OPTION)$/.test(p.tagName)) continue;
-    if (p.closest("#countdown,#hours,#minutes,#seconds,#cdText,#toastText")) continue;
-    const t = n.nodeValue.trim();
-    if (t.length < 2 || !/[A-Za-z\u0600-\u06FF]/.test(t)) continue;
-    items.push({ node: n, text: t });
-  }
-  return { doc, items };
-}
-
-function buildTplPrompt(items, form, country, extra) {
-  const map = {};
-  items.forEach((it, i) => { map[i] = it.text; });
-  const priceOld = form.priceOld && Number(form.priceOld) > Number(form.price) ? formatPrice(form.priceOld, country) : "(لا يوجد)";
-  return "أنت كاتب إعلانات لصفحات هبوط COD عربية. عندك نصوص صفحة هبوط جاهزة لمنتج آخر، أعد كتابتها لتناسب المنتج الجديد (من الصور والبيانات).\n\n" +
-    "المنتج: " + form.name + "\nالسعر الحالي: " + formatPrice(form.price, country) + "\nالسعر القديم: " + priceOld +
-    "\nالدولة: " + country.name + " | اللهجة: " + (form.dialect === "auto" ? country.dialect : form.dialect) +
-    "\nوصف: " + (form.description || "(استنتج من الصور)") +
-    (extra || "") +
-    "\n\nالقواعد:\n- أعد JSON فقط: {\"title\":\"عنوان الصفحة\",\"hue\":رقم من 0 إلى 359 يمثل أنسب لون رئيسي للمنتج حسب صوره,\"texts\":{\"0\":\"...\",\"1\":\"...\"}} بنفس المفاتيح بالضبط، بدون Markdown.\n" +
-    "- احتفظ بنفس الدور والطول التقريبي لكل نص (عنوان يبقى عنوان، زر يبقى زر).\n" +
-    "- استبدل كل ما يخص المنتج القديم (أسماء، مواصفات، أرقام، مكونات، ادعاءات، أوصاف) بما يناسب المنتج الجديد فقط.\n" +
-    "- الأسعار: استعمل السعر الحالي حرفياً بالعملة. السعر القديم والخصم: إن لم يوجد أرجع نصاً فارغاً \"\" لذلك المفتاح.\n" +
-    "- لا تخترع ادعاءات طبية أو ضمانات بأرقام أو علامات تجارية. آراء العملاء تبقى تجريبية بأسماء شائعة.\n" +
-    "- نصوص الأزرار والتنقل (اطلب الآن، واتساب...) تبقى بنفس المعنى.\n\n" +
-    "النصوص الحالية:\n" + JSON.stringify(map);
-}
-
-async function generateFromTemplate(key, form, country, images) {
-  const { items } = tplExtract(tplSource(key));
-  const angle = TPL_ANGLES[Math.floor(Math.random() * TPL_ANGLES.length)];
-  const content = [
-    { type: "text", text: buildTplPrompt(items, form, country, "\nالأسلوب: " + angle) },
-    ...images.slice(0, 3).map((img) => ({ type: "image", source: { type: "base64", media_type: img.mediaType, data: img.base64 } })),
-  ];
-  const out = await callClaude(content, true);
-  return {
-    designSystem: "Tech", sections: [], hero: { headline: out.title || form.name },
-    _template: key, _title: out.title || form.name, _texts: out.texts || {}, _variant: makeVariant(key, out.hue),
-  };
-}
-
-async function editTemplatePage(data, instruction, form, country) {
-  const { items } = tplExtract(tplSource(data._template));
-  const cur = {};
-  items.forEach((it, i) => { cur[i] = data._texts[i] != null ? data._texts[i] : it.text; });
-  const prompt = "هذه نصوص صفحة هبوط حالية (JSON). طبّق طلب المستخدم وعدّل فقط ما يلزم، وأعد {\"title\":\"...\",\"texts\":{...}} بنفس المفاتيح كلها، بدون Markdown.\n" +
-    "الدولة: " + country.name + " | العملة: " + country.currency + "\nطلب التعديل: \"" + instruction + "\"\n\nعنوان الصفحة: " + data._title + "\nالنصوص:\n" + JSON.stringify(cur);
-  const out = await callClaude([{ type: "text", text: prompt }], true);
-  return Object.assign({}, data, { _title: out.title || data._title, _texts: out.texts || data._texts });
-}
-
-function tplShuffleArr(arr, rng) {
-  for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); const t = arr[i]; arr[i] = arr[j]; arr[j] = t; }
-  return arr;
-}
-
-// تغيير ترتيب/إخفاء الأقسام باش كل صفحة تخرج بهيكل مختلف
-function tplRestructure(doc, key, rng) {
-  const cfg = TPL_CFG[key];
-  const secs = Array.from(doc.body.children).filter((e) => e.tagName === "SECTION");
-  const movable = cfg.movable.map((i) => secs[i]).filter(Boolean);
-  const optional = cfg.optional.map((i) => secs[i]).filter(Boolean);
-  const r = rng();
-  const nHide = r < 0.3 ? 0 : r < 0.7 ? 1 : 2;
-  const hidden = tplShuffleArr(optional.slice(), rng).slice(0, nHide);
-  hidden.forEach((el) => {
-    const nx = el.nextElementSibling;
-    if (nx && nx.classList && nx.classList.contains("section-gap")) nx.remove();
-    el.remove();
-  });
-  const keep = movable.filter((el) => hidden.indexOf(el) < 0);
-  const marks = keep.map((el) => { const c = doc.createComment(""); el.parentNode.insertBefore(c, el); return c; });
-  keep.forEach((el) => el.remove());
-  if (rng() < 0.9) tplShuffleArr(keep, rng);
-  marks.forEach((c, i) => { c.parentNode.replaceChild(keep[i], c); });
-  if (key === "tablet") { // رجّع التناوب بين الخلفيات
-    let alt = 0;
-    Array.from(doc.body.children).filter((e) => e.tagName === "SECTION" && e.classList.contains("section-pad") && !e.classList.contains("gallery-dark") && !e.classList.contains("order-section")).forEach((el) => {
-      if (alt % 2) el.style.background = "var(--mist)"; else el.style.removeProperty("background");
-      alt++;
-    });
-  }
-}
-
-// تغيير ترتيب البطاقات المتشابهة (مزايا، آراء، أسئلة...) بدون ما نخرب الترقيم/الأسعار
-function tplShuffleGrids(doc, rng) {
-  const num = /^[0-9\u0661-\u0669]+$/;
-  Array.from(doc.body.querySelectorAll("*")).forEach((par) => {
-    if (/^(TABLE|TBODY|THEAD|TR|SELECT|UL|OL|SCRIPT|STYLE|SVG)$/i.test(par.tagName)) return;
-    if (par.closest("form,nav,header,footer,.pricing-section,#order,#express-checkout-form,.order-section,#countdown")) return;
-    const kids = Array.from(par.children);
-    if (kids.length < 3) return;
-    const t0 = kids[0].tagName, c0 = kids[0].className;
-    if (!kids.every((k) => k.tagName === t0 && k.className === c0 && !k.id)) return;
-    if (/step|how|time|count|dots|stars|menu|tw\b/i.test(par.className || "")) return;
-    const hasNum = kids.some((k) => Array.from(k.querySelectorAll("*")).some((e) => e.children.length === 0 && num.test(e.textContent.trim())));
-    if (hasNum) return;
-    if (rng() < 0.65) {
-      const mark = doc.createComment("");
-      par.insertBefore(mark, kids[0]);
-      kids.forEach((k) => k.remove());
-      tplShuffleArr(kids, rng).forEach((k) => par.insertBefore(k, mark));
-      mark.remove();
+function sxSections(data, images, key) {
+  const E = sxE, order = data.sections || [];
+  const ico = (k) => (typeof EMOJI !== "undefined" && EMOJI[k]) || "✅";
+  const sim = images.slice(1).map((i) => i.dataUrl);
+  let n = 0, k = 0;
+  const out = [];
+  const li = (arr, m) => (arr || []).map((x) => "<li>" + m + " " + E(x) + "</li>").join("");
+  order.forEach((t) => {
+    const d = data[t];
+    if (!d || t === "urgency") return;
+    let kick = "✨", body = "";
+    if (t === "problem") { kick = "😟"; body = '<div class="card"><p>' + E(d.text) + "</p></div>"; }
+    else if (t === "solution") { kick = "✨"; body = '<div class="card"><p>' + E(d.text) + "</p></div>"; }
+    else if (t === "features" || t === "benefits") {
+      kick = t === "features" ? "🌟" : "🎯";
+      body = '<div class="fgrid">' + (d.items || []).map((it) => '<div class="fc"><div class="fi">' + ico(it.icon) + "</div><div><h3>" + E(it.title) + "</h3><p>" + E(it.desc) + "</p></div></div>").join("") + "</div>";
     }
+    else if (t === "beforeAfter") {
+      kick = "📊";
+      body = '<div class="ba"><div class="bb"><b>❌ ' + E(d.beforeLabel || "قبل") + "</b><p>" + E(d.beforeText) + '</p></div><div class="bb a"><b>✅ ' + E(d.afterLabel || "بعد") + "</b><p>" + E(d.afterText) + "</p></div></div>";
+    }
+    else if (t === "howToUse") { kick = "📋"; body = '<div class="steps">' + (d.steps || []).map((s, i) => '<div class="st"><i>' + (i + 1) + "</i><p>" + E(s) + "</p></div>").join("") + "</div>"; }
+    else if (t === "specs") { kick = "📐"; body = '<div class="specs card">' + (d.items || []).map((s) => '<div class="sp"><span>' + E(s.label) + "</span><b>" + E(s.value) + "</b></div>").join("") + "</div>"; }
+    else if (t === "compare") {
+      kick = "⚖️";
+      body = '<div class="cmp"><div class="cu"><h4>✅ ' + E(d.productLabel || "منتجنا") + "</h4><ul>" + li(d.us, "✔") + '</ul></div><div class="ct"><h4>❌ البدائل التقليدية</h4><ul>' + li(d.them, "✖") + "</ul></div></div>";
+    }
+    else if (t === "whatsIncluded") { kick = "📦"; body = '<ul class="inc card">' + li(d.items, "📦") + "</ul>"; }
+    else if (t === "testimonials") {
+      kick = "💬";
+      body = '<div class="tgrid">' + (d.items || []).map((x) => '<div class="tc"><div class="stars">' + "★".repeat(Math.max(1, Math.min(5, Number(x.rating) || 5))) + "</div><p>" + E(x.text) + "</p><b>" + E(x.name) + "</b></div>").join("") + "</div>" + (d.note ? '<small class="note">' + E(d.note) + "</small>" : "");
+    }
+    else if (t === "guarantee") { kick = "🛡️"; body = '<div class="card"><p>' + E(d.text) + "</p></div>"; }
+    else if (t === "faq") { kick = "❓"; body = '<div class="faq">' + (d.items || []).map((q) => "<details><summary>" + E(q.q) + "</summary><p>" + E(q.a) + "</p></details>").join("") + "</div>"; }
+    else return;
+    n++;
+    let img = "";
+    if (n % 2 === 1 && sim[k]) { img = '<div class="simg"><img src="' + sim[k] + '" alt=""></div>'; k++; }
+    const inner = key === "tablet" && img ? '<div class="split"><div>' + body + "</div>" + img + "</div>" : body + img;
+    out.push('<section class="s s-' + t + (n % 4 === 1 || n % 4 === 2 ? " fl" : "") + '"><div class="in"><div class="kick">' + kick + "</div><h2>" + E(d.title) + "</h2>" + inner + "</div></section>");
   });
+  return out.join("");
 }
 
-function tplApply(data, images, form, country) {
+const SX_BASE = `*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{font-family:'Cairo','Tajawal',Tahoma,sans-serif;background:var(--bg);color:var(--tx);line-height:1.7;-webkit-text-size-adjust:100%;padding-bottom:70px}
+img{max-width:100%;display:block}a{text-decoration:none;color:inherit}ul{list-style:none}
+.in{max-width:var(--w);margin:0 auto;padding:0 18px}
+.s{padding:38px 0}.s h2{font-size:25px;font-weight:900;line-height:1.35;margin-bottom:16px;text-align:var(--al)}.kick{font-size:20px;margin-bottom:4px;text-align:var(--al)}
+.card,.fc,.bb,.st,.tc,.cu,.ct,.faq details{background:var(--sf);border:1px solid var(--ln);border-radius:var(--r)}
+.card{padding:18px}.card p,.tc p,.bb p,.st p,.fc p,.faq p{color:var(--mu);font-size:14.5px}
+.fgrid,.steps,.tgrid,.faq{display:grid;gap:12px}.fc{display:flex;gap:12px;padding:15px}.fi{font-size:26px;flex:none}.fc h3{font-size:16px;font-weight:800}
+.ba,.cmp{display:grid;grid-template-columns:1fr 1fr;gap:10px}.bb,.cu,.ct{padding:14px}.bb b,.cu h4,.ct h4{display:block;margin-bottom:6px;font-size:15px}.bb.a,.cu{border-color:var(--ac)}
+.cmp li{font-size:13.5px;padding:3px 0;color:var(--mu)}.st{display:flex;gap:12px;align-items:flex-start;padding:14px}
+.st i{flex:none;width:34px;height:34px;border-radius:50%;background:var(--ac);color:var(--on);display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:900}
+.specs .sp{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--ln);font-size:14.5px}.specs .sp:last-child{border:0}.specs span{color:var(--mu)}
+.inc li{padding:8px 0;border-bottom:1px dashed var(--ln)}.inc li:last-child{border:0}
+.tc{padding:15px}.tc b{display:block;margin-top:8px;font-size:13px}.stars{color:#F5B301;letter-spacing:2px}.note{display:block;margin-top:10px;color:var(--mu);font-size:11.5px}
+.faq details{padding:14px 16px}.faq summary{cursor:pointer;font-weight:800;font-size:15px}.faq p{margin-top:8px}
+.simg img{width:100%;max-height:440px;object-fit:cover;border-radius:var(--r);margin-top:18px}
+.cta{display:inline-flex;align-items:center;justify-content:center;background:var(--ac);color:var(--on);font-weight:900;padding:14px 30px;border-radius:999px;font-size:17px;box-shadow:0 12px 28px -10px var(--ac);transition:transform .2s}.cta:active{transform:scale(.97)}
+.pr{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.pn{font-size:36px;font-weight:900;color:var(--ac)}.po{text-decoration:line-through;color:var(--mu);font-size:17px}.sv{background:var(--ac);color:var(--on);font-weight:800;font-size:12px;padding:3px 10px;border-radius:99px}
+.bdg{display:flex;flex-wrap:wrap;gap:8px}.bdg span{font-size:12.5px;font-weight:700;padding:5px 12px;border-radius:99px;border:1px solid var(--ln);background:var(--sf)}
+.hero h1{font-weight:900;line-height:1.3}.hero .sub{color:var(--mu)}.hero img.hi{width:100%;object-fit:cover;border-radius:var(--r)}
+.cds{text-align:center;padding:22px 18px}.cds b{font-size:15px}.cd{font-size:34px;font-weight:900;letter-spacing:2px;direction:ltr;color:var(--ac)}
+.order .of{display:grid;gap:10px;max-width:460px;margin:0 auto}.order input{width:100%;padding:13px 14px;border-radius:calc(var(--r) - 4px);border:1px solid var(--ln);background:var(--bg);color:var(--tx);font:inherit}
+.order button{border:0;cursor:pointer;font:inherit}.order h3{text-align:center;font-size:22px;font-weight:900;margin-bottom:14px}.ok{display:none;text-align:center;padding:20px}
+.fin{text-align:center;padding:44px 18px}.fin h3{font-size:24px;font-weight:900;margin-bottom:16px}
+footer{text-align:center;padding:26px 18px;color:var(--mu);font-size:12.5px;border-top:1px solid var(--ln)}
+.sbar{position:fixed;bottom:0;left:0;right:0;z-index:99;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;transform:translateY(110%);transition:transform .35s}.sbar.on{transform:none}.sbar .cta{padding:10px 22px;font-size:15px}
+.fabs{position:fixed;left:12px;bottom:84px;display:flex;flex-direction:column;gap:10px;z-index:100}.fabs a{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 8px 20px rgba(0,0,0,.35)}
+@media(max-width:560px){.ba,.cmp{grid-template-columns:1fr}}`;
+
+const SX_SKIN = {
+  chair: `.top{background:var(--ac);color:var(--on);text-align:center;font-size:13px;font-weight:700;padding:8px 12px}
+header.h{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;background:#fff;border-bottom:1px solid var(--ln)}.logo{font-weight:900;font-size:19px}.logo:before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--ac);margin-inline-end:8px}.hb{font-size:12px;font-weight:700;color:var(--ac)}
+.hero{text-align:center;padding:30px 0 34px;background:linear-gradient(180deg,var(--tint),var(--bg))}.hero h1{font-size:30px;margin:12px 0}.hero .pr{justify-content:center;margin:14px 0}.hero img.hi{max-height:420px;margin:16px auto;box-shadow:0 20px 50px -20px var(--ac)}
+.db{display:inline-block;background:var(--sf);border:1px solid var(--ac);color:var(--ac);font-weight:800;font-size:13px;padding:5px 14px;border-radius:99px}.tk{display:flex;justify-content:center;flex-wrap:wrap;gap:8px 16px;margin-top:16px;font-size:13px;font-weight:700}
+.cds{background:var(--dk);color:#fff}.s:nth-of-type(odd){background:var(--tint)}
+.fgrid{grid-template-columns:1fr 1fr}.fc{flex-direction:column;align-items:center;text-align:center}.steps{grid-template-columns:1fr 1fr}.st{flex-direction:column;align-items:center;text-align:center}
+.tc{border-top:3px solid var(--ac)}.order{background:var(--dk);color:#fff}.order h3{color:#fff}.order .card{background:transparent;border-color:#ffffff22}.order input{background:#ffffff10;color:#fff;border-color:#ffffff22}.fin{background:var(--tint)}
+.sbar{background:var(--dk);color:#fff;border-top:2px solid var(--ac)}
+.hw{position:relative;margin:16px auto;max-width:520px}.hw img.hi{margin:0}.ft{position:absolute;background:var(--sf);border:1px solid var(--ln);box-shadow:0 8px 24px rgba(0,0,0,.14);border-radius:99px;padding:5px 12px;font-size:12px;font-weight:800}.ft.t1{top:12%;right:-6px}.ft.t2{bottom:12%;left:-6px}
+.kick{background:var(--sf);border:1px solid var(--ln);padding:2px 16px;border-radius:99px;font-size:16px}.fi{width:54px;height:54px;border-radius:50%;background:var(--tint);display:flex;align-items:center;justify-content:center}
+.st i{width:40px;height:40px}.fin h3{font-size:26px}`,
+  hair: `.tick{background:var(--ac);color:var(--on);overflow:hidden;white-space:nowrap;font-weight:800;font-size:13px;padding:7px 0}.tick div{display:inline-block;padding-inline-start:100%;animation:mq 22s linear infinite}@keyframes mq{to{transform:translateX(100%)}}
+header.h{text-align:center;padding:16px;border-bottom:1px solid var(--ln)}.logo{font-weight:900;letter-spacing:1px;color:var(--ac);font-size:21px}.hd2{font-size:11px;color:var(--mu);letter-spacing:2px}
+.hero{padding:26px 0;text-align:center}.hero h1{font-size:30px;margin:14px 0}.hero .pr{justify-content:center;margin:14px 0}.hero img.hi{border:2px solid var(--ac);margin:14px auto;max-height:400px}
+.eb{display:inline-block;color:var(--ac);border:1px solid var(--ac);font-weight:800;font-size:12.5px;padding:4px 14px;border-radius:99px}.cta{animation:pl 2s infinite}@keyframes pl{50%{box-shadow:0 0 0 12px transparent}}
+.hero .bdg{justify-content:center;margin-top:16px}.s{border-top:10px solid #000}.s h2{color:var(--ac)}
+.fgrid{grid-template-columns:1fr}.fc{border-inline-start:3px solid var(--ac)}.steps{grid-template-columns:1fr}.tgrid{grid-template-columns:1fr}.tc p{font-style:italic}
+.order{background:var(--sf)}.fin{background:var(--sf)}.sbar{background:#000;border-top:1px solid var(--ln)}
+.s h2:before,.s h2:after{content:"";display:inline-block;width:26px;height:2px;background:var(--ac);vertical-align:middle;margin:0 10px}
+.fc{background:transparent;border:0;border-bottom:1px solid var(--ln);border-radius:0;padding:14px 0}.fc:last-child{border-bottom:0}
+.steps{position:relative;padding-inline-start:0}.steps:before{content:"";position:absolute;right:17px;top:14px;bottom:14px;width:2px;background:var(--ac);opacity:.5}.st{background:transparent;border:0;padding:8px 0}.st i{position:relative;z-index:1;background:#000;border:2px solid var(--ac);color:var(--ac)}
+.faq details{border-radius:6px}.tc{text-align:center}.specs{background:transparent}`,
+  tablet: `.scar{background:var(--dk);color:#fff;text-align:center;font-size:13px;padding:8px 12px}.scar b{color:var(--ac2)}
+nav.h{display:flex;justify-content:space-between;align-items:center;padding:14px 22px;background:var(--dk2);color:#fff;position:sticky;top:0;z-index:50}.logo{font-weight:900;font-size:20px}.logo span{color:var(--ac2)}nav.h .cta{padding:8px 20px;font-size:14px}
+.hero{background:radial-gradient(900px 400px at 85% -10%,var(--glow),transparent),var(--dk2);color:#fff;padding:46px 0}.hero .gr{display:grid;grid-template-columns:1.1fr .9fr;gap:34px;align-items:center}.hero h1{font-size:40px;margin:14px 0}.hero .sub{color:#cbd5e1;margin-bottom:16px}
+.hero img.hi{max-height:460px;box-shadow:0 30px 80px -20px #000;border:1px solid #ffffff22}.eb{display:inline-block;background:#ffffff14;border:1px solid #ffffff2a;color:var(--ac2);font-weight:700;font-size:13px;padding:5px 14px;border-radius:99px}
+.hero .bdg span{background:#ffffff10;border-color:#ffffff22;color:#fff}.hero .pn{color:#fff}.hero .po{color:#94a3b8}.hero .cds{display:none}
+.s:nth-of-type(even){background:var(--alt)}.s{padding:56px 0}.s h2{font-size:30px}
+.fgrid{grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}.fc{flex-direction:column;box-shadow:0 14px 40px -22px rgba(11,18,32,.35)}.steps{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}.st{flex-direction:column}
+.tgrid{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}.fin{background:linear-gradient(135deg,var(--ac),var(--dk2));color:#fff;margin:0}.fin .cta{background:#fff;color:var(--dk)}
+.order{background:var(--alt)}.sbar{background:rgba(11,18,32,.94);color:#fff;backdrop-filter:blur(12px)}
+.s h2:after{content:"";display:block;width:56px;height:4px;border-radius:4px;background:var(--ac);margin-top:10px}.kick{font-size:12px;letter-spacing:1px;color:var(--ac);font-weight:800;background:var(--alt);padding:3px 12px;border-radius:8px;display:inline-block}
+.split{display:grid;grid-template-columns:1.15fr .85fr;gap:34px;align-items:center}.s.fl .split{direction:ltr}.s.fl .split>*{direction:rtl}.split .simg img{margin:0;max-height:380px}
+.fi{width:54px;height:54px;border-radius:16px;background:var(--alt);display:flex;align-items:center;justify-content:center}.st i{width:48px;height:48px;font-size:19px}.st{text-align:right}
+.tc:before{content:"“";font-size:54px;color:var(--ac);line-height:.6;display:block;font-weight:900}.faq{grid-template-columns:1fr 1fr}.cmp .cu{background:var(--alt)}
+@media(max-width:760px){.hero .gr,.split{grid-template-columns:1fr}.hero h1{font-size:30px}.faq{grid-template-columns:1fr}.s{padding:40px 0}}`,
+};
+
+function buildStructureHTML(data, images, form, country) {
   const key = data._template;
-  const cfg = TPL_CFG[key];
-  const v = data._variant || (data._variant = makeVariant(key));
-  const rng = tplRng(v.seed);
+  const E = sxE;
+  const rng = sxRng((data._variant && data._variant.seed) || 7);
+  const t = data._paletteVariant || {};
+  const dark = key === "hair";
+  const ac = sxAccent(t, dark);
+  const on = sxLum(ac) > 0.6 ? "#0a0a0a" : "#ffffff";
+  const rad = [10, 16, 24][Math.floor(rng() * 3)];
+  const flip = rng() < 0.5;
+  const align = key === "tablet" ? "right" : "center";
 
-  // 1) الألوان
-  let hue = v.hue;
-  if (hue == null) hue = TPL_HUES[Math.floor(rng() * TPL_HUES.length)];
-  else rng();
-  let src = tplSource(key);
-  src = tplShiftColors(src, cfg, hue - cfg.h0);
+  const P = {
+    chair:  { bg: "#FFFFFF", sf: "#FFFFFF", tx: "#0F1B18", mu: "#5E7A72", ln: "#DCEBE7", w: "760px", dk: sxMix(ac, "#0A1210", 0.82), tint: sxMix(ac, "#FFFFFF", 0.9) },
+    hair:   { bg: "#0A0A0A", sf: "#151515", tx: "#FFFFFF", mu: "#A3A3A3", ln: "#2A2A2A", w: "560px", dk: "#000", tint: "#111" },
+    tablet: { bg: "#FFFFFF", sf: "#FFFFFF", tx: "#0B1220", mu: "#475569", ln: "#E2E8F0", w: "1080px", dk: "#060912", dk2: sxMix(ac, "#0B1220", 0.8), alt: "#F4F7FB", glow: sxMix(ac, "#0B1220", 0.45), ac2: sxMix(ac, "#FFFFFF", 0.45) },
+  }[key];
+  const vars = ":root{--bg:" + P.bg + ";--sf:" + P.sf + ";--tx:" + P.tx + ";--mu:" + P.mu + ";--ln:" + P.ln + ";--w:" + P.w + ";--ac:" + ac + ";--on:" + on + ";--r:" + rad + "px;--al:" + align +
+    ";--dk:" + P.dk + ";--dk2:" + (P.dk2 || P.dk) + ";--tint:" + (P.tint || P.bg) + ";--alt:" + (P.alt || P.bg) + ";--glow:" + (P.glow || ac) + ";--ac2:" + (P.ac2 || ac) + "}";
 
-  // 2) الاستدارة (فقط للهياكل اللي كتستعمل متغيرات)
-  const prof = [null, [8, 4, 10, 8, 6], [34, 20, 36, 28, 20]][v.radius % 3];
-  if (prof) {
-    if (key === "chair") src = src.replace(/--r:\s*20px/, "--r:" + prof[0] + "px").replace(/--r2:\s*12px/, "--r2:" + prof[1] + "px");
-    if (key === "tablet") src = src.replace(/--radius-lg:\s*28px/, "--radius-lg:" + prof[2] + "px").replace(/--radius-md:\s*20px/, "--radius-md:" + prof[3] + "px").replace(/--radius-sm:\s*14px/, "--radius-sm:" + prof[4] + "px");
+  const hasContact = !!form.whatsapp;
+  const num = hasContact ? country.phoneCode.replace("+", "") + form.whatsapp : "";
+  const showWa = hasContact && form.showWa !== false, showCall = hasContact && form.showCall !== false;
+  const showCod = form.showCod !== false, showOrder = form.showOrderForm !== false;
+  const href = showOrder ? "#order" : (showWa ? "https://wa.me/" + num : (showCall ? "tel:+" + num : "#order"));
+  const hero = data.hero || {};
+  const cta = E(hero.ctaText || "اطلب الآن");
+  const oldP = form.priceOld && Number(form.priceOld) > Number(form.price) ? form.priceOld : null;
+  const disc = oldP ? Math.round((1 - Number(form.price) / Number(oldP)) * 100) : null;
+  const priceTxt = E(formatPrice(form.price, country));
+  const priceHtml = '<div class="pr"><span class="pn">' + priceTxt + "</span>" + (oldP ? '<span class="po">' + E(formatPrice(oldP, country)) + '</span><span class="sv">-' + disc + "%</span>" : "") + "</div>";
+  const badges = (hero.badges || []).map((b) => "<span>" + E(b) + "</span>").join("");
+  const heroImg0 = images[0] ? '<img class="hi" src="' + images[0].dataUrl + '" alt="' + E(form.name) + '">' : "";
+  const hb = hero.badges || [];
+  const heroImg = key === "chair" && heroImg0 ? '<div class="hw">' + heroImg0 + (hb[0] ? '<span class="ft t1">' + E(hb[0]) + "</span>" : "") + (hb[1] ? '<span class="ft t2">' + E(hb[1]) + "</span>" : "") + "</div>" : heroImg0;
+  const urg = data.urgency && (data.sections || []).indexOf("urgency") >= 0 ? data.urgency : null;
+  const cds = urg ? '<div class="cds"><b>' + E(urg.countdownLabel || "ينتهي العرض خلال") + '</b><div class="cd" id="cd">05:59:59</div><div>' + E(urg.stockLabel || "") + "</div></div>" : "";
+  const name = E(form.name);
+
+  let top, hero_html;
+  if (key === "chair") {
+    top = '<div class="top">' + E((urg && urg.stockLabel) || (hero.badges && hero.badges[0]) || "🚚 توصيل مجاني · الدفع عند الاستلام") + '</div><header class="h"><div class="logo">' + name + '</div><div class="hb">✅ الدفع عند الاستلام</div></header>';
+    hero_html = '<section class="hero"><div class="in">' + (disc ? '<span class="db">🏷️ خصم ' + disc + "%</span>" : (hero.eyebrow ? '<span class="db">' + E(hero.eyebrow) + "</span>" : "")) +
+      "<h1>" + E(hero.headline) + '</h1><p class="sub">' + E(hero.subheadline) + "</p>" + priceHtml + heroImg + '<a class="cta" href="' + E(href) + '">' + cta + '</a><div class="tk">' + (hero.badges || []).slice(0, 3).map((b) => "<span>✔ " + E(b) + "</span>").join("") + "</div></div></section>" + cds;
+  } else if (key === "hair") {
+    const tk = (hero.badges && hero.badges.length ? hero.badges : ["توصيل مجاني", "الدفع عند الاستلام"]).map((b) => "✦ " + E(b)).join("   ");
+    top = '<div class="tick"><div>' + tk + "   " + tk + '</div></div><header class="h"><div class="logo">' + name + '</div><div class="hd2">' + E(hero.eyebrow || "") + "</div></header>";
+    hero_html = '<section class="hero"><div class="in">' + (hero.eyebrow ? '<span class="eb">' + E(hero.eyebrow) + "</span>" : "") + "<h1>" + E(hero.headline) + "</h1>" + heroImg + '<p class="sub">' + E(hero.subheadline) + "</p>" + priceHtml + '<a class="cta" href="' + E(href) + '">' + cta + '</a><div class="bdg">' + badges + "</div></div></section>" + cds;
+  } else {
+    top = '<div class="scar">' + (urg ? E(urg.countdownLabel || "العرض ينتهي خلال") + ' <b id="cd">05:59:59</b> — ' + E(urg.stockLabel || "الكمية محدودة") : E((hero.badges && hero.badges[0]) || "🚚 توصيل مجاني · الدفع عند الاستلام")) + '</div><nav class="h"><div class="logo">' + name + '</div><a class="cta" href="' + E(href) + '">' + cta + "</a></nav>";
+    hero_html = '<section class="hero"><div class="in"><div class="gr"' + (flip ? ' style="direction:ltr"' : "") + '><div style="direction:rtl">' + (hero.eyebrow ? '<span class="eb">' + E(hero.eyebrow) + "</span>" : "") + "<h1>" + E(hero.headline) + '</h1><p class="sub">' + E(hero.subheadline) + "</p>" + priceHtml + '<div style="margin:18px 0"><a class="cta" href="' + E(href) + '">' + cta + '</a></div><div class="bdg">' + badges + '</div></div><div style="direction:rtl">' + heroImg + "</div></div></div></section>";
   }
 
-  const { doc, items } = tplExtract(src);
-  const texts = data._texts || {};
-  items.forEach((it, i) => { if (texts[i] != null) it.node.nodeValue = String(texts[i]); });
-  if (data._title) doc.title = data._title;
+  const sections = sxSections(data, images, key);
+  const of = data.orderForm || {};
+  const orderHtml = showOrder ? '<section class="s order" id="order"><div class="in"><div class="card" style="max-width:500px;margin:0 auto"><div id="ofW"><h3>' + E(of.title || "أكمل طلبك الآن") + '</h3><div class="of"><input id="ofN" placeholder="الاسم الكامل"><input id="ofP" placeholder="رقم الهاتف" inputmode="tel"><input placeholder="المدينة"><input placeholder="العنوان بالتفصيل"><button id="ofB" class="cta">' + E(of.buttonText || "اطلب الآن") + '</button></div></div><div class="ok" id="ofS"><div style="font-size:42px">🎉</div><h3>' + E(of.successHeadline || "تم استلام طلبك بنجاح!") + "</h3><p>" + E(of.successText || "سنتصل بك قريباً لتأكيد الطلب.") + "</p></div></div></div></section>" : '<div id="order"></div>';
+  const finHtml = data.finalCta ? '<section class="fin"><div class="in"><h3>' + E(data.finalCta.headline) + '</h3><a class="cta" href="' + E(href) + '">' + E(data.finalCta.buttonText || "اطلب الآن") + "</a></div></section>" : "";
+  const sbar = showCod ? '<div class="sbar" id="sbar"><div><div style="font-weight:900">' + priceTxt + '</div><div style="font-size:11.5px;opacity:.8">🚚 توصيل مجاني · الدفع عند الاستلام</div></div><a class="cta" href="' + E(href) + '">' + cta + "</a></div>" : "";
+  const fabs = (showWa || showCall) ? '<div class="fabs">' + (showWa ? '<a href="https://wa.me/' + num + '" target="_blank" rel="noopener" style="background:#25D366">💬</a>' : "") + (showCall ? '<a href="tel:+' + num + '" style="background:#2563EB">📞</a>' : "") + "</div>" : "";
 
-  // 3) الهيكل
-  tplRestructure(doc, key, rng);
-  tplShuffleGrids(doc, rng);
+  const js = '(function(){var d=document;var end=Date.now()+(5*3600+59*60+59)*1000;function p(n){return String(n).padStart(2,"0")}function tick(){var x=end-Date.now();if(x<0)x=0;var e=d.getElementById("cd");if(e)e.textContent=p(Math.floor(x/3600000))+":"+p(Math.floor(x%3600000/60000))+":"+p(Math.floor(x%60000/1000));}tick();setInterval(tick,1000);var sb=d.getElementById("sbar");if(sb)addEventListener("scroll",function(){sb.classList.toggle("on",scrollY>400)});var b=d.getElementById("ofB");if(b)b.addEventListener("click",function(){if(!d.getElementById("ofN").value.trim()||!d.getElementById("ofP").value.trim()){alert("الرجاء إدخال الاسم ورقم الهاتف على الأقل.");return;}d.getElementById("ofW").style.display="none";d.getElementById("ofS").style.display="block";});})();';
 
-  // 4) الخط
-  const font = TPL_FONTS[v.font % TPL_FONTS.length];
-  const lk = doc.createElement("link");
-  lk.setAttribute("rel", "stylesheet");
-  lk.setAttribute("href", "https://fonts.googleapis.com/css2?family=" + encodeURIComponent(font).replace(/%20/g, "+") + ":wght@400;700&display=swap");
-  doc.head.appendChild(lk);
-  const fs = doc.createElement("style");
-  fs.textContent = "*{font-family:'" + font + "',Tahoma,sans-serif!important}";
-  doc.head.appendChild(fs);
-
-  // 5) الصور (الأولى كتبقى ديال الهيرو، الباقي كيتخلط)
-  if (images.length) {
-    const pool = images.slice(1);
-    const order = [images[0]].concat(pool.length ? tplShuffleArr(pool.slice(), rng) : []);
-    let k = 0;
-    doc.querySelectorAll("img").forEach((img) => {
-      if (!img.getAttribute("src")) return;
-      img.setAttribute("src", order[k % order.length].dataUrl); k++;
-    });
-  }
-
-  // 6) الأزرار: واتساب / اتصال / COD / نموذج الطلب (حسب اختيار العميل)
-  const num = form.whatsapp ? country.phoneCode.replace("+", "") + form.whatsapp : "";
-  const showWa = !!num && form.showWa === true;
-  const showCall = !!num && form.showCall === true;
-  const showCod = form.showCod === true;
-  const showOrder = form.showOrderForm === true;
-  const waUrl = "https://wa.me/" + num, telUrl = "tel:+" + num;
-
-  doc.querySelectorAll('a[href*="wa.me"],a[href^="tel:"]').forEach((a) => {
-    const isTel = (a.getAttribute("href") || "").indexOf("tel:") === 0;
-    if ((isTel && !showCall) || (!isTel && !showWa)) { a.remove(); return; }
-    a.setAttribute("href", isTel ? telUrl : waUrl);
-  });
-  if (showWa || showCall) {
-    const hasWa = !!doc.querySelector('a[href*="wa.me"]'), hasTel = !!doc.querySelector('a[href^="tel:"]');
-    const box = doc.createElement("div");
-    box.setAttribute("style", "position:fixed;left:12px;bottom:" + (key === "tablet" ? "160" : "78") + "px;display:flex;flex-direction:column;gap:10px;z-index:9999");
-    const fab = (href, bg, emoji) => '<a href="' + href + '" target="_blank" rel="noopener" style="width:46px;height:46px;border-radius:50%;background:' + bg + ';display:flex;align-items:center;justify-content:center;font-size:20px;text-decoration:none;box-shadow:0 8px 20px rgba(0,0,0,.35)">' + emoji + "</a>";
-    box.innerHTML = (showWa && !hasWa ? fab(waUrl, "linear-gradient(135deg,#2FE070,#1DAA53)", "💬") : "") + (showCall && !hasTel ? fab(telUrl, "linear-gradient(135deg,#3B82F6,#1D4ED8)", "📞") : "");
-    if (box.innerHTML) doc.body.appendChild(box);
-  }
-  const w2 = doc.getElementById("waLink2");
-  if (w2) { if (showWa) { w2.setAttribute("href", waUrl); w2.setAttribute("target", "_blank"); } else w2.style.setProperty("display", "none", "important"); }
-  if (!showCod && cfg.sticky) doc.querySelectorAll(cfg.sticky).forEach((e) => { e.style.setProperty("display", "none", "important"); });
-
-  // 7) منع أي إرسال خارجي (YouCan/abi3o القديم)
-  doc.querySelectorAll("form").forEach((f) => {
-    f.removeAttribute("action"); f.removeAttribute("method");
-    f.querySelectorAll('input[type="hidden"]:not(#colorInput)').forEach((h) => h.remove());
-  });
-  doc.querySelectorAll("script").forEach((s) => { if (/yc-form|abi3o/.test(s.textContent)) s.remove(); });
-
-  const add = (code) => { const s = doc.createElement("script"); s.textContent = code; doc.body.appendChild(s); };
-  const MSG = "الرجاء إدخال الاسم ورقم الهاتف على الأقل.";
-
-  if (key === "chair" && showOrder) {
-    add('(function(){var b=document.getElementById("yc-btn");if(!b)return;b.addEventListener("click",function(){var n=document.getElementById("yc-name"),p=document.getElementById("yc-phone");if(!n.value.trim()||!p.value.trim()){alert("' + MSG + '");return;}document.getElementById("yc-form").style.display="none";var s=document.getElementById("yc-success");if(s)s.style.display="block";});})();');
-  }
-  if (key === "hair" && showOrder) {
-    const host = doc.getElementById("express-checkout-form");
-    if (host) {
-      const inp = 'style="width:100%;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:10px;padding:12px;color:#fff;font-family:inherit;font-size:14px;margin-bottom:10px"';
-      host.innerHTML = '<div style="max-width:400px;margin:0 auto;text-align:right"><div id="hf-wrap"><h3 style="color:#C9A84C;font-size:20px;font-weight:900;margin-bottom:14px;text-align:center">أكمل طلبك الآن</h3>' +
-        '<input id="hf-n" placeholder="الاسم الكامل" ' + inp + '><input id="hf-p" placeholder="رقم الهاتف" ' + inp + '><input id="hf-c" placeholder="المدينة" ' + inp + '><input id="hf-a" placeholder="العنوان بالتفصيل" ' + inp + '>' +
-        '<button id="hf-b" style="width:100%;background:linear-gradient(135deg,#C9A84C,#E8C96A);color:#0A0A0A;font-weight:900;font-size:17px;padding:15px;border:none;border-radius:50px;cursor:pointer;font-family:inherit">اطلب الآن</button></div>' +
-        '<div id="hf-ok" style="display:none;text-align:center;color:#C9A84C;font-weight:800;padding:20px">✅ تم استلام طلبك! سنتواصل معك قريباً.</div></div>';
-      add('(function(){var b=document.getElementById("hf-b");if(!b)return;b.addEventListener("click",function(){if(!document.getElementById("hf-n").value.trim()||!document.getElementById("hf-p").value.trim()){alert("' + MSG + '");return;}document.getElementById("hf-wrap").style.display="none";document.getElementById("hf-ok").style.display="block";});})();');
-    }
-  }
-  if (key === "tablet") { // حقول خاصة بمنتج/بلد القالب الأصلي
-    const col = doc.getElementById("colorInput");
-    if (col && col.closest(".f-group")) col.closest(".f-group").style.display = "none";
-    const prov = doc.querySelector('select[name="province"]');
-    if (prov) { const t = doc.createElement("input"); t.setAttribute("type", "text"); t.setAttribute("name", "province"); t.setAttribute("placeholder", "المدينة"); t.setAttribute("required", ""); prov.replaceWith(t); }
-  }
-
-  // 8) إخفاء نموذج الطلب إلا ما اختارو العميل، وتوجيه أزرار "اطلب الآن" لواتساب/اتصال
-  if (!showOrder) {
-    doc.querySelectorAll(cfg.order).forEach((e) => { e.style.setProperty("display", "none", "important"); });
-    if (cfg.orderExtra) { const secs = Array.from(doc.body.children).filter((e) => e.tagName === "SECTION"); const last = secs[secs.length - 1]; if (last && !last.className) last.style.setProperty("display", "none", "important"); }
-    const target = showWa ? waUrl : showCall ? telUrl : "";
-    if (target) doc.querySelectorAll('a[href="#order"]').forEach((a) => a.setAttribute("href", target));
-  }
-  return "<!DOCTYPE html>" + doc.documentElement.outerHTML;
+  return "<!DOCTYPE html><html lang=\"ar\" dir=\"rtl\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>" + E((data.seo && data.seo.title) || form.name) +
+    '</title><meta name="description" content="' + E((data.seo && data.seo.description) || "") + '"><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet"><style>' + vars + SX_BASE + SX_SKIN[key] + "</style></head><body>" +
+    top + hero_html + "<main>" + sections + "</main>" + orderHtml + finHtml + "<footer>" + name + " © " + new Date().getFullYear() + "</footer>" + sbar + fabs + "<scr" + "ipt>" + js + "</scr" + "ipt></body></html>";
 }
 
-let _tplCache = { k: "", v: "" };
+let _sxCache = { k: "", v: "" };
 function tplApplyCached(data, images, form, country) {
-  const k = JSON.stringify([data._template, data._title, data._texts, data._variant, form.whatsapp, form.countryCode, form.showWa, form.showCall, form.showCod, form.showOrderForm, images.map((i) => (i.dataUrl || "").length + (i.dataUrl || "").slice(-24))]);
-  if (_tplCache.k !== k) _tplCache = { k: k, v: tplApply(data, images, form, country) };
-  return _tplCache.v;
+  const k = JSON.stringify([data, form.name, form.price, form.priceOld, form.whatsapp, form.countryCode, form.showWa, form.showCall, form.showCod, form.showOrderForm, images.map((i) => (i.dataUrl || "").length + (i.dataUrl || "").slice(-24))]);
+  if (_sxCache.k !== k) _sxCache = { k: k, v: buildStructureHTML(data, images, form, country) };
+  return _sxCache.v;
 }
 
 function TemplateFrame({ html, height }) {
@@ -1895,7 +1787,7 @@ function TemplateFrame({ html, height }) {
 
 function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange }) {
   const [step, setStep] = useState("form");
-  const [form, setForm] = useState({ name: "", price: "", priceOld: "", description: "", countryCode: "SA", dialect: "auto", whatsapp: "", template: "auto", showWa: false, showCall: false, showCod: false, showOrderForm: false });
+  const [form, setForm] = useState({ name: "", price: "", priceOld: "", description: "", countryCode: "SA", dialect: "auto", whatsapp: "", showWa: false, showCall: false, showCod: false, showOrderForm: false });
   const [images, setImages] = useState([]);
   const [error, setError] = useState("");
   const [genStepIdx, setGenStepIdx] = useState(0);
@@ -1972,19 +1864,13 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
         { type: "text", text: buildGeneratePrompt(form, country) },
         ...imagesForAI.map((img) => ({ type: "image", source: { type: "base64", media_type: img.mediaType, data: img.base64 } })),
       ];
-      let tpl = form.template || "auto";
-      if (tpl === "auto") tpl = ["original", "chair", "hair", "tablet"][Math.floor(Math.random() * 4)];
-      let result;
-      if (tpl !== "original") {
-        result = await generateFromTemplate(tpl, form, country, images);
-        result._paletteVariant = DESIGN_SYSTEMS.Tech[0];
-        result._heroLayout = "split";
-      } else {
-        const generated = await callClaude(content);
-        result = await runQualityControl(generated);
-        result._paletteVariant = pickDesignTokens(result.designSystem);
-        result._heroLayout = pickHeroLayout();
-      }
+      const generated = await callClaude(content);
+      const result = await runQualityControl(generated);
+      result._paletteVariant = pickDesignTokens(result.designSystem);
+      result._heroLayout = pickHeroLayout();
+      const pickedStruct = STRUCTS[Math.floor(Math.random() * STRUCTS.length)];
+      result._template = pickedStruct === "original" ? undefined : pickedStruct;
+      result._variant = sxVariant();
 
       // خصم نقطة واحدة بعد نجاح التوليد فقط. شرط credits يمنع خصماً سالباً.
       // Admin مستثنى تماماً من الخصم — التوليد عندو مجاني ومايبانش عليه أي تغيير فالرصيد.
@@ -2023,17 +1909,13 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
     if (!editCmd.trim() || !data) return;
     setEditing(true); setError("");
     try {
-      let result;
-      if (data._template) {
-        result = await editTemplatePage(data, editCmd.trim(), form, country);
-        result._paletteVariant = data._paletteVariant; result._heroLayout = data._heroLayout;
-      } else {
-        const content = [{ type: "text", text: buildEditPrompt(data, editCmd.trim(), country) }];
-        result = await callClaude(content);
-        const designChanged = result.designSystem !== data.designSystem;
-        result._paletteVariant = designChanged ? pickDesignTokens(result.designSystem) : data._paletteVariant;
-        result._heroLayout = designChanged ? pickHeroLayout() : data._heroLayout;
-      }
+      const content = [{ type: "text", text: buildEditPrompt(data, editCmd.trim(), country) }];
+      const result = await callClaude(content);
+      const designChanged = result.designSystem !== data.designSystem;
+      result._paletteVariant = designChanged ? pickDesignTokens(result.designSystem) : data._paletteVariant;
+      result._heroLayout = designChanged ? pickHeroLayout() : data._heroLayout;
+      result._template = data._template;
+      result._variant = data._variant;
       const truncated = history.slice(0, historyIdx + 1);
       const nextHistory = [...truncated, result];
       setHistory(nextHistory); setHistoryIdx(nextHistory.length - 1); setEditCmd("");
@@ -2047,12 +1929,9 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
 
   function handleShuffleDesign() {
     if (!data) return;
-    if (data._template) {
-      const nextT = Object.assign({}, data, { _variant: makeVariant(data._template) });
-      const nhT = [...history.slice(0, historyIdx + 1), nextT];
-      setHistory(nhT); setHistoryIdx(nhT.length - 1);
-      return;
-    }
+    const cur = data._template || "original";
+    const opts = STRUCTS.filter((s) => s !== cur);
+    const nx = opts[Math.floor(Math.random() * opts.length)];
     const allSystems = Object.keys(DESIGN_SYSTEMS);
     const otherSystems = allSystems.filter((s) => s !== data.designSystem);
     const nextSystem = otherSystems[Math.floor(Math.random() * otherSystems.length)] || data.designSystem;
@@ -2060,6 +1939,8 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
       designSystem: nextSystem,
       _paletteVariant: pickDesignTokens(nextSystem),
       _heroLayout: pickHeroLayout(),
+      _template: nx === "original" ? undefined : nx,
+      _variant: sxVariant(),
     });
     const truncated = history.slice(0, historyIdx + 1);
     const nextHistory = [...truncated, next];
@@ -2145,11 +2026,6 @@ function FormScreen({ form, setForm, images, onUpload, onRemoveImage, onEnhanceI
           <Field label="الدولة المستهدفة"><select value={form.countryCode} onChange={(e) => setForm((f) => ({ ...f, countryCode: e.target.value }))} style={inputStyle}>{COUNTRIES.map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}</select></Field>
           <Field label="اللهجة"><select value={form.dialect} onChange={(e) => setForm((f) => ({ ...f, dialect: e.target.value }))} style={inputStyle}><option value="auto">تلقائي حسب الدولة</option>{COUNTRIES.map((c) => <option key={c.code} value={c.dialect}>{c.dialect}</option>)}</select></Field>
         </div>
-        <Field label="شكل الصفحة">
-          <select value={form.template || "auto"} onChange={(e) => setForm((f) => ({ ...f, template: e.target.value }))} style={inputStyle}>
-            {TEMPLATE_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-          </select>
-        </Field>
         <Field label="رقم واتساب/هاتف للتواصل المباشر (اختياري)">
           <div style={{ display: "flex", gap: 8 }}>
             <span style={Object.assign({}, inputStyle, { width: "auto", display: "flex", alignItems: "center", color: "#8da0bd", fontWeight: 800 })}>{country.phoneCode}</span>
