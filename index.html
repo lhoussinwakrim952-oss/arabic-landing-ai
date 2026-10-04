@@ -207,10 +207,15 @@
   @media (max-width:820px){.hp-nav-in{padding:7px 10px;gap:6px}.hp-nav-btns{gap:5px;flex:none}.hp-nav-btns .hp-ghost{padding:6px 10px;font-size:11.5px}.hp-nav-btns .hp-cta{padding:7px 11px;font-size:12px;box-shadow:none}.hp-logo-sm{gap:6px;min-width:0}.hp-logo-sm .hp-logo-img{width:32px;height:32px}.hp-logo-name{font-size:10.5px;line-height:1.2}}
 
   html,body{overscroll-behavior-y:contain}
+  .hp-nav{background:linear-gradient(180deg,rgba(11,15,25,.98),rgba(11,15,25,.9));border-bottom:1px solid #1b263d;box-shadow:0 8px 28px rgba(0,0,0,.4);padding-top:env(safe-area-inset-top,0px)}
+  .hp-nav-in{max-width:1100px;min-height:64px;padding:10px 14px;gap:10px}
+  .hp-nav-btns{display:flex;align-items:center;gap:8px;flex:none}
+  .hp-nav-btns .hp-ghost,.hp-nav-btns .hp-cta{height:38px;padding:0 16px;font-size:13px;font-weight:800;line-height:1;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap}
+  .hp-nav-btns .hp-ghost{background:rgba(255,255,255,.04);border:1px solid #2a3654;color:#dbe4f5}
+  .hp-nav-btns .hp-cta{box-shadow:0 6px 18px -4px rgba(34,211,238,.55)}
+  .hp-logo-sm .hp-logo-img{width:44px;height:44px;border:2px solid #2f4d86;box-shadow:0 0 0 3px rgba(34,211,238,.08),0 0 18px rgba(34,211,238,.35)}
+  @media (max-width:380px){.hp-nav-in{padding:8px 10px;min-height:58px}.hp-nav-btns{gap:6px}.hp-nav-btns .hp-ghost,.hp-nav-btns .hp-cta{height:34px;padding:0 11px;font-size:12px}.hp-logo-sm .hp-logo-img{width:40px;height:40px}}
   .hp-nav-in{direction:rtl}
-  .hp-logo-sm{margin-inline-end:auto}
-  .hp-logo-sm .hp-logo-img{width:46px;height:46px}
-  @media (max-width:820px){.hp-logo-sm .hp-logo-img{width:40px;height:40px}}
 </style>
 </head>
 <body>
@@ -983,9 +988,8 @@ function TopBar({ email, credits, loading, isAdmin, onLogout, onBuy }) {
 }
 
 /* ============================== الصفحات القانونية (Terms / Privacy / Refund / Contact) ============================== */
-/* ملاحظة: لم يتم العثور على بريد دعم فعلي داخل المشروع، فتم وضع بريد مؤقت أدناه.
-   يجب على صاحب المنصة استبداله ببريد الدعم الحقيقي قبل النشر. */
-const SUPPORT_EMAIL = "chatst820@gmail.com";
+/* بريد الدعم والتواصل */
+const SUPPORT_EMAIL = "arabicpageai@gmail.com";
 
 const LEGAL_CONTENT = {
   terms: {
@@ -1346,6 +1350,46 @@ function HomePage({ onLogin, onSignup }) {
   );
 }
 
+/* ===== زر الرجوع: يرجع للشاشة السابقة داخل الموقع ولا يخرج منه ===== */
+const NAV = { stack: [], suppress: 0, guard: false, lastRoot: 0 };
+function navToast(msg) {
+  try {
+    const el = document.createElement("div");
+    el.textContent = msg;
+    el.style.cssText = "position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#131A2A;color:#F1F5F9;border:1px solid #2A3654;border-radius:999px;padding:10px 18px;font:700 13px Cairo,sans-serif;z-index:99999;box-shadow:0 10px 30px rgba(0,0,0,.5)";
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2000);
+  } catch (e) {}
+}
+if (!window.__alaiNav) {
+  window.__alaiNav = true;
+  window.addEventListener("popstate", (e) => {
+    if (NAV.suppress > 0) { NAV.suppress--; return; }
+    if (NAV.stack.length) { NAV.stack.pop().close(); return; }
+    if (NAV.guard && !e.state && !window.location.hash) {
+      const now = Date.now();
+      if (now - NAV.lastRoot < 2000) { NAV.lastRoot = 0; NAV.guard = false; window.history.back(); return; }
+      NAV.lastRoot = now;
+      window.history.pushState({ alaiRoot: 1 }, "");
+      navToast("اضغط رجوع مرة أخرى للخروج");
+    }
+  });
+}
+function useBackLayer(open, onClose) {
+  const ref = useRef(onClose);
+  ref.current = onClose;
+  useEffect(() => {
+    if (!open) return;
+    const layer = { close: () => ref.current() };
+    NAV.stack.push(layer);
+    window.history.pushState({ alaiLayer: 1 }, "");
+    return () => {
+      const i = NAV.stack.indexOf(layer);
+      if (i >= 0) { NAV.stack.splice(i, 1); NAV.suppress++; window.history.back(); }
+    };
+  }, [open]);
+}
+
 function AuthGate() {
   const [ready, setReady] = useState(false);
   const [configError, setConfigError] = useState(false);
@@ -1484,6 +1528,15 @@ function AuthGate() {
   }
 
   function switchView(v) { setView(v); setError(""); setMsg(""); }
+
+  useBackLayer(!session && view !== "home", () => { setView("home"); setError(""); setMsg(""); });
+  useBackLayer(showBuyModal, () => setShowBuyModal(false));
+  const guardedRef = useRef(false);
+  useEffect(() => {
+    NAV.guard = !!session;
+    if (session && !guardedRef.current) { guardedRef.current = true; window.history.pushState({ alaiRoot: 1 }, ""); }
+    if (!session) guardedRef.current = false;
+  }, [!!session]);
 
   if (legalPage && LEGAL_CONTENT[legalPage]) {
     return <LegalPage type={legalPage} onBack={() => { window.location.hash = ""; }} />;
@@ -1836,6 +1889,7 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
   const pageIdRef = useRef(null);
   const [savedPages, setSavedPages] = useState([]);
   const [showPages, setShowPages] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
   useEffect(() => { pagesLoad(pagesKey).then(setSavedPages); }, [pagesKey]);
   useEffect(() => {
     let alive = true;
@@ -1851,8 +1905,10 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
         }
       }
       restoredRef.current = true;
+      setHydrated(true);
     });
-    return () => { alive = false; };
+    const failsafe = setTimeout(() => { if (alive) { restoredRef.current = true; setHydrated(true); } }, 2500);
+    return () => { alive = false; clearTimeout(failsafe); };
   }, [sessKey]);
   useEffect(() => {
     if (!restoredRef.current) return;
@@ -1864,7 +1920,7 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
         pagesUpsert(pagesKey, { id: pageIdRef.current, ts: Date.now(), name: form.name, title: (cur.hero && cur.hero.headline) || form.name, thumb: images[0] ? images[0].dataUrl : "", form, images, history, historyIdx })
           .then(() => pagesLoad(pagesKey)).then(setSavedPages);
       }
-    }, 600);
+    }, 150);
     return () => clearTimeout(tm);
   }, [step, form, images, history, historyIdx]);
 
@@ -1974,6 +2030,8 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
   }
 
   const [viewPage, setViewPage] = useState(null);
+  useBackLayer(step === "preview", () => setStep("form"));
+  useBackLayer(!!viewPage, () => setViewPage(null));
   function savedHtml(p) {
     const d = p.history[p.historyIdx];
     const c = COUNTRIES.find((x) => x.code === p.form.countryCode) || COUNTRIES[0];
@@ -1986,6 +2044,48 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
     const a = document.createElement("a");
     a.href = url; a.download = ((p.form.name || "landing-page").trim().replace(/\s+/g, "-")) + ".html";
     document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  }
+  const [imgBusy, setImgBusy] = useState(null);
+  async function downloadSavedImage(p) {
+    if (!window.html2canvas || imgBusy) return;
+    setImgBusy(p.id);
+    let fr = null;
+    try {
+      fr = document.createElement("iframe");
+      fr.style.cssText = "position:fixed;left:-10000px;top:0;width:430px;height:900px;border:0";
+      document.body.appendChild(fr);
+      await new Promise((res) => { fr.onload = res; fr.srcdoc = savedHtml(p); });
+      const d = fr.contentDocument;
+      try { if (d.fonts && d.fonts.ready) await d.fonts.ready; } catch (e) {}
+      await Promise.all(Array.from(d.images).map((im) => im.complete ? 0 : new Promise((r) => { im.onload = im.onerror = r; })));
+      const st = d.createElement("style");
+      st.textContent = ".rev,.reveal{opacity:1!important;transform:none!important}*{animation:none!important;transition:none!important}";
+      d.head.appendChild(st);
+      const el = d.body;
+      const W = 430, H = Math.ceil(el.scrollHeight);
+      let scale = Math.max(1, Math.min(3, 16000 / H, Math.sqrt(40e6 / (W * H))));
+      const bg = ((p.history[p.historyIdx]._paletteVariant || {}).bg) || "#ffffff";
+      const canvas = await window.html2canvas(el, {
+        scale, backgroundColor: bg, useCORS: true, allowTaint: false, logging: false, imageTimeout: 20000,
+        x: 0, y: 0, scrollX: 0, scrollY: 0, width: W, height: H, windowWidth: W, windowHeight: H,
+        onclone: (doc, cloned) => {
+          cloned.querySelectorAll("*").forEach((n) => {
+            const cs = doc.defaultView.getComputedStyle(n);
+            if (cs.position === "fixed") n.style.display = "none";
+            else if (cs.position === "sticky") { n.style.position = "relative"; n.style.top = "auto"; }
+          });
+          cloned.style.width = W + "px"; cloned.style.margin = "0"; cloned.style.overflow = "hidden";
+        },
+      });
+      const blob = await new Promise((res) => canvas.toBlob(res, "image/png"));
+      const url = blob ? URL.createObjectURL(blob) : canvas.toDataURL("image/png");
+      const a = document.createElement("a");
+      a.href = url; a.download = ((p.form.name || "landing-page").trim().replace(/\s+/g, "-")) + ".png";
+      document.body.appendChild(a); a.click(); a.remove();
+      if (blob) setTimeout(() => URL.revokeObjectURL(url), 4000);
+    } catch (e) { console.error("Image export failed", e); }
+    if (fr && fr.parentNode) fr.parentNode.removeChild(fr);
+    setImgBusy(null);
   }
   async function deleteSavedPage(id) {
     await pagesDelete(pagesKey, id);
@@ -2049,6 +2149,8 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
     document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
   }
 
+  if (!hydrated) return <SplashLoader />;
+
   return (
     <div dir="rtl" style={{ fontFamily: "'Cairo', sans-serif", minHeight: "100vh", background: "#0B0F19" }}>
       {viewPage && (
@@ -2056,7 +2158,8 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
           <div style={{ display: "flex", gap: 10, alignItems: "center", padding: "10px 14px", background: "#0B0F19", borderBottom: "1px solid #202A42" }}>
             <button onClick={() => setViewPage(null)} style={{ background: "#131A2A", border: "1px solid #202A42", borderRadius: 10, color: "#E2E8F5", padding: "8px 14px", fontFamily: "inherit", fontWeight: 800, cursor: "pointer" }}>← رجوع</button>
             <div style={{ flex: 1, color: "#F1F5F9", fontWeight: 800, fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{viewPage.name || viewPage.title}</div>
-            <button onClick={() => downloadSaved(viewPage)} style={{ background: "linear-gradient(90deg,#3B82F6,#22D3EE)", border: "none", borderRadius: 10, color: "#04101C", fontWeight: 800, padding: "8px 16px", cursor: "pointer", fontFamily: "inherit" }}>تنزيل</button>
+            <button onClick={() => downloadSaved(viewPage)} style={{ background: "linear-gradient(90deg,#3B82F6,#22D3EE)", border: "none", borderRadius: 10, color: "#04101C", fontWeight: 800, padding: "8px 12px", cursor: "pointer", fontFamily: "inherit" }}>HTML</button>
+            <button onClick={() => downloadSavedImage(viewPage)} disabled={imgBusy === viewPage.id} style={{ background: "linear-gradient(90deg,#8B5CF6,#EC4899)", border: "none", borderRadius: 10, color: "#fff", fontWeight: 800, padding: "8px 12px", cursor: "pointer", fontFamily: "inherit", opacity: imgBusy === viewPage.id ? 0.6 : 1 }}>{imgBusy === viewPage.id ? "⏳" : "صورة"}</button>
           </div>
           <iframe title="saved" srcDoc={savedHtml(viewPage)} style={{ flex: 1, width: "100%", border: 0, background: "#fff" }} />
         </div>
@@ -2069,15 +2172,20 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
           {showPages && (
             <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
               {savedPages.map((p) => (
-                <div key={p.id} style={{ display: "flex", gap: 12, alignItems: "center", background: "#131A2A", border: "1px solid #202A42", borderRadius: 14, padding: 10 }}>
-                  {p.thumb ? <img src={p.thumb} alt="" style={{ width: 56, height: 56, objectFit: "cover", borderRadius: 10, flex: "none" }} /> : null}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ color: "#F1F5F9", fontWeight: 800, fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name || p.title}</div>
-                    <div style={{ color: "#8B96AC", fontSize: 11.5 }}>{new Date(p.ts).toLocaleString("ar-MA", { dateStyle: "short", timeStyle: "short" })}</div>
+                <div key={p.id} style={{ background: "#131A2A", border: "1px solid #202A42", borderRadius: 14, padding: 10, display: "grid", gap: 10 }}>
+                  <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                    {p.thumb ? <img src={p.thumb} alt="" style={{ width: 52, height: 52, objectFit: "cover", borderRadius: 10, flex: "none" }} /> : null}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ color: "#F1F5F9", fontWeight: 800, fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name || p.title}</div>
+                      <div style={{ color: "#8B96AC", fontSize: 11.5 }}>{new Date(p.ts).toLocaleString("ar-MA", { dateStyle: "short", timeStyle: "short" })}</div>
+                    </div>
+                    <button onClick={() => { if (window.confirm("حذف هذه الصفحة؟")) deleteSavedPage(p.id); }} aria-label="حذف" style={{ background: "transparent", border: "1px solid #2A3654", borderRadius: 10, color: "#F87171", fontSize: 14, padding: "6px 10px", cursor: "pointer" }}>🗑</button>
                   </div>
-                  <button onClick={() => setViewPage(p)} style={{ background: "#1B2540", border: "1px solid #2A3654", borderRadius: 10, color: "#E2E8F5", fontWeight: 800, fontSize: 13, padding: "8px 12px", cursor: "pointer", fontFamily: "inherit" }}>معاينة</button>
-                  <button onClick={() => downloadSaved(p)} style={{ background: "linear-gradient(90deg,#3B82F6,#22D3EE)", border: "none", borderRadius: 10, color: "#04101C", fontWeight: 800, fontSize: 13, padding: "8px 12px", cursor: "pointer", fontFamily: "inherit" }}>تنزيل</button>
-                  <button onClick={() => { if (window.confirm("حذف هذه الصفحة؟")) deleteSavedPage(p.id); }} aria-label="حذف" style={{ background: "transparent", border: "1px solid #2A3654", borderRadius: 10, color: "#F87171", fontSize: 14, padding: "7px 10px", cursor: "pointer" }}>🗑</button>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                    <button onClick={() => setViewPage(p)} style={{ background: "#1B2540", border: "1px solid #2A3654", borderRadius: 10, color: "#E2E8F5", fontWeight: 800, fontSize: 12.5, padding: "9px 6px", cursor: "pointer", fontFamily: "inherit" }}>👁 معاينة</button>
+                    <button onClick={() => downloadSaved(p)} style={{ background: "linear-gradient(90deg,#3B82F6,#22D3EE)", border: "none", borderRadius: 10, color: "#04101C", fontWeight: 800, fontSize: 12.5, padding: "9px 6px", cursor: "pointer", fontFamily: "inherit" }}>⬇ HTML</button>
+                    <button onClick={() => downloadSavedImage(p)} disabled={imgBusy === p.id} style={{ background: "linear-gradient(90deg,#8B5CF6,#EC4899)", border: "none", borderRadius: 10, color: "#fff", fontWeight: 800, fontSize: 12.5, padding: "9px 6px", cursor: "pointer", fontFamily: "inherit", opacity: imgBusy === p.id ? 0.6 : 1 }}>{imgBusy === p.id ? "⏳ ..." : "🖼 صورة"}</button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -2205,6 +2313,7 @@ function PreviewScreen(props) {
   const captureRef = useRef(null);
   const [imageLoading, setImageLoading] = useState(false);
   const [previewOnly, setPreviewOnly] = useState(false);
+  useBackLayer(previewOnly, () => setPreviewOnly(false));
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef(null);
 
