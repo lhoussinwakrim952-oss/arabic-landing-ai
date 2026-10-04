@@ -524,7 +524,7 @@ async function runQualityControl(data) {
     return data;
   }
 }
-async function callClaude(content) {
+async function callClaude(content, raw) {
   // يتصل بالـ Backend الخاص بنا (api/generate.js) بدل الاتصال المباشر بـ Anthropic.
   // مفتاح الـ API مخبّأ فالسيرفر (Environment Variable) وما ظاهرش هنا فالفرونت-إند.
   let response;
@@ -557,7 +557,8 @@ async function callClaude(content) {
   }
   if (!response.ok) throw new Error(data.error || "تعذّر الاتصال بمحرك الذكاء الاصطناعي (كود " + response.status + ").");
   if (!data.text) throw new Error("لم يصل رد نصي من المحرك");
-  return validateGeneratedData(stripToJSON(data.text));
+  const parsed = stripToJSON(data.text);
+  return raw ? parsed : validateGeneratedData(parsed);
 }
 
 const SCHEMA_INSTRUCTIONS = `
@@ -1566,9 +1567,335 @@ function CheckRow({ checked, onChange, children, hint }) {
   );
 }
 
+/* ================= TEMPLATES ENGINE (3 هياكل + الأصلي) ================= */
+const TEMPLATE_OPTIONS = [
+  ["auto", "تلقائي (عشوائي بين الأربعة)"],
+  ["original", "الهيكل الأصلي"],
+  ["chair", "هيكل 1 — فاتح ونظيف"],
+  ["hair", "هيكل 2 — داكن فاخر"],
+  ["tablet", "هيكل 3 — عصري زجاجي"],
+];
+
+// إعدادات كل هيكل: الأقسام اللي كتتحرك/كتتخبى، ولون العلامة الأساسي (hue) لتدوير الألوان
+const TPL_CFG = {
+  chair:  { h0: 170, range: 35, sMin: 0.08, lMin: 0,    lMax: 1,    movable: [1,2,3,4,5,6,7,8], optional: [2,3,6,8], order: "#order",                sticky: "#sbar",       orderExtra: false },
+  hair:   { h0: 43,  range: 22, sMin: 0.30, lMin: 0.12, lMax: 0.85, movable: [1,2,3,4,5,6,7],   optional: [1,3,6,7], order: "#express-checkout-form", sticky: ".sticky-cta", orderExtra: true },
+  tablet: { h0: 215, range: 35, sMin: 0.08, lMin: 0,    lMax: 1,    movable: [1,2,3,4,5,6,7,8,9,10,11], optional: [5,6,7,8,9], order: "#order", sticky: "#stickyCta", orderExtra: false },
+};
+const TPL_HUES = [8, 24, 330, 350, 262, 282, 190, 160, 140, 205, 38, 300, 175, 225];
+const TPL_FONTS = ["Cairo", "Tajawal", "Almarai", "IBM Plex Sans Arabic", "El Messiri", "Readex Pro", "Changa", "Noto Kufi Arabic"];
+const TPL_ANGLES = [
+  "المشكلة ثم الحل.",
+  "الفوائد والنتيجة.",
+  "الندرة والاستعجال.",
+  "الثقة وراحة البال.",
+  "تجربة استخدام يومية.",
+];
+
+function tplSource(key) { return decodeLP(window.__LP[key]); } // قراءة فقط
+
+function tplRng(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function makeVariant(key, hue) {
+  const h = typeof hue === "number" && isFinite(hue) ? ((Math.round(hue) % 360) + 360) % 360 : null;
+  return { seed: Math.floor(Math.random() * 4294967295), hue: h, font: Math.floor(Math.random() * TPL_FONTS.length), radius: Math.floor(Math.random() * 3) };
+}
+
+function tplRgb2Hsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+  let h = 0, s = 0; const l = (mx + mn) / 2;
+  if (d) {
+    s = d / (1 - Math.abs(2 * l - 1));
+    if (mx === r) h = ((g - b) / d) % 6; else if (mx === g) h = (b - r) / d + 2; else h = (r - g) / d + 4;
+    h *= 60; if (h < 0) h += 360;
+  }
+  return [h, s, l];
+}
+function tplHsl2Rgb(h, s, l) {
+  const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs(((h / 60) % 2) - 1)), m = l - c / 2;
+  let r = 0, g = 0, b = 0;
+  if (h < 60) { r = c; g = x; } else if (h < 120) { r = x; g = c; } else if (h < 180) { g = c; b = x; }
+  else if (h < 240) { g = x; b = c; } else if (h < 300) { r = x; b = c; } else { r = c; b = x; }
+  return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
+}
+// تدوير ألوان العلامة فقط (الأخضر/الذهبي/الأحمر الوظيفي كيبقاو)
+function tplShiftColors(html, cfg, delta) {
+  if (!delta) return html;
+  const shift = (r, g, b) => {
+    const hsl = tplRgb2Hsl(r, g, b);
+    if (hsl[1] < cfg.sMin || hsl[2] < cfg.lMin || hsl[2] > cfg.lMax) return null;
+    const dist = ((hsl[0] - cfg.h0 + 540) % 360) - 180;
+    if (Math.abs(dist) > cfg.range) return null;
+    return tplHsl2Rgb((hsl[0] + delta + 360) % 360, hsl[1], hsl[2]);
+  };
+  html = html.replace(/#([0-9a-fA-F]{6})\b/g, (m, hx) => {
+    const n = parseInt(hx, 16);
+    const o = shift((n >> 16) & 255, (n >> 8) & 255, n & 255);
+    if (!o) return m;
+    return "#" + o.map((v) => ("0" + v.toString(16)).slice(-2)).join("");
+  });
+  html = html.replace(/(rgba?\()\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/g, (m, pre, r, g, b) => {
+    const o = shift(+r, +g, +b);
+    return o ? pre + o[0] + "," + o[1] + "," + o[2] : m;
+  });
+  return html;
+}
+
+function tplExtract(html) {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const items = [];
+  const w = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
+  let n;
+  while ((n = w.nextNode())) {
+    const p = n.parentElement;
+    if (!p || /^(SCRIPT|STYLE|NOSCRIPT|OPTION)$/.test(p.tagName)) continue;
+    if (p.closest("#countdown,#hours,#minutes,#seconds,#cdText,#toastText")) continue;
+    const t = n.nodeValue.trim();
+    if (t.length < 2 || !/[A-Za-z\u0600-\u06FF]/.test(t)) continue;
+    items.push({ node: n, text: t });
+  }
+  return { doc, items };
+}
+
+function buildTplPrompt(items, form, country, extra) {
+  const map = {};
+  items.forEach((it, i) => { map[i] = it.text; });
+  const priceOld = form.priceOld && Number(form.priceOld) > Number(form.price) ? formatPrice(form.priceOld, country) : "(لا يوجد)";
+  return "أنت كاتب إعلانات لصفحات هبوط COD عربية. عندك نصوص صفحة هبوط جاهزة لمنتج آخر، أعد كتابتها لتناسب المنتج الجديد (من الصور والبيانات).\n\n" +
+    "المنتج: " + form.name + "\nالسعر الحالي: " + formatPrice(form.price, country) + "\nالسعر القديم: " + priceOld +
+    "\nالدولة: " + country.name + " | اللهجة: " + (form.dialect === "auto" ? country.dialect : form.dialect) +
+    "\nوصف: " + (form.description || "(استنتج من الصور)") +
+    (extra || "") +
+    "\n\nالقواعد:\n- أعد JSON فقط: {\"title\":\"عنوان الصفحة\",\"hue\":رقم من 0 إلى 359 يمثل أنسب لون رئيسي للمنتج حسب صوره,\"texts\":{\"0\":\"...\",\"1\":\"...\"}} بنفس المفاتيح بالضبط، بدون Markdown.\n" +
+    "- احتفظ بنفس الدور والطول التقريبي لكل نص (عنوان يبقى عنوان، زر يبقى زر).\n" +
+    "- استبدل كل ما يخص المنتج القديم (أسماء، مواصفات، أرقام، مكونات، ادعاءات، أوصاف) بما يناسب المنتج الجديد فقط.\n" +
+    "- الأسعار: استعمل السعر الحالي حرفياً بالعملة. السعر القديم والخصم: إن لم يوجد أرجع نصاً فارغاً \"\" لذلك المفتاح.\n" +
+    "- لا تخترع ادعاءات طبية أو ضمانات بأرقام أو علامات تجارية. آراء العملاء تبقى تجريبية بأسماء شائعة.\n" +
+    "- نصوص الأزرار والتنقل (اطلب الآن، واتساب...) تبقى بنفس المعنى.\n\n" +
+    "النصوص الحالية:\n" + JSON.stringify(map);
+}
+
+async function generateFromTemplate(key, form, country, images) {
+  const { items } = tplExtract(tplSource(key));
+  const angle = TPL_ANGLES[Math.floor(Math.random() * TPL_ANGLES.length)];
+  const content = [
+    { type: "text", text: buildTplPrompt(items, form, country, "\nالأسلوب: " + angle) },
+    ...images.slice(0, 3).map((img) => ({ type: "image", source: { type: "base64", media_type: img.mediaType, data: img.base64 } })),
+  ];
+  const out = await callClaude(content, true);
+  return {
+    designSystem: "Tech", sections: [], hero: { headline: out.title || form.name },
+    _template: key, _title: out.title || form.name, _texts: out.texts || {}, _variant: makeVariant(key, out.hue),
+  };
+}
+
+async function editTemplatePage(data, instruction, form, country) {
+  const { items } = tplExtract(tplSource(data._template));
+  const cur = {};
+  items.forEach((it, i) => { cur[i] = data._texts[i] != null ? data._texts[i] : it.text; });
+  const prompt = "هذه نصوص صفحة هبوط حالية (JSON). طبّق طلب المستخدم وعدّل فقط ما يلزم، وأعد {\"title\":\"...\",\"texts\":{...}} بنفس المفاتيح كلها، بدون Markdown.\n" +
+    "الدولة: " + country.name + " | العملة: " + country.currency + "\nطلب التعديل: \"" + instruction + "\"\n\nعنوان الصفحة: " + data._title + "\nالنصوص:\n" + JSON.stringify(cur);
+  const out = await callClaude([{ type: "text", text: prompt }], true);
+  return Object.assign({}, data, { _title: out.title || data._title, _texts: out.texts || data._texts });
+}
+
+function tplShuffleArr(arr, rng) {
+  for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); const t = arr[i]; arr[i] = arr[j]; arr[j] = t; }
+  return arr;
+}
+
+// تغيير ترتيب/إخفاء الأقسام باش كل صفحة تخرج بهيكل مختلف
+function tplRestructure(doc, key, rng) {
+  const cfg = TPL_CFG[key];
+  const secs = Array.from(doc.body.children).filter((e) => e.tagName === "SECTION");
+  const movable = cfg.movable.map((i) => secs[i]).filter(Boolean);
+  const optional = cfg.optional.map((i) => secs[i]).filter(Boolean);
+  const r = rng();
+  const nHide = r < 0.3 ? 0 : r < 0.7 ? 1 : 2;
+  const hidden = tplShuffleArr(optional.slice(), rng).slice(0, nHide);
+  hidden.forEach((el) => {
+    const nx = el.nextElementSibling;
+    if (nx && nx.classList && nx.classList.contains("section-gap")) nx.remove();
+    el.remove();
+  });
+  const keep = movable.filter((el) => hidden.indexOf(el) < 0);
+  const marks = keep.map((el) => { const c = doc.createComment(""); el.parentNode.insertBefore(c, el); return c; });
+  keep.forEach((el) => el.remove());
+  if (rng() < 0.9) tplShuffleArr(keep, rng);
+  marks.forEach((c, i) => { c.parentNode.replaceChild(keep[i], c); });
+  if (key === "tablet") { // رجّع التناوب بين الخلفيات
+    let alt = 0;
+    Array.from(doc.body.children).filter((e) => e.tagName === "SECTION" && e.classList.contains("section-pad") && !e.classList.contains("gallery-dark") && !e.classList.contains("order-section")).forEach((el) => {
+      if (alt % 2) el.style.background = "var(--mist)"; else el.style.removeProperty("background");
+      alt++;
+    });
+  }
+}
+
+// تغيير ترتيب البطاقات المتشابهة (مزايا، آراء، أسئلة...) بدون ما نخرب الترقيم/الأسعار
+function tplShuffleGrids(doc, rng) {
+  const num = /^[0-9\u0661-\u0669]+$/;
+  Array.from(doc.body.querySelectorAll("*")).forEach((par) => {
+    if (/^(TABLE|TBODY|THEAD|TR|SELECT|UL|OL|SCRIPT|STYLE|SVG)$/i.test(par.tagName)) return;
+    if (par.closest("form,nav,header,footer,.pricing-section,#order,#express-checkout-form,.order-section,#countdown")) return;
+    const kids = Array.from(par.children);
+    if (kids.length < 3) return;
+    const t0 = kids[0].tagName, c0 = kids[0].className;
+    if (!kids.every((k) => k.tagName === t0 && k.className === c0 && !k.id)) return;
+    if (/step|how|time|count|dots|stars|menu|tw\b/i.test(par.className || "")) return;
+    const hasNum = kids.some((k) => Array.from(k.querySelectorAll("*")).some((e) => e.children.length === 0 && num.test(e.textContent.trim())));
+    if (hasNum) return;
+    if (rng() < 0.65) {
+      const mark = doc.createComment("");
+      par.insertBefore(mark, kids[0]);
+      kids.forEach((k) => k.remove());
+      tplShuffleArr(kids, rng).forEach((k) => par.insertBefore(k, mark));
+      mark.remove();
+    }
+  });
+}
+
+function tplApply(data, images, form, country) {
+  const key = data._template;
+  const cfg = TPL_CFG[key];
+  const v = data._variant || (data._variant = makeVariant(key));
+  const rng = tplRng(v.seed);
+
+  // 1) الألوان
+  let hue = v.hue;
+  if (hue == null) hue = TPL_HUES[Math.floor(rng() * TPL_HUES.length)];
+  else rng();
+  let src = tplSource(key);
+  src = tplShiftColors(src, cfg, hue - cfg.h0);
+
+  // 2) الاستدارة (فقط للهياكل اللي كتستعمل متغيرات)
+  const prof = [null, [8, 4, 10, 8, 6], [34, 20, 36, 28, 20]][v.radius % 3];
+  if (prof) {
+    if (key === "chair") src = src.replace(/--r:\s*20px/, "--r:" + prof[0] + "px").replace(/--r2:\s*12px/, "--r2:" + prof[1] + "px");
+    if (key === "tablet") src = src.replace(/--radius-lg:\s*28px/, "--radius-lg:" + prof[2] + "px").replace(/--radius-md:\s*20px/, "--radius-md:" + prof[3] + "px").replace(/--radius-sm:\s*14px/, "--radius-sm:" + prof[4] + "px");
+  }
+
+  const { doc, items } = tplExtract(src);
+  const texts = data._texts || {};
+  items.forEach((it, i) => { if (texts[i] != null) it.node.nodeValue = String(texts[i]); });
+  if (data._title) doc.title = data._title;
+
+  // 3) الهيكل
+  tplRestructure(doc, key, rng);
+  tplShuffleGrids(doc, rng);
+
+  // 4) الخط
+  const font = TPL_FONTS[v.font % TPL_FONTS.length];
+  const lk = doc.createElement("link");
+  lk.setAttribute("rel", "stylesheet");
+  lk.setAttribute("href", "https://fonts.googleapis.com/css2?family=" + encodeURIComponent(font).replace(/%20/g, "+") + ":wght@400;700&display=swap");
+  doc.head.appendChild(lk);
+  const fs = doc.createElement("style");
+  fs.textContent = "*{font-family:'" + font + "',Tahoma,sans-serif!important}";
+  doc.head.appendChild(fs);
+
+  // 5) الصور (الأولى كتبقى ديال الهيرو، الباقي كيتخلط)
+  if (images.length) {
+    const pool = images.slice(1);
+    const order = [images[0]].concat(pool.length ? tplShuffleArr(pool.slice(), rng) : []);
+    let k = 0;
+    doc.querySelectorAll("img").forEach((img) => {
+      if (!img.getAttribute("src")) return;
+      img.setAttribute("src", order[k % order.length].dataUrl); k++;
+    });
+  }
+
+  // 6) الأزرار: واتساب / اتصال / COD / نموذج الطلب (حسب اختيار العميل)
+  const num = form.whatsapp ? country.phoneCode.replace("+", "") + form.whatsapp : "";
+  const showWa = !!num && form.showWa === true;
+  const showCall = !!num && form.showCall === true;
+  const showCod = form.showCod === true;
+  const showOrder = form.showOrderForm === true;
+  const waUrl = "https://wa.me/" + num, telUrl = "tel:+" + num;
+
+  doc.querySelectorAll('a[href*="wa.me"],a[href^="tel:"]').forEach((a) => {
+    const isTel = (a.getAttribute("href") || "").indexOf("tel:") === 0;
+    if ((isTel && !showCall) || (!isTel && !showWa)) { a.remove(); return; }
+    a.setAttribute("href", isTel ? telUrl : waUrl);
+  });
+  if (showWa || showCall) {
+    const hasWa = !!doc.querySelector('a[href*="wa.me"]'), hasTel = !!doc.querySelector('a[href^="tel:"]');
+    const box = doc.createElement("div");
+    box.setAttribute("style", "position:fixed;left:12px;bottom:" + (key === "tablet" ? "160" : "78") + "px;display:flex;flex-direction:column;gap:10px;z-index:9999");
+    const fab = (href, bg, emoji) => '<a href="' + href + '" target="_blank" rel="noopener" style="width:46px;height:46px;border-radius:50%;background:' + bg + ';display:flex;align-items:center;justify-content:center;font-size:20px;text-decoration:none;box-shadow:0 8px 20px rgba(0,0,0,.35)">' + emoji + "</a>";
+    box.innerHTML = (showWa && !hasWa ? fab(waUrl, "linear-gradient(135deg,#2FE070,#1DAA53)", "💬") : "") + (showCall && !hasTel ? fab(telUrl, "linear-gradient(135deg,#3B82F6,#1D4ED8)", "📞") : "");
+    if (box.innerHTML) doc.body.appendChild(box);
+  }
+  const w2 = doc.getElementById("waLink2");
+  if (w2) { if (showWa) { w2.setAttribute("href", waUrl); w2.setAttribute("target", "_blank"); } else w2.style.setProperty("display", "none", "important"); }
+  if (!showCod && cfg.sticky) doc.querySelectorAll(cfg.sticky).forEach((e) => { e.style.setProperty("display", "none", "important"); });
+
+  // 7) منع أي إرسال خارجي (YouCan/abi3o القديم)
+  doc.querySelectorAll("form").forEach((f) => {
+    f.removeAttribute("action"); f.removeAttribute("method");
+    f.querySelectorAll('input[type="hidden"]:not(#colorInput)').forEach((h) => h.remove());
+  });
+  doc.querySelectorAll("script").forEach((s) => { if (/yc-form|abi3o/.test(s.textContent)) s.remove(); });
+
+  const add = (code) => { const s = doc.createElement("script"); s.textContent = code; doc.body.appendChild(s); };
+  const MSG = "الرجاء إدخال الاسم ورقم الهاتف على الأقل.";
+
+  if (key === "chair" && showOrder) {
+    add('(function(){var b=document.getElementById("yc-btn");if(!b)return;b.addEventListener("click",function(){var n=document.getElementById("yc-name"),p=document.getElementById("yc-phone");if(!n.value.trim()||!p.value.trim()){alert("' + MSG + '");return;}document.getElementById("yc-form").style.display="none";var s=document.getElementById("yc-success");if(s)s.style.display="block";});})();');
+  }
+  if (key === "hair" && showOrder) {
+    const host = doc.getElementById("express-checkout-form");
+    if (host) {
+      const inp = 'style="width:100%;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:10px;padding:12px;color:#fff;font-family:inherit;font-size:14px;margin-bottom:10px"';
+      host.innerHTML = '<div style="max-width:400px;margin:0 auto;text-align:right"><div id="hf-wrap"><h3 style="color:#C9A84C;font-size:20px;font-weight:900;margin-bottom:14px;text-align:center">أكمل طلبك الآن</h3>' +
+        '<input id="hf-n" placeholder="الاسم الكامل" ' + inp + '><input id="hf-p" placeholder="رقم الهاتف" ' + inp + '><input id="hf-c" placeholder="المدينة" ' + inp + '><input id="hf-a" placeholder="العنوان بالتفصيل" ' + inp + '>' +
+        '<button id="hf-b" style="width:100%;background:linear-gradient(135deg,#C9A84C,#E8C96A);color:#0A0A0A;font-weight:900;font-size:17px;padding:15px;border:none;border-radius:50px;cursor:pointer;font-family:inherit">اطلب الآن</button></div>' +
+        '<div id="hf-ok" style="display:none;text-align:center;color:#C9A84C;font-weight:800;padding:20px">✅ تم استلام طلبك! سنتواصل معك قريباً.</div></div>';
+      add('(function(){var b=document.getElementById("hf-b");if(!b)return;b.addEventListener("click",function(){if(!document.getElementById("hf-n").value.trim()||!document.getElementById("hf-p").value.trim()){alert("' + MSG + '");return;}document.getElementById("hf-wrap").style.display="none";document.getElementById("hf-ok").style.display="block";});})();');
+    }
+  }
+  if (key === "tablet") { // حقول خاصة بمنتج/بلد القالب الأصلي
+    const col = doc.getElementById("colorInput");
+    if (col && col.closest(".f-group")) col.closest(".f-group").style.display = "none";
+    const prov = doc.querySelector('select[name="province"]');
+    if (prov) { const t = doc.createElement("input"); t.setAttribute("type", "text"); t.setAttribute("name", "province"); t.setAttribute("placeholder", "المدينة"); t.setAttribute("required", ""); prov.replaceWith(t); }
+  }
+
+  // 8) إخفاء نموذج الطلب إلا ما اختارو العميل، وتوجيه أزرار "اطلب الآن" لواتساب/اتصال
+  if (!showOrder) {
+    doc.querySelectorAll(cfg.order).forEach((e) => { e.style.setProperty("display", "none", "important"); });
+    if (cfg.orderExtra) { const secs = Array.from(doc.body.children).filter((e) => e.tagName === "SECTION"); const last = secs[secs.length - 1]; if (last && !last.className) last.style.setProperty("display", "none", "important"); }
+    const target = showWa ? waUrl : showCall ? telUrl : "";
+    if (target) doc.querySelectorAll('a[href="#order"]').forEach((a) => a.setAttribute("href", target));
+  }
+  return "<!DOCTYPE html>" + doc.documentElement.outerHTML;
+}
+
+let _tplCache = { k: "", v: "" };
+function tplApplyCached(data, images, form, country) {
+  const k = JSON.stringify([data._template, data._title, data._texts, data._variant, form.whatsapp, form.countryCode, form.showWa, form.showCall, form.showCod, form.showOrderForm, images.map((i) => (i.dataUrl || "").length + (i.dataUrl || "").slice(-24))]);
+  if (_tplCache.k !== k) _tplCache = { k: k, v: tplApply(data, images, form, country) };
+  return _tplCache.v;
+}
+
+function TemplateFrame({ html, height }) {
+  return <iframe title="landing" srcDoc={html} style={{ width: "100%", height: height, border: 0, display: "block", background: "#fff" }} />;
+}
+
+
 function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange }) {
   const [step, setStep] = useState("form");
-  const [form, setForm] = useState({ name: "", price: "", priceOld: "", description: "", countryCode: "SA", dialect: "auto", whatsapp: "", showWa: false, showCall: false, showCod: false, showOrderForm: false });
+  const [form, setForm] = useState({ name: "", price: "", priceOld: "", description: "", countryCode: "SA", dialect: "auto", whatsapp: "", template: "auto", showWa: false, showCall: false, showCod: false, showOrderForm: false });
   const [images, setImages] = useState([]);
   const [error, setError] = useState("");
   const [genStepIdx, setGenStepIdx] = useState(0);
@@ -1645,10 +1972,19 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
         { type: "text", text: buildGeneratePrompt(form, country) },
         ...imagesForAI.map((img) => ({ type: "image", source: { type: "base64", media_type: img.mediaType, data: img.base64 } })),
       ];
-      const generated = await callClaude(content);
-      const result = await runQualityControl(generated);
-      result._paletteVariant = pickDesignTokens(result.designSystem);
-      result._heroLayout = pickHeroLayout();
+      let tpl = form.template || "auto";
+      if (tpl === "auto") tpl = ["original", "chair", "hair", "tablet"][Math.floor(Math.random() * 4)];
+      let result;
+      if (tpl !== "original") {
+        result = await generateFromTemplate(tpl, form, country, images);
+        result._paletteVariant = DESIGN_SYSTEMS.Tech[0];
+        result._heroLayout = "split";
+      } else {
+        const generated = await callClaude(content);
+        result = await runQualityControl(generated);
+        result._paletteVariant = pickDesignTokens(result.designSystem);
+        result._heroLayout = pickHeroLayout();
+      }
 
       // خصم نقطة واحدة بعد نجاح التوليد فقط. شرط credits يمنع خصماً سالباً.
       // Admin مستثنى تماماً من الخصم — التوليد عندو مجاني ومايبانش عليه أي تغيير فالرصيد.
@@ -1687,11 +2023,17 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
     if (!editCmd.trim() || !data) return;
     setEditing(true); setError("");
     try {
-      const content = [{ type: "text", text: buildEditPrompt(data, editCmd.trim(), country) }];
-      const result = await callClaude(content);
-      const designChanged = result.designSystem !== data.designSystem;
-      result._paletteVariant = designChanged ? pickDesignTokens(result.designSystem) : data._paletteVariant;
-      result._heroLayout = designChanged ? pickHeroLayout() : data._heroLayout;
+      let result;
+      if (data._template) {
+        result = await editTemplatePage(data, editCmd.trim(), form, country);
+        result._paletteVariant = data._paletteVariant; result._heroLayout = data._heroLayout;
+      } else {
+        const content = [{ type: "text", text: buildEditPrompt(data, editCmd.trim(), country) }];
+        result = await callClaude(content);
+        const designChanged = result.designSystem !== data.designSystem;
+        result._paletteVariant = designChanged ? pickDesignTokens(result.designSystem) : data._paletteVariant;
+        result._heroLayout = designChanged ? pickHeroLayout() : data._heroLayout;
+      }
       const truncated = history.slice(0, historyIdx + 1);
       const nextHistory = [...truncated, result];
       setHistory(nextHistory); setHistoryIdx(nextHistory.length - 1); setEditCmd("");
@@ -1705,6 +2047,12 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
 
   function handleShuffleDesign() {
     if (!data) return;
+    if (data._template) {
+      const nextT = Object.assign({}, data, { _variant: makeVariant(data._template) });
+      const nhT = [...history.slice(0, historyIdx + 1), nextT];
+      setHistory(nhT); setHistoryIdx(nhT.length - 1);
+      return;
+    }
     const allSystems = Object.keys(DESIGN_SYSTEMS);
     const otherSystems = allSystems.filter((s) => s !== data.designSystem);
     const nextSystem = otherSystems[Math.floor(Math.random() * otherSystems.length)] || data.designSystem;
@@ -1718,7 +2066,7 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
     setHistory(nextHistory); setHistoryIdx(nextHistory.length - 1);
   }
 
-  const htmlString = data ? buildStandaloneHTML(data, tokens, images, form, country) : "";
+  const htmlString = data ? (data._template ? tplApplyCached(data, images, form, country) : buildStandaloneHTML(data, tokens, images, form, country)) : "";
 
   async function copyHTML() {
     try { await navigator.clipboard.writeText(htmlString); setCopyStatus("تم نسخ الكود ✓"); }
@@ -1744,6 +2092,7 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
           canUndo={historyIdx > 0} canRedo={historyIdx < history.length - 1} onUndo={undo} onRedo={redo}
           onCopy={copyHTML} onDownload={downloadHTML} copyStatus={copyStatus} error={error}
           onShuffleDesign={handleShuffleDesign}
+          tplHtml={htmlString}
           onBack={() => setStep("form")}
           onBuyCredits={onBuyCredits}
           onPreviewChange={onPreviewChange} />
@@ -1796,6 +2145,11 @@ function FormScreen({ form, setForm, images, onUpload, onRemoveImage, onEnhanceI
           <Field label="الدولة المستهدفة"><select value={form.countryCode} onChange={(e) => setForm((f) => ({ ...f, countryCode: e.target.value }))} style={inputStyle}>{COUNTRIES.map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}</select></Field>
           <Field label="اللهجة"><select value={form.dialect} onChange={(e) => setForm((f) => ({ ...f, dialect: e.target.value }))} style={inputStyle}><option value="auto">تلقائي حسب الدولة</option>{COUNTRIES.map((c) => <option key={c.code} value={c.dialect}>{c.dialect}</option>)}</select></Field>
         </div>
+        <Field label="شكل الصفحة">
+          <select value={form.template || "auto"} onChange={(e) => setForm((f) => ({ ...f, template: e.target.value }))} style={inputStyle}>
+            {TEMPLATE_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+          </select>
+        </Field>
         <Field label="رقم واتساب/هاتف للتواصل المباشر (اختياري)">
           <div style={{ display: "flex", gap: 8 }}>
             <span style={Object.assign({}, inputStyle, { width: "auto", display: "flex", alignItems: "center", color: "#8da0bd", fontWeight: 800 })}>{country.phoneCode}</span>
@@ -1849,7 +2203,7 @@ function PreviewScreen(props) {
     data, tokens, images, form, country, previewMode, setPreviewMode,
     editCmd, setEditCmd, onApplyEdit, editing, canUndo, canRedo,
     onUndo, onRedo, onDownload, error, onBack, onShuffleDesign,
-    onBuyCredits, onPreviewChange
+    onBuyCredits, onPreviewChange, tplHtml
   } = props;
 
   const captureRef = useRef(null);
@@ -1881,7 +2235,15 @@ function PreviewScreen(props) {
     if (!captureRef.current || !window.html2canvas || imageLoading) return;
     setImageLoading(true);
     try {
-      const el = captureRef.current;
+      let el = captureRef.current;
+      const fr = el.querySelector("iframe");
+      if (fr && fr.contentDocument) {
+        const d = fr.contentDocument;
+        const st = d.createElement("style");
+        st.textContent = ".rev,.reveal{opacity:1!important;transform:none!important}";
+        d.head.appendChild(st);
+        el = d.body;
+      }
       try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (e) {}
       // Use the real visible width of the page (NOT scrollWidth, which includes fixed/overflowing
       // elements and caused the blank margin) and a full-page height.
@@ -1939,7 +2301,7 @@ function PreviewScreen(props) {
     return (
       <div dir="rtl" style={{ minHeight: "100vh", background: "#05070C" }}>
         <div ref={captureRef}>
-          <LandingPage data={data} tokens={tokens} images={images} form={form} country={country} />
+          {data._template ? <TemplateFrame html={tplHtml} height={previewOnly ? "100vh" : "calc(100vh - 150px)"} /> : <LandingPage data={data} tokens={tokens} images={images} form={form} country={country} />}
         </div>
         <button
           className="floating-editor-back"
@@ -1987,7 +2349,7 @@ function PreviewScreen(props) {
       <div style={{ flex: 1, padding: "28px 16px", display: "flex", justifyContent: "center" }}>
         <div style={{ width: previewMode === "mobile" ? 390 : "100%", maxWidth: previewMode === "mobile" ? 390 : 1100, borderRadius: previewMode === "mobile" ? 30 : 16, overflow: "hidden", border: previewMode === "mobile" ? "8px solid #1B1F2B" : "1px solid #1D2740", boxShadow: "0 30px 60px rgba(0,0,0,.5)", height: "fit-content" }}>
           <div ref={captureRef}>
-            <LandingPage data={data} tokens={tokens} images={images} form={form} country={country} />
+            {data._template ? <TemplateFrame html={tplHtml} height={previewOnly ? "100vh" : "calc(100vh - 150px)"} /> : <LandingPage data={data} tokens={tokens} images={images} form={form} country={country} />}
           </div>
         </div>
       </div>
