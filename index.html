@@ -206,6 +206,7 @@
   .hp-showtitle::after{content:"";display:block;width:54px;height:3px;border-radius:3px;margin:9px auto 0;background:linear-gradient(90deg,#3b82f6,#22d3ee)}
   @media (max-width:820px){.hp-nav-in{padding:7px 10px;gap:6px}.hp-nav-btns{gap:5px;flex:none}.hp-nav-btns .hp-ghost{padding:6px 10px;font-size:11.5px}.hp-nav-btns .hp-cta{padding:7px 11px;font-size:12px;box-shadow:none}.hp-logo-sm{gap:6px;min-width:0}.hp-logo-sm .hp-logo-img{width:32px;height:32px}.hp-logo-name{font-size:10.5px;line-height:1.2}}
 
+  html,body{overscroll-behavior-y:contain}
   .hp-nav-in{direction:rtl}
   .hp-logo-sm{margin-inline-end:auto}
   .hp-logo-sm .hp-logo-img{width:46px;height:46px}
@@ -1785,6 +1786,34 @@ function TemplateFrame({ html, height }) {
 }
 
 
+/* ===== حفظ الجلسة (الصفحة المولّدة تبقى بعد التحديث) ===== */
+function sessDb() { return new Promise((res, rej) => { const r = indexedDB.open("alai_sess", 1); r.onupgradeneeded = () => r.result.createObjectStore("kv"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
+async function sessSave(k, v) {
+  try {
+    const db = await sessDb();
+    await new Promise((res, rej) => { const tx = db.transaction("kv", "readwrite"); tx.objectStore("kv").put(v, k); tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
+    db.close();
+  } catch (e) {}
+}
+async function sessLoad(k) {
+  try {
+    const db = await sessDb();
+    const v = await new Promise((res, rej) => { const tx = db.transaction("kv"); const q = tx.objectStore("kv").get(k); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
+    db.close();
+    return v || null;
+  } catch (e) { return null; }
+}
+
+async function pagesLoad(k) { const v = await sessLoad(k); return Array.isArray(v) ? v : []; }
+async function pagesUpsert(k, entry) {
+  const list = await pagesLoad(k);
+  const i = list.findIndex((x) => x.id === entry.id);
+  if (i >= 0) list[i] = entry; else list.unshift(entry);
+  list.sort((a, b) => b.ts - a.ts);
+  await sessSave(k, list.slice(0, 5));
+}
+async function pagesDelete(k, id) { const list = await pagesLoad(k); await sessSave(k, list.filter((x) => x.id !== id)); }
+
 function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange }) {
   const [step, setStep] = useState("form");
   const [form, setForm] = useState({ name: "", price: "", priceOld: "", description: "", countryCode: "SA", dialect: "auto", whatsapp: "", showWa: false, showCall: false, showCod: false, showOrderForm: false });
@@ -1800,6 +1829,44 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
   const [editCmd, setEditCmd] = useState("");
   const [editing, setEditing] = useState(false);
   const [copyStatus, setCopyStatus] = useState("");
+
+  const sessKey = "alai_session_v1_" + (user && user.id ? user.id : "anon");
+  const restoredRef = useRef(false);
+  const pagesKey = "alai_pages_v1_" + (user && user.id ? user.id : "anon");
+  const pageIdRef = useRef(null);
+  const [savedPages, setSavedPages] = useState([]);
+  const [showPages, setShowPages] = useState(false);
+  useEffect(() => { pagesLoad(pagesKey).then(setSavedPages); }, [pagesKey]);
+  useEffect(() => {
+    let alive = true;
+    restoredRef.current = false;
+    sessLoad(sessKey).then((s) => {
+      if (!alive) return;
+      if (s && s.form) {
+        setForm(s.form); setImages(s.images || []);
+        if (s.pageId) pageIdRef.current = s.pageId;
+        if (s.history && s.history.length) {
+          setHistory(s.history); setHistoryIdx(typeof s.historyIdx === "number" ? s.historyIdx : s.history.length - 1);
+          if (s.step === "preview") setStep("preview");
+        }
+      }
+      restoredRef.current = true;
+    });
+    return () => { alive = false; };
+  }, [sessKey]);
+  useEffect(() => {
+    if (!restoredRef.current) return;
+    const tm = setTimeout(() => {
+      sessSave(sessKey, { step: step === "preview" ? "preview" : "form", form, images, history, historyIdx, pageId: pageIdRef.current });
+      if (step === "preview" && history[historyIdx]) {
+        if (!pageIdRef.current) pageIdRef.current = "p" + Date.now() + Math.floor(Math.random() * 1000);
+        const cur = history[historyIdx];
+        pagesUpsert(pagesKey, { id: pageIdRef.current, ts: Date.now(), name: form.name, title: (cur.hero && cur.hero.headline) || form.name, thumb: images[0] ? images[0].dataUrl : "", form, images, history, historyIdx })
+          .then(() => pagesLoad(pagesKey)).then(setSavedPages);
+      }
+    }, 600);
+    return () => clearTimeout(tm);
+  }, [step, form, images, history, historyIdx]);
 
   const country = COUNTRIES.find((c) => c.code === form.countryCode) || COUNTRIES[0];
   const tokens = data && data._paletteVariant ? data._paletteVariant : DESIGN_SYSTEMS.Tech[0];
@@ -1898,11 +1965,31 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
         setCredits(Number(updateResult.data.credits));
       }
 
+      pageIdRef.current = "p" + Date.now() + Math.floor(Math.random() * 1000);
       setHistory([result]); setHistoryIdx(0); setStep("preview");
     } catch (err) {
       setError(err.message || "حدث خطأ أثناء التوليد، حاول مرة أخرى.");
       setStep("form");
     }
+  }
+
+  const [viewPage, setViewPage] = useState(null);
+  function savedHtml(p) {
+    const d = p.history[p.historyIdx];
+    const c = COUNTRIES.find((x) => x.code === p.form.countryCode) || COUNTRIES[0];
+    const tk = d._paletteVariant || DESIGN_SYSTEMS.Tech[0];
+    return d._template ? tplApplyCached(d, p.images || [], p.form, c) : buildStandaloneHTML(d, tk, p.images || [], p.form, c);
+  }
+  function downloadSaved(p) {
+    const blob = new Blob([savedHtml(p)], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = ((p.form.name || "landing-page").trim().replace(/\s+/g, "-")) + ".html";
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  }
+  async function deleteSavedPage(id) {
+    await pagesDelete(pagesKey, id);
+    setSavedPages(await pagesLoad(pagesKey));
   }
 
   async function handleApplyEdit() {
@@ -1964,6 +2051,39 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
 
   return (
     <div dir="rtl" style={{ fontFamily: "'Cairo', sans-serif", minHeight: "100vh", background: "#0B0F19" }}>
+      {viewPage && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 3000, background: "#05070C", display: "flex", flexDirection: "column" }}>
+          <div style={{ display: "flex", gap: 10, alignItems: "center", padding: "10px 14px", background: "#0B0F19", borderBottom: "1px solid #202A42" }}>
+            <button onClick={() => setViewPage(null)} style={{ background: "#131A2A", border: "1px solid #202A42", borderRadius: 10, color: "#E2E8F5", padding: "8px 14px", fontFamily: "inherit", fontWeight: 800, cursor: "pointer" }}>← رجوع</button>
+            <div style={{ flex: 1, color: "#F1F5F9", fontWeight: 800, fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{viewPage.name || viewPage.title}</div>
+            <button onClick={() => downloadSaved(viewPage)} style={{ background: "linear-gradient(90deg,#3B82F6,#22D3EE)", border: "none", borderRadius: 10, color: "#04101C", fontWeight: 800, padding: "8px 16px", cursor: "pointer", fontFamily: "inherit" }}>تنزيل</button>
+          </div>
+          <iframe title="saved" srcDoc={savedHtml(viewPage)} style={{ flex: 1, width: "100%", border: 0, background: "#fff" }} />
+        </div>
+      )}
+      {step === "form" && savedPages.length > 0 && (
+        <div style={{ maxWidth: 560, margin: "0 auto", padding: "14px 16px 0" }}>
+          <button onClick={() => setShowPages((v) => !v)} style={{ width: "100%", background: "#131A2A", border: "1px solid #202A42", color: "#E2E8F5", borderRadius: 14, padding: "12px 16px", fontFamily: "inherit", fontWeight: 800, fontSize: 14, cursor: "pointer", display: "flex", justifyContent: "space-between" }}>
+            <span>📂 آخر صفحاتي ({savedPages.length}/5)</span><span>{showPages ? "▲" : "▼"}</span>
+          </button>
+          {showPages && (
+            <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
+              {savedPages.map((p) => (
+                <div key={p.id} style={{ display: "flex", gap: 12, alignItems: "center", background: "#131A2A", border: "1px solid #202A42", borderRadius: 14, padding: 10 }}>
+                  {p.thumb ? <img src={p.thumb} alt="" style={{ width: 56, height: 56, objectFit: "cover", borderRadius: 10, flex: "none" }} /> : null}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ color: "#F1F5F9", fontWeight: 800, fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name || p.title}</div>
+                    <div style={{ color: "#8B96AC", fontSize: 11.5 }}>{new Date(p.ts).toLocaleString("ar-MA", { dateStyle: "short", timeStyle: "short" })}</div>
+                  </div>
+                  <button onClick={() => setViewPage(p)} style={{ background: "#1B2540", border: "1px solid #2A3654", borderRadius: 10, color: "#E2E8F5", fontWeight: 800, fontSize: 13, padding: "8px 12px", cursor: "pointer", fontFamily: "inherit" }}>معاينة</button>
+                  <button onClick={() => downloadSaved(p)} style={{ background: "linear-gradient(90deg,#3B82F6,#22D3EE)", border: "none", borderRadius: 10, color: "#04101C", fontWeight: 800, fontSize: 13, padding: "8px 12px", cursor: "pointer", fontFamily: "inherit" }}>تنزيل</button>
+                  <button onClick={() => { if (window.confirm("حذف هذه الصفحة؟")) deleteSavedPage(p.id); }} aria-label="حذف" style={{ background: "transparent", border: "1px solid #2A3654", borderRadius: 10, color: "#F87171", fontSize: 14, padding: "7px 10px", cursor: "pointer" }}>🗑</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
       {step === "form" && <FormScreen form={form} setForm={setForm} images={images} onUpload={handleImageUpload} onRemoveImage={removeImage} onEnhanceImage={handleEnhanceImage} enhancingIdx={enhancingIdx} error={error} onGenerate={handleGenerate} />}
       {step === "loading" && <LoadingScreen stepIdx={genStepIdx} />}
       {step === "preview" && data && (
