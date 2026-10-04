@@ -205,6 +205,11 @@
   .hp-showtitle span{background:linear-gradient(90deg,#60a5fa,#22d3ee);-webkit-background-clip:text;background-clip:text;color:transparent}
   .hp-showtitle::after{content:"";display:block;width:54px;height:3px;border-radius:3px;margin:9px auto 0;background:linear-gradient(90deg,#3b82f6,#22d3ee)}
   @media (max-width:820px){.hp-nav-in{padding:7px 10px;gap:6px}.hp-nav-btns{gap:5px;flex:none}.hp-nav-btns .hp-ghost{padding:6px 10px;font-size:11.5px}.hp-nav-btns .hp-cta{padding:7px 11px;font-size:12px;box-shadow:none}.hp-logo-sm{gap:6px;min-width:0}.hp-logo-sm .hp-logo-img{width:32px;height:32px}.hp-logo-name{font-size:10.5px;line-height:1.2}}
+
+  .hp-nav-in{direction:rtl}
+  .hp-logo-sm{margin-inline-end:auto}
+  .hp-logo-sm .hp-logo-img{width:46px;height:46px}
+  @media (max-width:820px){.hp-logo-sm .hp-logo-img{width:40px;height:40px}}
 </style>
 </head>
 <body>
@@ -1259,7 +1264,7 @@ function HomePage({ onLogin, onSignup }) {
           <button className="hp-ghost" onClick={onLogin}>تسجيل الدخول</button>
           <button className="hp-cta" onClick={onSignup}>إنشاء حساب</button>
         </div>
-        <span className="hp-logo hp-logo-sm"><img src="https://i.ibb.co/spZLnqzb/file-00000000da0c81f4a4088e7d66ce8dc8.png" alt="Arabic Landing AI" className="hp-logo-img" /><span className="hp-logo-name">Arabic<br />Landing AI</span></span>
+        <span className="hp-logo hp-logo-sm"><img src="https://i.ibb.co/spZLnqzb/file-00000000da0c81f4a4088e7d66ce8dc8.png" alt="Arabic Landing AI" className="hp-logo-img" /></span>
       </div></nav>
 
       <header className="hp-hero">
@@ -1563,7 +1568,7 @@ function CheckRow({ checked, onChange, children, hint }) {
 
 function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange }) {
   const [step, setStep] = useState("form");
-  const [form, setForm] = useState({ name: "", price: "", priceOld: "", description: "", countryCode: "SA", dialect: "auto", whatsapp: "", showWa: true, showCall: true, showCod: true, showOrderForm: true });
+  const [form, setForm] = useState({ name: "", price: "", priceOld: "", description: "", countryCode: "SA", dialect: "auto", whatsapp: "", showWa: false, showCall: false, showCod: false, showOrderForm: false });
   const [images, setImages] = useState([]);
   const [error, setError] = useState("");
   const [genStepIdx, setGenStepIdx] = useState(0);
