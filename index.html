@@ -214,8 +214,55 @@
   .hp-nav-btns .hp-ghost{background:rgba(255,255,255,.04);border:1px solid #2a3654;color:#dbe4f5}
   .hp-nav-btns .hp-cta{box-shadow:0 6px 18px -4px rgba(34,211,238,.55)}
   .hp-logo-sm .hp-logo-img{width:44px;height:44px;border:2px solid #2f4d86;box-shadow:0 0 0 3px rgba(34,211,238,.08),0 0 18px rgba(34,211,238,.35)}
-  @media (max-width:380px){.hp-nav-in{padding:8px 10px;min-height:58px}.hp-nav-btns{gap:6px}.hp-nav-btns .hp-ghost,.hp-nav-btns .hp-cta{height:34px;padding:0 11px;font-size:12px}.hp-logo-sm .hp-logo-img{width:40px;height:40px}}
   .hp-nav-in{direction:rtl}
+
+  /* ===== Arabic Landing AI 2027 UI refresh ===== */
+  :root{--a-bg:#070b14;--a-surface:#0d1422;--a-surface2:#111a2b;--a-line:rgba(148,163,184,.16);--a-text:#f7f9fc;--a-muted:#8996ad;--a-blue:#4f8cff;--a-cyan:#39d6ff;--a-violet:#8b6cff;--a-green:#28d7a1}
+  body{background:var(--a-bg)!important}
+  .alai-dashboard-header{position:sticky;top:0;z-index:1200;background:rgba(7,11,20,.78);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border-bottom:1px solid rgba(148,163,184,.12);box-shadow:0 12px 35px rgba(0,0,0,.22);padding-top:env(safe-area-inset-top,0px)}
+  .alai-dashboard-inner{max-width:920px;margin:auto;min-height:68px;padding:9px 16px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+  .alai-brand-block{display:flex;align-items:center;gap:10px;min-width:0}
+  .alai-brand-mark{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;color:#fff;font-size:20px;font-weight:900;background:linear-gradient(145deg,#3b82f6,#7c3aed);box-shadow:0 8px 24px rgba(79,140,255,.28);border:1px solid rgba(255,255,255,.12)}
+  .alai-brand-name{font-size:14px;font-weight:900;color:#f8fafc;letter-spacing:-.2px;white-space:nowrap}
+  .alai-brand-sub{font-size:10px;color:#748198;margin-top:2px;white-space:nowrap}
+  .alai-header-actions{display:flex;align-items:center;gap:7px}
+  .alai-credit-pill,.alai-icon-btn{font-family:inherit;cursor:pointer;border:1px solid var(--a-line);color:#eaf2ff;background:rgba(255,255,255,.045);transition:.2s ease}
+  .alai-credit-pill{height:38px;border-radius:13px;padding:0 8px 0 5px;display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700}
+  .alai-credit-pill b{font-size:13px;color:#fff}.alai-credit-icon{width:25px;height:25px;border-radius:9px;display:grid;place-items:center;background:linear-gradient(135deg,#3b82f6,#22d3ee);color:#04101c;font-weight:900}.alai-plus{width:21px;height:21px;border-radius:7px;background:rgba(255,255,255,.08);display:grid;place-items:center;font-size:16px}
+  .alai-icon-btn{width:38px;height:38px;border-radius:13px;font-size:16px}
+  .alai-credit-pill:hover,.alai-icon-btn:hover{transform:translateY(-1px);border-color:rgba(79,140,255,.55);background:rgba(79,140,255,.09)}
+  .alai-form-shell{isolation:isolate}
+  .alai-form-shell:before{content:"";position:absolute;z-index:-2;width:480px;height:480px;top:-120px;left:50%;transform:translateX(-50%);background:radial-gradient(circle,rgba(79,140,255,.12),transparent 68%);pointer-events:none}
+  .alai-form-shell .orb{opacity:.42;filter:blur(8px)}
+  .alai-hero-block{text-align:center;margin:18px 0 28px;position:relative}
+  .alai-eyebrow{display:inline-flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;border:1px solid rgba(79,140,255,.22);background:rgba(79,140,255,.07);color:#a9b9d2;font-size:11px;font-weight:800;box-shadow:inset 0 1px rgba(255,255,255,.05)}
+  .alai-eyebrow span{font-size:9px;padding:3px 6px;border-radius:6px;background:linear-gradient(135deg,#4f8cff,#8b6cff);color:#fff}
+  .alai-hero-block h1{margin:15px auto 8px;max-width:650px;color:#f8fafc;font-size:clamp(28px,7vw,44px);line-height:1.22;letter-spacing:-1.3px;font-weight:950}
+  .alai-hero-block h1 span{background:linear-gradient(90deg,#fff,#78c9ff 48%,#a99aff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .alai-hero-block p{max-width:590px;margin:0 auto;color:#8d9ab0;font-size:13px;line-height:1.9}
+  .alai-quick-actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:18px}
+  .alai-quick{font-family:inherit;min-height:37px;padding:0 13px;border-radius:12px;border:1px solid rgba(148,163,184,.15);background:rgba(255,255,255,.035);color:#cbd5e1;font-size:11px;font-weight:800;cursor:pointer;transition:.2s ease}
+  .alai-quick:hover{transform:translateY(-1px);background:rgba(255,255,255,.07);border-color:rgba(148,163,184,.28)}
+  .alai-quick.primary{border-color:transparent;background:linear-gradient(135deg,#4f8cff,#6d63ff);color:#fff;box-shadow:0 10px 25px rgba(79,140,255,.22)}
+  .alai-progress-line{display:grid;grid-template-columns:28px 1fr 28px 1fr 28px;align-items:center;max-width:340px;margin:22px auto 0;gap:7px;position:relative}
+  .alai-progress-line span{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;border:1px solid rgba(148,163,184,.18);background:#101827;color:#66748b;font-size:10px;font-weight:900}
+  .alai-progress-line span.active{background:linear-gradient(135deg,#4f8cff,#22d3ee);border-color:transparent;color:#04101c;box-shadow:0 5px 18px rgba(79,140,255,.25)}
+  .alai-progress-line i{height:1px;background:linear-gradient(90deg,rgba(79,140,255,.45),rgba(148,163,184,.12))}
+  .alai-progress-line small{display:none}
+  .alai-form-shell>.glass{background:linear-gradient(180deg,rgba(17,26,43,.92),rgba(10,16,28,.92))!important;border:1px solid rgba(148,163,184,.14)!important;border-radius:24px!important;box-shadow:0 25px 70px rgba(0,0,0,.32),inset 0 1px rgba(255,255,255,.035)!important;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+  .alai-form-shell .glass>label>span,.alai-form-shell .glass>div>span{color:#b9c5d8!important}
+  .alai-form-shell input:not([type="checkbox"]),.alai-form-shell textarea,.alai-form-shell select{background:#090f1b!important;border:1px solid rgba(148,163,184,.15)!important;border-radius:13px!important;min-height:46px;transition:.18s ease;box-shadow:inset 0 1px rgba(255,255,255,.025)}
+  .alai-form-shell textarea{min-height:96px}
+  .alai-form-shell input:not([type="checkbox"]):focus,.alai-form-shell textarea:focus,.alai-form-shell select:focus{border-color:rgba(79,140,255,.72)!important;box-shadow:0 0 0 4px rgba(79,140,255,.09),0 8px 25px rgba(0,0,0,.18)!important}
+  .alai-form-shell select{appearance:auto}
+  .alai-section-divider{display:flex;align-items:center;gap:10px;color:#77859d;font-size:11px;font-weight:900;margin:2px 0 -3px}
+  .alai-section-divider:before,.alai-section-divider:after{content:"";height:1px;flex:1;background:rgba(148,163,184,.11)}
+  .alai-section-divider span{white-space:nowrap}
+  .alai-form-shell .glass button{transition:transform .18s ease,filter .18s ease,box-shadow .18s ease}
+  .alai-form-shell .glass button:hover{filter:brightness(1.07);transform:translateY(-1px)}
+  .alai-form-shell .glass button[style*="linear-gradient"]{border-radius:14px!important}
+  @media(max-width:560px){.alai-dashboard-inner{padding:8px 12px;min-height:62px}.alai-brand-mark{width:36px;height:36px;border-radius:12px}.alai-brand-name{font-size:12px}.alai-brand-sub{font-size:9px}.alai-credit-pill{height:36px}.alai-icon-btn{width:36px;height:36px}.alai-form-shell{padding:20px 12px 80px!important}.alai-hero-block{margin-top:8px}.alai-hero-block h1{font-size:30px}.alai-hero-block p{font-size:12px;padding:0 8px}.alai-quick{font-size:10.5px;padding:0 10px}.alai-progress-line{max-width:290px}}
+  @media(max-width:380px){.alai-brand-sub{display:none}.alai-credit-pill{padding-right:6px}.alai-credit-pill span:not(.alai-credit-icon):not(.alai-plus){font-size:10px}.alai-quick{flex:1;min-width:0}.alai-quick-actions{display:grid;grid-template-columns:1fr 1fr}.alai-quick.primary{grid-column:1/-1}}
 </style>
 </head>
 <body>
@@ -1873,7 +1920,7 @@ const ORDER_STATUS = [
 ];
 function statusInfo(k) { return ORDER_STATUS.find((s) => s[0] === k) || ORDER_STATUS[0]; }
 
-function OrdersPanel({ onClose }) {
+function OrdersPanel({ onClose, embedded }) {
   const [tab, setTab] = useState("orders");
   const [orders, setOrders] = useState([]);
   const [pages, setPages] = useState([]);
@@ -1942,7 +1989,7 @@ function OrdersPanel({ onClose }) {
   const pill = (active) => ({ flex: "none", background: active ? "#22D3EE" : "#131A2A", color: active ? "#04101C" : "#B7C0D4", border: "1px solid " + (active ? "#22D3EE" : "#202A42"), borderRadius: 99, padding: "6px 14px", fontFamily: "inherit", fontWeight: 800, fontSize: 12.5, cursor: "pointer" });
 
   return (
-    <div dir="rtl" style={{ position: "fixed", inset: 0, zIndex: 3000, background: "#0B0F19", display: "flex", flexDirection: "column", fontFamily: "'Cairo', sans-serif" }}>
+    <div dir="rtl" style={{ position: "fixed", inset: embedded ? "64px 0 70px 0" : 0, zIndex: 3000, background: "#0B0F19", display: "flex", flexDirection: "column", fontFamily: "'Cairo', sans-serif" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "#0B0F19", borderBottom: "1px solid #202A42" }}>
         <button onClick={onClose} style={{ background: "#131A2A", border: "1px solid #202A42", borderRadius: 10, color: "#E2E8F5", padding: "8px 14px", fontFamily: "inherit", fontWeight: 800, cursor: "pointer" }}>← رجوع</button>
         <div style={{ flex: 1, color: "#F1F5F9", fontWeight: 900, fontSize: 16 }}>📦 طلباتي</div>
@@ -2086,7 +2133,10 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
   const [showPages, setShowPages] = useState(false);
   const [showOrders, setShowOrders] = useState(false);
   const [newOrders, setNewOrders] = useState(0);
+  const [tab, setTab] = useState("create");
+  const [lastUrl, setLastUrl] = useState(() => { try { return localStorage.getItem("alai_last_url") || ""; } catch (e) { return ""; } });
   const [pub, setPub] = useState(null);
+  useEffect(() => { if (pub && pub.url) { setLastUrl(pub.url); try { localStorage.setItem("alai_last_url", pub.url); } catch (e) {} } }, [pub]);
   const uploadCacheRef = useRef({});
   async function refreshNewOrders() {
     try {
@@ -2398,7 +2448,7 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
   if (!hydrated) return <SplashLoader />;
 
   return (
-    <div dir="rtl" style={{ fontFamily: "'Cairo', sans-serif", minHeight: "100vh", background: "#0B0F19" }}>
+    <div dir="rtl" style={{ fontFamily: "'Cairo', sans-serif", minHeight: "100vh", background: "#0B0F19", paddingBottom: step === "form" ? 84 : 0 }}>
       {showOrders && <OrdersPanel onClose={() => { setShowOrders(false); refreshNewOrders(); }} />}
       <PublishModal pub={pub} onClose={() => setPub(null)} />
       {viewPage && (
@@ -2413,6 +2463,27 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
         </div>
       )}
       {step === "form" && (
+        <div className="alai-dashboard-header" dir="rtl">
+          <div className="alai-dashboard-inner">
+            <div className="alai-brand-block">
+              <div className="alai-brand-mark">✦</div>
+              <div>
+                <div className="alai-brand-name">Arabic Landing AI</div>
+                <div className="alai-brand-sub">استوديو صفحات الهبوط</div>
+              </div>
+            </div>
+            <div className="alai-header-actions">
+              <button className="alai-credit-pill" onClick={onBuyCredits} title="شراء نقاط">
+                <span className="alai-credit-icon">✦</span>
+                <span><b>{credits}</b> نقطة</span>
+                <span className="alai-plus">+</span>
+              </button>
+              <button className="alai-icon-btn" onClick={() => setTab("orders")} title="الطلبات والصفحات">📦</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {false && (
         <div style={{ maxWidth: 560, margin: "0 auto", padding: "14px 16px 0" }}>
           <button onClick={() => setShowOrders(true)} style={{ width: "100%", background: "#131A2A", border: "1px solid #202A42", color: "#E2E8F5", borderRadius: 14, padding: "12px 16px", fontFamily: "inherit", fontWeight: 800, fontSize: 14, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span>📦 طلباتي والصفحات المنشورة</span>
@@ -2420,12 +2491,15 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
           </button>
         </div>
       )}
-      {step === "form" && savedPages.length > 0 && (
+      {step === "form" && tab === "pages" && savedPages.length === 0 && (
+        <div style={{ maxWidth: 560, margin: "0 auto", padding: "40px 16px", textAlign: "center", color: "#8B96AC", fontWeight: 700 }}>📂 ما كاين حتى صفحة محفوظة دابا. أنشئ أول صفحة ديالك.</div>
+      )}
+      {step === "form" && tab === "pages" && savedPages.length > 0 && (
         <div style={{ maxWidth: 560, margin: "0 auto", padding: "14px 16px 0" }}>
-          <button onClick={() => setShowPages((v) => !v)} style={{ width: "100%", background: "#131A2A", border: "1px solid #202A42", color: "#E2E8F5", borderRadius: 14, padding: "12px 16px", fontFamily: "inherit", fontWeight: 800, fontSize: 14, cursor: "pointer", display: "flex", justifyContent: "space-between" }}>
-            <span>📂 آخر صفحاتي ({savedPages.length}/5)</span><span>{showPages ? "▲" : "▼"}</span>
+          <button onClick={undefined} style={{ width: "100%", background: "#131A2A", border: "1px solid #202A42", color: "#E2E8F5", borderRadius: 14, padding: "12px 16px", fontFamily: "inherit", fontWeight: 800, fontSize: 14, cursor: "pointer", display: "flex", justifyContent: "space-between" }}>
+            <span>📂 آخر صفحاتي ({savedPages.length}/5)</span><span></span>
           </button>
-          {showPages && (
+          {true && (
             <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
               {savedPages.map((p) => (
                 <div key={p.id} style={{ background: "#131A2A", border: "1px solid #202A42", borderRadius: 14, padding: 10, display: "grid", gap: 10 }}>
@@ -2449,7 +2523,38 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
           )}
         </div>
       )}
-      {step === "form" && <FormScreen form={form} setForm={setForm} images={images} onUpload={handleImageUpload} onRemoveImage={removeImage} onEnhanceImage={handleEnhanceImage} enhancingIdx={enhancingIdx} error={error} onGenerate={handleGenerate} />}
+      {step === "form" && tab === "create" && <FormScreen form={form} setForm={setForm} images={images} onUpload={handleImageUpload} onRemoveImage={removeImage} onEnhanceImage={handleEnhanceImage} enhancingIdx={enhancingIdx} error={error} onGenerate={handleGenerate} />}
+      {step === "form" && tab === "orders" && <OrdersPanel embedded onClose={() => { setTab("create"); refreshNewOrders(); }} />}
+      {step === "form" && tab === "link" && (
+        <div style={{ maxWidth: 560, margin: "0 auto", padding: "18px 16px 0" }}>
+          <div style={{ background: "#131A2A", border: "1px solid #202A42", borderRadius: 16, padding: 16 }}>
+            <div style={{ color: "#F1F5F9", fontWeight: 900, fontSize: 16, marginBottom: 12 }}>🔗 رابط الصفحة</div>
+            {lastUrl ? (
+              <div>
+                <div dir="ltr" style={{ background: "#0B0F19", border: "1px solid #202A42", borderRadius: 10, color: "#22D3EE", padding: "10px 12px", fontSize: 13, wordBreak: "break-all", textAlign: "left", marginBottom: 12 }}>{lastUrl}</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                  <button onClick={() => { try { navigator.clipboard.writeText(lastUrl); } catch (e) {} }} style={{ background: "linear-gradient(90deg,#3B82F6,#22D3EE)", border: "none", borderRadius: 10, color: "#04101C", fontWeight: 800, fontSize: 13, padding: "10px 4px", cursor: "pointer", fontFamily: "inherit" }}>📋 نسخ</button>
+                  <a href={lastUrl} target="_blank" rel="noopener noreferrer" style={{ background: "#1B2540", border: "1px solid #2A3654", borderRadius: 10, color: "#E2E8F5", fontWeight: 800, fontSize: 13, padding: "10px 4px", textDecoration: "none", textAlign: "center" }}>↗ فتح</a>
+                  <a href={"https://wa.me/?text=" + encodeURIComponent(lastUrl)} target="_blank" rel="noopener noreferrer" style={{ background: "#0F3D2A", border: "1px solid #1D6B47", borderRadius: 10, color: "#6EE7B7", fontWeight: 800, fontSize: 13, padding: "10px 4px", textDecoration: "none", textAlign: "center" }}>واتساب</a>
+                </div>
+                <div style={{ color: "#8B96AC", fontSize: 11.5, marginTop: 12, lineHeight: 1.7 }}>استعمل هذا الرابط في الإعلان. الطلبات كتوصلك فـ "طلباتي".</div>
+              </div>
+            ) : (
+              <div style={{ color: "#8B96AC", fontSize: 13.5, lineHeight: 1.8 }}>ما نشرتي حتى صفحة بعد. من "آخر صفحاتي" اختار صفحة واضغط على نشر باش يبان الرابط هنا.</div>
+            )}
+          </div>
+        </div>
+      )}
+      {step === "form" && (
+        <nav dir="rtl" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 3500, display: "flex", background: "rgba(14,22,40,.98)", borderTop: "1px solid #202A42", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+          {[["create", "✨", "إنشاء صفحة"], ["orders", "📦", "طلباتي"], ["link", "🔗", "الرابط"], ["pages", "📂", "آخر صفحاتي"]].map(([k, ic, lb]) => (
+            <button key={k} onClick={() => setTab(k)} style={{ flex: 1, background: "none", border: "none", color: tab === k ? "#22D3EE" : "#8B96AC", fontFamily: "inherit", fontWeight: 800, fontSize: 11.5, padding: "9px 2px 8px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, position: "relative" }}>
+              <span style={{ fontSize: 20 }}>{ic}</span>{lb}
+              {k === "orders" && newOrders > 0 ? <span style={{ position: "absolute", top: 4, right: "50%", marginRight: -26, background: "#22D3EE", color: "#04101C", borderRadius: 99, fontSize: 10.5, padding: "0 6px" }}>{newOrders}</span> : null}
+            </button>
+          ))}
+        </nav>
+      )}
       {step === "loading" && <LoadingScreen stepIdx={genStepIdx} />}
       {step === "preview" && data && (
         <PreviewScreen data={data} tokens={tokens} images={images} form={form} country={country}
@@ -2471,18 +2576,22 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
 function FormScreen({ form, setForm, images, onUpload, onRemoveImage, onEnhanceImage, enhancingIdx, error, onGenerate }) {
   const country = COUNTRIES.find((c) => c.code === form.countryCode) || COUNTRIES[0];
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto", padding: "48px 20px 80px", position: "relative", overflow: "hidden" }} className="fade-in">
+    <div style={{ maxWidth: 760, margin: "0 auto", padding: "28px 18px 88px", position: "relative", overflow: "hidden" }} className="fade-in alai-form-shell">
       <div className="orb" style={{ width: 260, height: 260, top: -40, right: -40, background: "#2563eb55", animation: "drift 9s ease-in-out infinite" }} />
       <div className="orb" style={{ width: 200, height: 200, bottom: 60, left: -50, background: "#06b6d455", animation: "drift 11s ease-in-out infinite reverse" }} />
-      <div style={{ textAlign: "center", marginBottom: 40, position: "relative" }}>
-        <div className="glass" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 14px", borderRadius: 999, color: "#5eead4", fontSize: 13, fontWeight: 600, marginBottom: 18 }}>
-          <Ico size={14}>✨</Ico> Arabic Landing AI
+      <div className="alai-hero-block">
+        <div className="alai-eyebrow"><span>AI</span> استوديو إنشاء صفحات الهبوط</div>
+        <h1>حوّل منتجك إلى <span>صفحة هبوط جاهزة للبيع</span></h1>
+        <p>أدخل معلومات بسيطة، ودع الذكاء الاصطناعي يبني التصميم والمحتوى والهيكلة المناسبة لمنتجك.</p>
+        <div className="alai-quick-actions">
+          <button className="alai-quick primary" onClick={() => document.getElementById("alai-product-name")?.focus()}>＋ صفحة جديدة</button>
+          <button className="alai-quick" onClick={() => document.getElementById("alai-product-images")?.click()}>⌁ رفع صور المنتج</button>
+          <button className="alai-quick" onClick={() => document.getElementById("alai-settings-anchor")?.scrollIntoView({behavior:"smooth",block:"center"})}>⚙ إعدادات الصفحة</button>
         </div>
-        <h1 style={{ color: "#F1F5F9", fontSize: 30, fontWeight: 800, lineHeight: 1.4, margin: 0 }}>أنشئ صفحة هبوط احترافية لمنتجك بالذكاء الاصطناعي</h1>
-        <p style={{ color: "#8B96AC", fontSize: 15, marginTop: 10 }}>منتج + سعر + صور + دولة = صفحة هبوط جاهزة</p>
+        <div className="alai-progress-line"><span className="active">1</span><i></i><span>2</span><i></i><span>3</span><small>المعلومات</small><small>التوليد</small><small>النشر</small></div>
       </div>
       <div className="glass" style={{ borderRadius: 20, padding: 22, display: "grid", gap: 16, position: "relative", boxShadow: "0 30px 70px rgba(0,0,0,.45)" }}>
-        <Field label="اسم المنتج"><input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="مثال: سماعة بلوتوث لاسلكية" style={inputStyle} /></Field>
+        <Field label="اسم المنتج"><input id="alai-product-name" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="مثال: سماعة بلوتوث لاسلكية" style={inputStyle} /></Field>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <Field label="سعر المنتج"><input type="number" value={form.price} onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))} placeholder="مثال: 149" style={inputStyle} /></Field>
           <Field label="السعر قبل التخفيض (اختياري)"><input type="number" value={form.priceOld} onChange={(e) => setForm((f) => ({ ...f, priceOld: e.target.value }))} placeholder="مثال: 249" style={inputStyle} /></Field>
@@ -2501,13 +2610,14 @@ function FormScreen({ form, setForm, images, onUpload, onRemoveImage, onEnhanceI
             {images.length < 8 && (
               <label style={{ width: 76, height: 76, borderRadius: 12, border: "1.5px dashed #2A3654", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#5B6478", gap: 4 }}>
                 <Ico size={18}>🖼️</Ico><span style={{ fontSize: 10 }}>رفع</span>
-                <input type="file" accept="image/*" multiple onChange={onUpload} style={{ display: "none" }} />
+                <input id="alai-product-images" type="file" accept="image/*" multiple onChange={onUpload} style={{ display: "none" }} />
               </label>
             )}
           </div>
           <span style={{ color: "#5B6478", fontSize: 11 }}>اضغط على ✨ فوق أي صورة لتقوية التباين والألوان الخاصة بها (تحسين تلقائي، وليس تعديلاً بالذكاء الاصطناعي).</span>
         </Field>
         <Field label="وصف المنتج (اختياري)"><textarea value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder="اتركه فارغاً وسيقوم الذكاء الاصطناعي بكتابة وصف من الصور" rows={3} style={Object.assign({}, inputStyle, { resize: "vertical" })} /></Field>
+        <div id="alai-settings-anchor" className="alai-section-divider"><span>إعدادات الجمهور والتواصل</span></div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <Field label="الدولة المستهدفة"><select value={form.countryCode} onChange={(e) => setForm((f) => ({ ...f, countryCode: e.target.value }))} style={inputStyle}>{COUNTRIES.map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}</select></Field>
           <Field label="اللهجة"><select value={form.dialect} onChange={(e) => setForm((f) => ({ ...f, dialect: e.target.value }))} style={inputStyle}><option value="auto">تلقائي حسب الدولة</option>{COUNTRIES.map((c) => <option key={c.code} value={c.dialect}>{c.dialect}</option>)}</select></Field>
