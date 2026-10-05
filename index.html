@@ -535,9 +535,15 @@ async function callClaude(content) {
   // مفتاح الـ API مخبّأ فالسيرفر (Environment Variable) وما ظاهرش هنا فالفرونت-إند.
   let response;
   try {
+    let token = "";
+    try {
+      const sb = await getSupabaseClient();
+      const ss = sb ? await sb.auth.getSession() : null;
+      token = ss && ss.data && ss.data.session ? ss.data.session.access_token : "";
+    } catch (e) {}
     response = await fetch("/api/generate", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: Object.assign({ "Content-Type": "application/json" }, token ? { Authorization: "Bearer " + token } : {}),
       body: JSON.stringify({ content }),
     });
   } catch (netErr) {
@@ -1815,12 +1821,12 @@ function buildStructureHTML(data, images, form, country) {
 
   const sections = sxSections(data, images, key);
   const of = data.orderForm || {};
-  const orderHtml = showOrder ? '<section class="s order" id="order"><div class="in"><div class="card" style="max-width:500px;margin:0 auto"><div id="ofW"><h3>' + E(of.title || "أكمل طلبك الآن") + '</h3><div class="of"><input id="ofN" placeholder="الاسم الكامل"><input id="ofP" placeholder="رقم الهاتف" inputmode="tel"><input placeholder="المدينة"><input placeholder="العنوان بالتفصيل"><button id="ofB" class="cta">' + E(of.buttonText || "اطلب الآن") + '</button></div></div><div class="ok" id="ofS"><div style="font-size:42px">🎉</div><h3>' + E(of.successHeadline || "تم استلام طلبك بنجاح!") + "</h3><p>" + E(of.successText || "سنتصل بك قريباً لتأكيد الطلب.") + "</p></div></div></div></section>" : '<div id="order"></div>';
+  const orderHtml = showOrder ? '<section class="s order" id="order"><div class="in"><div class="card" style="max-width:500px;margin:0 auto"><div id="ofW"><h3>' + E(of.title || "أكمل طلبك الآن") + '</h3><div class="of"><input id="ofN" placeholder="الاسم الكامل"><input id="ofP" placeholder="رقم الهاتف" inputmode="tel"><input id="ofC" placeholder="المدينة"><input id="ofA" placeholder="العنوان بالتفصيل"><button id="ofB" class="cta">' + E(of.buttonText || "اطلب الآن") + '</button></div></div><div class="ok" id="ofS"><div style="font-size:42px">🎉</div><h3>' + E(of.successHeadline || "تم استلام طلبك بنجاح!") + "</h3><p>" + E(of.successText || "سنتصل بك قريباً لتأكيد الطلب.") + "</p></div></div></div></section>" : '<div id="order"></div>';
   const finHtml = data.finalCta ? '<section class="fin"><div class="in"><h3>' + E(data.finalCta.headline) + '</h3><a class="cta" href="' + E(href) + '">' + E(data.finalCta.buttonText || "اطلب الآن") + "</a></div></section>" : "";
   const sbar = showCod ? '<div class="sbar" id="sbar"><div><div style="font-weight:900">' + priceTxt + '</div><div style="font-size:11.5px;opacity:.8">🚚 توصيل مجاني · الدفع عند الاستلام</div></div><a class="cta" href="' + E(href) + '">' + cta + "</a></div>" : "";
   const fabs = (showWa || showCall) ? '<div class="fabs">' + (showWa ? '<a href="https://wa.me/' + num + '" target="_blank" rel="noopener" style="background:#25D366">💬</a>' : "") + (showCall ? '<a href="tel:+' + num + '" style="background:#2563EB">📞</a>' : "") + "</div>" : "";
 
-  const js = '(function(){var d=document;var end=Date.now()+(5*3600+59*60+59)*1000;function p(n){return String(n).padStart(2,"0")}function tick(){var x=end-Date.now();if(x<0)x=0;var e=d.getElementById("cd");if(e)e.textContent=p(Math.floor(x/3600000))+":"+p(Math.floor(x%3600000/60000))+":"+p(Math.floor(x%60000/1000));}tick();setInterval(tick,1000);var sb=d.getElementById("sbar");if(sb)addEventListener("scroll",function(){sb.classList.toggle("on",scrollY>400)});var b=d.getElementById("ofB");if(b)b.addEventListener("click",function(){if(!d.getElementById("ofN").value.trim()||!d.getElementById("ofP").value.trim()){alert("الرجاء إدخال الاسم ورقم الهاتف على الأقل.");return;}d.getElementById("ofW").style.display="none";d.getElementById("ofS").style.display="block";});})();';
+  const js = '(function(){var d=document;var end=Date.now()+(5*3600+59*60+59)*1000;function p(n){return String(n).padStart(2,"0")}function tick(){var x=end-Date.now();if(x<0)x=0;var e=d.getElementById("cd");if(e)e.textContent=p(Math.floor(x/3600000))+":"+p(Math.floor(x%3600000/60000))+":"+p(Math.floor(x%60000/1000));}tick();setInterval(tick,1000);var sb=d.getElementById("sbar");if(sb)addEventListener("scroll",function(){sb.classList.toggle("on",scrollY>400)});var b=d.getElementById("ofB");if(b)b.addEventListener("click",function(){var nm=d.getElementById("ofN").value.trim(),ph=d.getElementById("ofP").value.trim();if(!nm||!ph){alert("الرجاء إدخال الاسم ورقم الهاتف على الأقل.");return;}function done(){d.getElementById("ofW").style.display="none";d.getElementById("ofS").style.display="block";}var pp=location.pathname.split("/");var slug=pp[1]==="p"?pp[2]:"";if(!slug){done();return;}b.disabled=true;fetch("/api/order",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({slug:slug,name:nm,phone:ph,city:(d.getElementById("ofC")||{}).value||"",address:(d.getElementById("ofA")||{}).value||"",hp:""})}).then(function(r){if(!r.ok)throw 0;done();}).catch(function(){b.disabled=false;alert("تعذّر إرسال الطلب، حاول مرة أخرى.");});});})();';
 
   return "<!DOCTYPE html><html lang=\"ar\" dir=\"rtl\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>" + E((data.seo && data.seo.title) || form.name) +
     '</title><meta name="description" content="' + E((data.seo && data.seo.description) || "") + '"><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet"><style>' + vars + SX_BASE + SX_SKIN[key] + "</style></head><body>" +
@@ -1857,6 +1863,195 @@ async function sessLoad(k) {
   } catch (e) { return null; }
 }
 
+/* ===== لوحة الطلبات + الصفحات المنشورة ===== */
+const ORDER_STATUS = [
+  ["new", "جديد", "#22D3EE"],
+  ["confirmed", "مؤكد", "#34D399"],
+  ["no_answer", "لا يرد", "#FBBF24"],
+  ["cancelled", "ملغي", "#F87171"],
+  ["delivered", "تم التسليم", "#A78BFA"],
+];
+function statusInfo(k) { return ORDER_STATUS.find((s) => s[0] === k) || ORDER_STATUS[0]; }
+
+function OrdersPanel({ onClose }) {
+  const [tab, setTab] = useState("orders");
+  const [orders, setOrders] = useState([]);
+  const [pages, setPages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
+  const [filter, setFilter] = useState("all");
+  const [q, setQ] = useState("");
+  const [copied, setCopied] = useState("");
+  useBackLayer(true, onClose);
+
+  async function load() {
+    try {
+      const client = await getSupabaseClient();
+      if (!client) throw new Error("تعذّر الاتصال.");
+      const [o, p] = await Promise.all([
+        client.from("orders").select("*").order("created_at", { ascending: false }).limit(500),
+        client.from("published_pages").select("id,slug,name,active,created_at,updated_at").order("updated_at", { ascending: false }),
+      ]);
+      if (o.error) throw new Error("تعذّر تحميل الطلبات. تأكد أنك شغّلت ملف SQL في Supabase.");
+      setOrders(o.data || []);
+      setPages(p.error ? [] : (p.data || []));
+      setErr("");
+    } catch (e) { setErr(e.message || "خطأ"); }
+    setLoading(false);
+  }
+  useEffect(() => { load(); const t = setInterval(load, 30000); return () => clearInterval(t); }, []);
+
+  async function setStatus(id, status) {
+    const prev = orders;
+    setOrders((os) => os.map((o) => (o.id === id ? Object.assign({}, o, { status }) : o)));
+    const client = await getSupabaseClient();
+    const r = await client.from("orders").update({ status }).eq("id", id);
+    if (r.error) { setOrders(prev); setErr("تعذّر تغيير الحالة."); }
+  }
+  async function togglePage(p) {
+    const client = await getSupabaseClient();
+    const r = await client.from("published_pages").update({ active: !p.active }).eq("id", p.id);
+    if (!r.error) setPages((ps) => ps.map((x) => (x.id === p.id ? Object.assign({}, x, { active: !p.active }) : x)));
+  }
+  function copyLink(slug) {
+    const url = window.location.origin + "/p/" + slug;
+    try { navigator.clipboard.writeText(url); } catch (e) {}
+    setCopied(slug); setTimeout(() => setCopied(""), 1800);
+  }
+  function exportCsv() {
+    const esc = (v) => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
+    const rows = [["التاريخ", "الاسم", "الهاتف", "المدينة", "العنوان", "الصفحة", "الحالة"]].concat(
+      shown.map((o) => [new Date(o.created_at).toLocaleString("en-GB"), o.name, o.phone, o.city, o.address, o.page_name, statusInfo(o.status)[1]])
+    );
+    const blob = new Blob(["\ufeff" + rows.map((r) => r.map(esc).join(",")).join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = "orders.csv";
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  }
+
+  const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+  const todayCount = orders.filter((o) => new Date(o.created_at) >= todayStart).length;
+  const newCount = orders.filter((o) => o.status === "new").length;
+  const okCount = orders.filter((o) => o.status === "confirmed" || o.status === "delivered").length;
+  const rate = orders.length ? Math.round((okCount / orders.length) * 100) : 0;
+  const needle = q.trim().toLowerCase();
+  const shown = orders.filter((o) => (filter === "all" || o.status === filter) &&
+    (!needle || [o.name, o.phone, o.city, o.page_name].some((v) => String(v || "").toLowerCase().indexOf(needle) >= 0)));
+
+  const card = { background: "#131A2A", border: "1px solid #202A42", borderRadius: 14, padding: 12 };
+  const pill = (active) => ({ flex: "none", background: active ? "#22D3EE" : "#131A2A", color: active ? "#04101C" : "#B7C0D4", border: "1px solid " + (active ? "#22D3EE" : "#202A42"), borderRadius: 99, padding: "6px 14px", fontFamily: "inherit", fontWeight: 800, fontSize: 12.5, cursor: "pointer" });
+
+  return (
+    <div dir="rtl" style={{ position: "fixed", inset: 0, zIndex: 3000, background: "#0B0F19", display: "flex", flexDirection: "column", fontFamily: "'Cairo', sans-serif" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "#0B0F19", borderBottom: "1px solid #202A42" }}>
+        <button onClick={onClose} style={{ background: "#131A2A", border: "1px solid #202A42", borderRadius: 10, color: "#E2E8F5", padding: "8px 14px", fontFamily: "inherit", fontWeight: 800, cursor: "pointer" }}>← رجوع</button>
+        <div style={{ flex: 1, color: "#F1F5F9", fontWeight: 900, fontSize: 16 }}>📦 طلباتي</div>
+        <button onClick={load} style={{ background: "#131A2A", border: "1px solid #202A42", borderRadius: 10, color: "#E2E8F5", padding: "8px 12px", fontFamily: "inherit", cursor: "pointer" }}>⟳</button>
+      </div>
+      <div style={{ display: "flex", gap: 8, padding: "10px 14px 0" }}>
+        <button onClick={() => setTab("orders")} style={pill(tab === "orders")}>الطلبات ({orders.length})</button>
+        <button onClick={() => setTab("pages")} style={pill(tab === "pages")}>🔗 صفحاتي المنشورة ({pages.length})</button>
+      </div>
+      <div style={{ flex: 1, overflowY: "auto", padding: 14 }}>
+        {err && <div style={{ color: "#F87171", fontSize: 13, marginBottom: 10 }}>{err}</div>}
+        {loading && <div style={{ color: "#8B96AC", textAlign: "center", padding: 30 }}>جارٍ التحميل...</div>}
+
+        {!loading && tab === "orders" && (
+          <div style={{ display: "grid", gap: 10, maxWidth: 640, margin: "0 auto" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8 }}>
+              {[["اليوم", todayCount], ["جديدة", newCount], ["مؤكدة", okCount], ["التأكيد", rate + "%"]].map((s) => (
+                <div key={s[0]} style={Object.assign({}, card, { textAlign: "center", padding: 10 })}>
+                  <div style={{ color: "#22D3EE", fontWeight: 900, fontSize: 20 }}>{s[1]}</div>
+                  <div style={{ color: "#8B96AC", fontSize: 11 }}>{s[0]}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 2 }}>
+              <button onClick={() => setFilter("all")} style={pill(filter === "all")}>الكل</button>
+              {ORDER_STATUS.map((s) => <button key={s[0]} onClick={() => setFilter(s[0])} style={pill(filter === s[0])}>{s[1]}</button>)}
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="بحث بالاسم أو الهاتف أو المدينة" style={{ flex: 1, background: "#131A2A", border: "1px solid #202A42", borderRadius: 10, color: "#F1F5F9", padding: "10px 12px", fontFamily: "inherit", fontSize: 13 }} />
+              <button onClick={exportCsv} disabled={!shown.length} style={{ background: "#131A2A", border: "1px solid #202A42", borderRadius: 10, color: "#E2E8F5", padding: "0 14px", fontFamily: "inherit", fontWeight: 800, fontSize: 12.5, cursor: "pointer" }}>⬇ CSV</button>
+            </div>
+            {!shown.length && <div style={{ color: "#8B96AC", textAlign: "center", padding: 30, fontSize: 14 }}>{orders.length ? "لا توجد نتائج." : "لا توجد طلبات بعد. انشر صفحة وشارك رابطها، وستظهر الطلبات هنا."}</div>}
+            {shown.map((o) => {
+              const st = statusInfo(o.status);
+              const wa = String(o.phone_intl || o.phone || "").replace(/\D/g, "");
+              return (
+                <div key={o.id} style={Object.assign({}, card, { borderInlineStart: "4px solid " + st[2] })}>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline" }}>
+                    <div style={{ color: "#F1F5F9", fontWeight: 800, fontSize: 15 }}>{o.name}</div>
+                    <div style={{ color: "#8B96AC", fontSize: 11.5, flex: "none" }}>{new Date(o.created_at).toLocaleString("ar-MA", { dateStyle: "short", timeStyle: "short" })}</div>
+                  </div>
+                  <div style={{ color: "#B7C0D4", fontSize: 13, margin: "6px 0", lineHeight: 1.8 }}>
+                    <div dir="ltr" style={{ textAlign: "right" }}>📞 {o.phone}</div>
+                    {(o.city || o.address) && <div>📍 {[o.city, o.address].filter(Boolean).join(" — ")}</div>}
+                    {o.page_name && <div style={{ color: "#8B96AC" }}>🛍 {o.page_name}</div>}
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1.3fr", gap: 8 }}>
+                    <a href={"tel:" + o.phone} style={{ textAlign: "center", background: "#1B2540", border: "1px solid #2A3654", borderRadius: 10, color: "#E2E8F5", fontWeight: 800, fontSize: 12.5, padding: "9px 4px", textDecoration: "none" }}>📞 اتصال</a>
+                    <a href={"https://wa.me/" + wa} target="_blank" rel="noopener noreferrer" style={{ textAlign: "center", background: "#0F3D2A", border: "1px solid #1D6B47", borderRadius: 10, color: "#6EE7B7", fontWeight: 800, fontSize: 12.5, padding: "9px 4px", textDecoration: "none" }}>💬 واتساب</a>
+                    <select value={o.status} onChange={(e) => setStatus(o.id, e.target.value)} style={{ background: "#131A2A", border: "1px solid " + st[2], borderRadius: 10, color: st[2], fontWeight: 800, fontSize: 12.5, padding: "8px 4px", fontFamily: "inherit" }}>
+                      {ORDER_STATUS.map((s) => <option key={s[0]} value={s[0]}>{s[1]}</option>)}
+                    </select>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {!loading && tab === "pages" && (
+          <div style={{ display: "grid", gap: 10, maxWidth: 640, margin: "0 auto" }}>
+            {!pages.length && <div style={{ color: "#8B96AC", textAlign: "center", padding: 30, fontSize: 14 }}>لا توجد صفحات منشورة بعد. اضغط "🔗 نشر" على أي صفحة.</div>}
+            {pages.map((p) => (
+              <div key={p.id} style={Object.assign({}, card, { opacity: p.active ? 1 : 0.55 })}>
+                <div style={{ color: "#F1F5F9", fontWeight: 800, fontSize: 14 }}>{p.name || "صفحة"}</div>
+                <div dir="ltr" style={{ color: "#22D3EE", fontSize: 12.5, margin: "4px 0 8px", wordBreak: "break-all", textAlign: "right" }}>{window.location.origin + "/p/" + p.slug}</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                  <button onClick={() => copyLink(p.slug)} style={{ background: "linear-gradient(90deg,#3B82F6,#22D3EE)", border: "none", borderRadius: 10, color: "#04101C", fontWeight: 800, fontSize: 12.5, padding: "9px 4px", cursor: "pointer", fontFamily: "inherit" }}>{copied === p.slug ? "✓ تم النسخ" : "نسخ الرابط"}</button>
+                  <a href={"/p/" + p.slug} target="_blank" rel="noopener noreferrer" style={{ textAlign: "center", background: "#1B2540", border: "1px solid #2A3654", borderRadius: 10, color: "#E2E8F5", fontWeight: 800, fontSize: 12.5, padding: "9px 4px", textDecoration: "none" }}>فتح</a>
+                  <button onClick={() => togglePage(p)} style={{ background: "transparent", border: "1px solid #2A3654", borderRadius: 10, color: p.active ? "#F87171" : "#34D399", fontWeight: 800, fontSize: 12.5, padding: "9px 4px", cursor: "pointer", fontFamily: "inherit" }}>{p.active ? "إيقاف" : "تفعيل"}</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PublishModal({ pub, onClose }) {
+  const [copied, setCopied] = useState(false);
+  if (!pub) return null;
+  function copy() { try { navigator.clipboard.writeText(pub.url); } catch (e) {} setCopied(true); setTimeout(() => setCopied(false), 1800); }
+  return (
+    <div dir="rtl" onClick={() => { if (!pub.busy) onClose(); }} style={{ position: "fixed", inset: 0, zIndex: 4000, background: "rgba(5,7,12,.8)", display: "flex", alignItems: "center", justifyContent: "center", padding: 18, fontFamily: "'Cairo', sans-serif" }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: "#131A2A", border: "1px solid #202A42", borderRadius: 18, padding: 20, width: "100%", maxWidth: 420, textAlign: "center" }}>
+        {pub.busy && (<div style={{ color: "#E2E8F5", padding: "18px 0" }}><div style={{ fontSize: 34 }}>⏳</div><div style={{ fontWeight: 800, marginTop: 8 }}>جارٍ نشر الصفحة...</div><div style={{ color: "#8B96AC", fontSize: 12.5, marginTop: 4 }}>رفع الصور وإنشاء الرابط، قد يستغرق بضع ثواني.</div></div>)}
+        {!pub.busy && pub.error && (<div><div style={{ fontSize: 34 }}>⚠️</div><div style={{ color: "#F87171", fontWeight: 700, margin: "8px 0 14px", fontSize: 14 }}>{pub.error}</div><button onClick={onClose} style={{ background: "#1B2540", border: "1px solid #2A3654", borderRadius: 10, color: "#E2E8F5", padding: "9px 22px", fontFamily: "inherit", fontWeight: 800, cursor: "pointer" }}>إغلاق</button></div>)}
+        {!pub.busy && pub.url && (
+          <div>
+            <div style={{ fontSize: 34 }}>🎉</div>
+            <div style={{ color: "#F1F5F9", fontWeight: 900, fontSize: 17, margin: "6px 0 10px" }}>صفحتك منشورة</div>
+            <div dir="ltr" style={{ background: "#0B0F19", border: "1px solid #202A42", borderRadius: 10, color: "#22D3EE", padding: "10px 12px", fontSize: 13, wordBreak: "break-all", textAlign: "left", marginBottom: 12 }}>{pub.url}</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+              <button onClick={copy} style={{ background: "linear-gradient(90deg,#3B82F6,#22D3EE)", border: "none", borderRadius: 10, color: "#04101C", fontWeight: 800, fontSize: 13, padding: "10px 4px", cursor: "pointer", fontFamily: "inherit" }}>{copied ? "✓ تم" : "نسخ"}</button>
+              <a href={pub.url} target="_blank" rel="noopener noreferrer" style={{ background: "#1B2540", border: "1px solid #2A3654", borderRadius: 10, color: "#E2E8F5", fontWeight: 800, fontSize: 13, padding: "10px 4px", textDecoration: "none" }}>فتح</a>
+              <a href={"https://wa.me/?text=" + encodeURIComponent(pub.url)} target="_blank" rel="noopener noreferrer" style={{ background: "#0F3D2A", border: "1px solid #1D6B47", borderRadius: 10, color: "#6EE7B7", fontWeight: 800, fontSize: 13, padding: "10px 4px", textDecoration: "none" }}>واتساب</a>
+            </div>
+            <div style={{ color: "#8B96AC", fontSize: 11.5, marginTop: 12, lineHeight: 1.7 }}>استعمل هذا الرابط في الإعلان. الطلبات كتوصلك فـ"📦 طلباتي". إلا نشرت نفس الصفحة مرة أخرى كيتحدّث نفس الرابط.</div>
+            <button onClick={onClose} style={{ marginTop: 12, background: "transparent", border: "1px solid #2A3654", borderRadius: 10, color: "#B7C0D4", padding: "8px 20px", fontFamily: "inherit", fontWeight: 700, cursor: "pointer" }}>إغلاق</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
 async function pagesLoad(k) { const v = await sessLoad(k); return Array.isArray(v) ? v : []; }
 async function pagesUpsert(k, entry) {
   const list = await pagesLoad(k);
@@ -1889,6 +2084,72 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
   const pageIdRef = useRef(null);
   const [savedPages, setSavedPages] = useState([]);
   const [showPages, setShowPages] = useState(false);
+  const [showOrders, setShowOrders] = useState(false);
+  const [newOrders, setNewOrders] = useState(0);
+  const [pub, setPub] = useState(null);
+  const uploadCacheRef = useRef({});
+  async function refreshNewOrders() {
+    try {
+      const c = await getSupabaseClient();
+      if (!c || !user) return;
+      const r = await c.from("orders").select("id", { count: "exact", head: true }).eq("status", "new");
+      if (!r.error) setNewOrders(r.count || 0);
+    } catch (e) {}
+  }
+  useEffect(() => { refreshNewOrders(); }, [user && user.id]);
+  function makeSlug() {
+    const abc = "abcdefghijkmnpqrstuvwxyz23456789";
+    const r = crypto.getRandomValues(new Uint8Array(8));
+    let s = ""; r.forEach((v) => { s += abc[v % abc.length]; });
+    return s;
+  }
+  async function publishEntry(entry) {
+    setPub({ busy: true });
+    try {
+      const client = await getSupabaseClient();
+      if (!client || !user) throw new Error("سجّل الدخول أولاً.");
+      const c = COUNTRIES.find((x) => x.code === entry.form.countryCode) || COUNTRIES[0];
+      const uploaded = [];
+      for (let i = 0; i < (entry.images || []).length; i++) {
+        const im = entry.images[i];
+        const ck = (im.dataUrl || "").length + ":" + (im.dataUrl || "").slice(-40);
+        let pubUrl = uploadCacheRef.current[ck];
+        if (!pubUrl) {
+          const blob = await (await fetch(im.dataUrl)).blob();
+          const ext = ((blob.type || "image/jpeg").split("/")[1] || "jpg").replace("jpeg", "jpg").replace(/[^a-z0-9]/g, "") || "jpg";
+          const path = user.id + "/" + Date.now().toString(36) + "-" + i + "." + ext;
+          const up = await client.storage.from("page-images").upload(path, blob, { contentType: blob.type || "image/jpeg" });
+          if (up.error) throw new Error("تعذّر رفع الصور: " + up.error.message);
+          pubUrl = client.storage.from("page-images").getPublicUrl(path).data.publicUrl;
+          uploadCacheRef.current[ck] = pubUrl;
+        }
+        uploaded.push(Object.assign({}, im, { dataUrl: pubUrl }));
+      }
+      const d = entry.data;
+      const tk = d._paletteVariant || DESIGN_SYSTEMS.Tech[0];
+      const html = d._template ? buildStructureHTML(d, uploaded, entry.form, c) : buildStandaloneHTML(d, tk, uploaded, entry.form, c);
+      if (html.length > 3500000) throw new Error("حجم الصفحة كبير جداً للنشر.");
+      const ex = await client.from("published_pages").select("slug").eq("user_id", user.id).eq("local_id", entry.localId).maybeSingle();
+      if (ex.error) throw new Error("تعذّر الوصول لجدول الصفحات. تأكد أنك شغّلت ملف SQL في Supabase.");
+      let slug = ex.data && ex.data.slug;
+      if (slug) {
+        const up = await client.from("published_pages").update({ html, name: entry.form.name, phone_code: c.phoneCode, active: true, updated_at: new Date().toISOString() }).eq("user_id", user.id).eq("slug", slug);
+        if (up.error) throw new Error("تعذّر تحديث الصفحة.");
+      } else {
+        let done = false;
+        for (let t = 0; t < 4 && !done; t++) {
+          slug = makeSlug();
+          const ins = await client.from("published_pages").insert({ slug, user_id: user.id, local_id: entry.localId, name: entry.form.name, phone_code: c.phoneCode, html });
+          if (!ins.error) done = true;
+          else if (ins.error.code !== "23505") throw new Error("تعذّر نشر الصفحة: " + ins.error.message);
+        }
+        if (!done) throw new Error("تعذّر إنشاء رابط. أعد المحاولة.");
+      }
+      setPub({ url: window.location.origin + "/p/" + slug });
+    } catch (e) {
+      setPub({ error: e.message || "تعذّر النشر." });
+    }
+  }
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => { pagesLoad(pagesKey).then(setSavedPages); }, [pagesKey]);
   useEffect(() => {
@@ -2001,24 +2262,9 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
       const nextCredits = Math.max(0, previousCredits - 1);
       const client = await getSupabaseClient();
       if (!isAdmin && client && user && previousCredits > 0) {
-        let updateResult = await client.from("users")
-          .update({ credits: nextCredits })
-          .eq("id", user.id)
-          .eq("credits", previousCredits)
-          .select("credits")
-          .single();
-
-        // توافق مع المشروع الحالي إذا كانت النقاط ما زالت في profiles.
-        if (updateResult.error) {
-          updateResult = await client.from("profiles")
-            .update({ credits: nextCredits })
-            .eq("id", user.id)
-            .eq("credits", previousCredits)
-            .select("credits")
-            .single();
-        }
-        if (updateResult.error) throw new Error("تعذّر تحديث رصيد النقاط. لم يتم اعتماد التوليد، حاول مرة أخرى.");
-        setCredits(Number(updateResult.data.credits));
+        const rpc = await client.rpc("use_credit");
+        if (rpc.error) throw new Error("تعذّر خصم النقطة. تأكد من رصيدك ثم أعد المحاولة.");
+        setCredits(Number(rpc.data));
       }
 
       pageIdRef.current = "p" + Date.now() + Math.floor(Math.random() * 1000);
@@ -2153,6 +2399,8 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
 
   return (
     <div dir="rtl" style={{ fontFamily: "'Cairo', sans-serif", minHeight: "100vh", background: "#0B0F19" }}>
+      {showOrders && <OrdersPanel onClose={() => { setShowOrders(false); refreshNewOrders(); }} />}
+      <PublishModal pub={pub} onClose={() => setPub(null)} />
       {viewPage && (
         <div style={{ position: "fixed", inset: 0, zIndex: 3000, background: "#05070C", display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", gap: 10, alignItems: "center", padding: "10px 14px", background: "#0B0F19", borderBottom: "1px solid #202A42" }}>
@@ -2162,6 +2410,14 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
             <button onClick={() => downloadSavedImage(viewPage)} disabled={imgBusy === viewPage.id} style={{ background: "linear-gradient(90deg,#8B5CF6,#EC4899)", border: "none", borderRadius: 10, color: "#fff", fontWeight: 800, padding: "8px 12px", cursor: "pointer", fontFamily: "inherit", opacity: imgBusy === viewPage.id ? 0.6 : 1 }}>{imgBusy === viewPage.id ? "⏳" : "صورة"}</button>
           </div>
           <iframe title="saved" srcDoc={savedHtml(viewPage)} style={{ flex: 1, width: "100%", border: 0, background: "#fff" }} />
+        </div>
+      )}
+      {step === "form" && (
+        <div style={{ maxWidth: 560, margin: "0 auto", padding: "14px 16px 0" }}>
+          <button onClick={() => setShowOrders(true)} style={{ width: "100%", background: "#131A2A", border: "1px solid #202A42", color: "#E2E8F5", borderRadius: 14, padding: "12px 16px", fontFamily: "inherit", fontWeight: 800, fontSize: 14, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span>📦 طلباتي والصفحات المنشورة</span>
+            {newOrders > 0 ? <span style={{ background: "#22D3EE", color: "#04101C", borderRadius: 99, padding: "1px 10px", fontSize: 12.5 }}>{newOrders} جديد</span> : <span>◂</span>}
+          </button>
         </div>
       )}
       {step === "form" && savedPages.length > 0 && (
@@ -2181,7 +2437,8 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
                     </div>
                     <button onClick={() => { if (window.confirm("حذف هذه الصفحة؟")) deleteSavedPage(p.id); }} aria-label="حذف" style={{ background: "transparent", border: "1px solid #2A3654", borderRadius: 10, color: "#F87171", fontSize: 14, padding: "6px 10px", cursor: "pointer" }}>🗑</button>
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    <button onClick={() => publishEntry({ data: p.history[p.historyIdx], images: p.images || [], form: p.form, localId: p.id })} style={{ gridColumn: "1 / -1", background: "linear-gradient(90deg,#10B981,#22D3EE)", border: "none", borderRadius: 10, color: "#04101C", fontWeight: 900, fontSize: 13, padding: "10px 6px", cursor: "pointer", fontFamily: "inherit" }}>🔗 نشر برابط مباشر</button>
                     <button onClick={() => setViewPage(p)} style={{ background: "#1B2540", border: "1px solid #2A3654", borderRadius: 10, color: "#E2E8F5", fontWeight: 800, fontSize: 12.5, padding: "9px 6px", cursor: "pointer", fontFamily: "inherit" }}>👁 معاينة</button>
                     <button onClick={() => downloadSaved(p)} style={{ background: "linear-gradient(90deg,#3B82F6,#22D3EE)", border: "none", borderRadius: 10, color: "#04101C", fontWeight: 800, fontSize: 12.5, padding: "9px 6px", cursor: "pointer", fontFamily: "inherit" }}>⬇ HTML</button>
                     <button onClick={() => downloadSavedImage(p)} disabled={imgBusy === p.id} style={{ background: "linear-gradient(90deg,#8B5CF6,#EC4899)", border: "none", borderRadius: 10, color: "#fff", fontWeight: 800, fontSize: 12.5, padding: "9px 6px", cursor: "pointer", fontFamily: "inherit", opacity: imgBusy === p.id ? 0.6 : 1 }}>{imgBusy === p.id ? "⏳ ..." : "🖼 صورة"}</button>
@@ -2202,6 +2459,7 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
           onCopy={copyHTML} onDownload={downloadHTML} copyStatus={copyStatus} error={error}
           onShuffleDesign={handleShuffleDesign}
           tplHtml={htmlString}
+          onPublish={() => publishEntry({ data, images, form, localId: pageIdRef.current || (pageIdRef.current = "p" + Date.now() + Math.floor(Math.random() * 1000)) })}
           onBack={() => setStep("form")}
           onBuyCredits={onBuyCredits}
           onPreviewChange={onPreviewChange} />
@@ -2306,7 +2564,7 @@ function PreviewScreen(props) {
   const {
     data, tokens, images, form, country, previewMode, setPreviewMode,
     editCmd, setEditCmd, onApplyEdit, editing, canUndo, canRedo,
-    onUndo, onRedo, onDownload, error, onBack, onShuffleDesign,
+    onUndo, onRedo, onDownload, onPublish, error, onBack, onShuffleDesign,
     onBuyCredits, onPreviewChange, tplHtml
   } = props;
 
@@ -2425,6 +2683,7 @@ function PreviewScreen(props) {
         <div className="toolbar-main">
           <button onClick={onBack} className="editor-tool"><SvgIcon name="back" size={14} /><span>رجوع</span></button>
           <button onClick={onShuffleDesign} className="editor-tool editor-design"><SvgIcon name="sparkle" size={14} /><span>تصميم</span></button>
+          <button onClick={onPublish} className="editor-tool tool-dl" title="نشر برابط مباشر"><span>🔗 نشر</span></button>
           <button onClick={onDownload} className="editor-tool tool-dl" title="تنزيل كملف HTML"><SvgIcon name="download" size={14} /><span>HTML</span></button>
           <button onClick={exportImage} disabled={imageLoading} className="editor-tool tool-dl" title="تنزيل كصورة PNG"><SvgIcon name="image" size={14} /><span>{imageLoading ? "..." : "PNG"}</span></button>
           <button onClick={() => setPreviewOnly(true)} className="editor-tool"><SvgIcon name="eye" size={14} /><span>معاينة</span></button>
@@ -3097,7 +3356,7 @@ function buildStandaloneHTML(data, tokens, images, form, country) {
     'document.addEventListener("keydown",function(e){if(!lb||!lb.classList.contains("open"))return;if(e.key==="Escape")closeLb();if(e.key==="ArrowRight")nextLb();if(e.key==="ArrowLeft")prevLb();});' +
     'var touchStartX=null;if(lb){lb.addEventListener("touchstart",function(e){touchStartX=e.touches[0].clientX;});lb.addEventListener("touchend",function(e){if(touchStartX===null)return;var diff=e.changedTouches[0].clientX-touchStartX;if(Math.abs(diff)>40){if(diff>0)prevLb();else nextLb();}touchStartX=null;});}' +
     'var ofSubmit=$("ofSubmit");' +
-    'if(ofSubmit){ofSubmit.addEventListener("click",function(){var name=($("ofName")||{}).value||"";var phone=($("ofPhone")||{}).value||"";if(!name.trim()||!phone.trim()){alert("الرجاء إدخال الاسم ورقم الهاتف على الأقل.");return;}var formWrap=$("orderFormWrap");var successWrap=$("orderSuccessWrap");if(formWrap)formWrap.style.display="none";if(successWrap)successWrap.style.display="block";});}' +
+    'if(ofSubmit){ofSubmit.addEventListener("click",function(){var name=($("ofName")||{}).value||"";var phone=($("ofPhone")||{}).value||"";if(!name.trim()||!phone.trim()){alert("الرجاء إدخال الاسم ورقم الهاتف على الأقل.");return;}var formWrap=$("orderFormWrap");var successWrap=$("orderSuccessWrap");function done(){if(formWrap)formWrap.style.display="none";if(successWrap)successWrap.style.display="block";}var pp=location.pathname.split("/");var slug=pp[1]==="p"?pp[2]:"";if(!slug){done();return;}ofSubmit.disabled=true;fetch("/api/order",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({slug:slug,name:name,phone:phone,city:($("ofCity")||{}).value||"",address:($("ofAddress")||{}).value||"",hp:""})}).then(function(r){if(!r.ok)throw 0;done();}).catch(function(){ofSubmit.disabled=false;alert("تعذّر إرسال الطلب، حاول مرة أخرى.");});});}' +
     'Array.prototype.forEach.call(document.getElementsByTagName("a"),function(a){var href=a.getAttribute("href")||"";if(href.charAt(0)!=="#")return;a.addEventListener("click",function(e){var id=href.slice(1);var el=id?document.getElementById(id):null;if(el){e.preventDefault();el.scrollIntoView({behavior:"smooth",block:"start"});}});});' +
     '})();' +
     '</' + 'script>' +
