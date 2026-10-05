@@ -2480,8 +2480,8 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
       {step === "form" && (
         <nav dir="rtl" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 3500, display: "flex", background: "rgba(14,22,40,.98)", borderTop: "1px solid #202A42", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
           {[["create", "✨", "إنشاء صفحة"], ["orders", "📦", "طلباتي"], ["link", "🔗", "الرابط"], ["pages", "📂", "آخر صفحاتي"]].map(([k, ic, lb]) => (
-            <button key={k} onClick={() => setTab(k)} style={{ flex: 1, background: "none", border: "none", color: k === "orders" ? "#F5C451" : (tab === k ? "#22D3EE" : "#8B96AC"), fontFamily: "inherit", fontWeight: 800, fontSize: 11.5, padding: "9px 2px 8px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, position: "relative" }}>
-              <span style={{ fontSize: 20 }}>{ic}</span>{lb}{k === "orders" ? <span style={{ position: "absolute", top: -8, left: "50%", transform: "translateX(-50%)", background: "#1A1204", color: "#F5C451", border: "1px solid #F5C451", borderRadius: 99, fontSize: 10, fontWeight: 900, padding: "0 7px", lineHeight: "16px", whiteSpace: "nowrap" }}>👑 VIP</span> : null}
+            <button key={k} onClick={() => setTab(k)} style={{ flex: 1, background: "none", border: "none", color: (k === "orders" || k === "link") ? "#F5C451" : (tab === k ? "#22D3EE" : "#8B96AC"), fontFamily: "inherit", fontWeight: 800, fontSize: 11.5, padding: "9px 2px 8px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, position: "relative" }}>
+              <span style={{ fontSize: 20 }}>{ic}</span>{lb}{(k === "orders" || k === "link") ? <span style={{ position: "absolute", top: -8, left: "50%", transform: "translateX(-50%)", background: "#1A1204", color: "#F5C451", border: "1px solid #F5C451", borderRadius: 99, fontSize: 10, fontWeight: 900, padding: "0 7px", lineHeight: "16px", whiteSpace: "nowrap" }}>👑 VIP</span> : null}
               {k === "orders" && newOrders > 0 ? <span style={{ position: "absolute", top: 4, right: "50%", marginRight: -26, background: "#22D3EE", color: "#04101C", borderRadius: 99, fontSize: 10.5, padding: "0 6px" }}>{newOrders}</span> : null}
             </button>
           ))}
@@ -2580,8 +2580,7 @@ function FormScreen({ form, setForm, images, onUpload, onRemoveImage, onEnhanceI
         <span style={{ color: "#5B6478", fontSize: 11, marginTop: -10 }}>إذا عطّلت هذا الخيار، فستنقلك الأزرار مباشرة إلى الواتساب أو الاتصال إذا كان الرقم متوفراً.</span>
         </Sec>
         {error && <div style={{ color: "#F87171", fontSize: 13, background: "#2A1519", padding: "8px 12px", borderRadius: 8 }}>{error}</div>}
-        <button onClick={onGenerate} style={{ background: "linear-gradient(135deg,#FDE68A,#F5C451 45%,#D99A1E)", border: "1px solid #FFE9A8", borderRadius: 14, color: "#3A2600", fontWeight: 900, fontSize: 17, padding: "17px 20px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, fontFamily: "inherit", position: "relative", boxShadow: "0 0 22px rgba(245,196,81,.5), 0 8px 24px rgba(0,0,0,.4)" }}>
-          <span style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", background: "#1A1204", color: "#F5C451", border: "1px solid #F5C451", borderRadius: 99, fontSize: 11, fontWeight: 900, padding: "0 10px", lineHeight: "18px", whiteSpace: "nowrap" }}>👑 VIP</span>
+        <button onClick={onGenerate} style={{ background: "linear-gradient(90deg,#3B82F6,#22D3EE,#5eead4)", border: "none", borderRadius: 14, color: "#04101C", fontWeight: 900, fontSize: 17, padding: "17px 20px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, fontFamily: "inherit", boxShadow: "0 8px 24px rgba(34,211,238,.25)" }}>
           أنشئ صفحة الهبوط <span style={{ fontSize: 20 }}>🚀</span>
         </button>
         <p style={{ textAlign: "center", color: "#5c6b85", fontSize: 11.5, margin: 0 }}>يستغرق التوليد عادة من 30 ثانية إلى دقيقة</p>
