@@ -871,6 +871,13 @@ const CREDIT_PLANS = [
   },
 ];
 
+/* باقة VIP: دفعة واحدة = نقاط + وصول للرابط وطلباتي لمدة محددة. بدّل الأرقام هنا فقط. */
+const VIP_PRICE_ID = ""; // ضع هنا Price ID ديال باقة VIP من Paddle (49$)
+const VIP_PLAN = {
+  name: "VIP", credits: 50, days: 30, price: "49$",
+  features: ["50 نقطة توليد صفحات هبوط", "رابط مباشر جاهز للإعلان", "استقبال الطلبات في لوحة خاصة", "كل ميزات المنصة مفتوحة لمدة 30 يوماً"],
+};
+
 function CreditsModal({ open, onClose, onBuy, buying, buyError }) {
   const [prices, setPrices] = useState(null);
   const [priceError, setPriceError] = useState("");
@@ -892,6 +899,16 @@ function CreditsModal({ open, onClose, onBuy, buying, buyError }) {
           <div style={{ fontSize: 30 }}>⚡</div>
           <h2 style={{ margin: "6px 0", color: "#F1F5F9", fontSize: 21 }}>اشترِ نقاط التوليد</h2>
           <p style={{ margin: 0, color: "#8B96AC", fontSize: 12.5 }}>كل صفحة هبوط يتم توليدها تستهلك نقطة واحدة.</p>
+        </div>
+        <div style={{ position: "relative", marginBottom: 22, borderRadius: 18, padding: "28px 18px 18px", background: "linear-gradient(160deg,#2A1E06,#171106)", border: "1.5px solid #F5C451", boxShadow: "0 0 28px rgba(245,196,81,.35)", textAlign: "center" }}>
+          <span style={{ position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg,#FDE68A,#F5C451,#D99A1E)", color: "#3A2600", borderRadius: 99, fontSize: 12, fontWeight: 900, padding: "3px 14px", whiteSpace: "nowrap" }}>👑 VIP</span>
+          <div style={{ color: "#FDE68A", fontWeight: 900, fontSize: 18 }}>باقة VIP</div>
+          <div style={{ fontSize: 40, fontWeight: 900, margin: "6px 0 2px", background: "linear-gradient(135deg,#FDE68A,#F5C451,#D99A1E)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{VIP_PLAN.price}</div>
+          <div style={{ color: "#B9A268", fontSize: 12, marginBottom: 14 }}>دفعة واحدة • {VIP_PLAN.days} يوماً بدون اشتراك</div>
+          <ul style={{ listStyle: "none", margin: "0 0 16px", padding: 0, display: "grid", gap: 8, textAlign: "right" }}>
+            {VIP_PLAN.features.map((f) => <li key={f} style={{ color: "#F3E7C2", fontSize: 13.5, fontWeight: 600 }}><span style={{ color: "#F5C451", marginLeft: 8 }}>✓</span>{f}</li>)}
+          </ul>
+          <button onClick={() => VIP_PRICE_ID && onBuy(VIP_PRICE_ID)} disabled={buying || !VIP_PRICE_ID} style={{ width: "100%", background: "linear-gradient(135deg,#FDE68A,#F5C451 45%,#D99A1E)", border: "none", borderRadius: 12, color: "#3A2600", fontWeight: 900, fontSize: 16, padding: "14px", cursor: VIP_PRICE_ID ? "pointer" : "not-allowed", opacity: VIP_PRICE_ID ? 1 : 0.6, fontFamily: "inherit", boxShadow: "0 0 16px rgba(245,196,81,.45)" }}>{buying ? "جاري الفتح..." : VIP_PRICE_ID ? "👑 اشترك في VIP" : "👑 سيتم التفعيل قريباً"}</button>
         </div>
         <div className="credit-plans">
           {CREDIT_PLANS.map((plan) => {
@@ -1431,11 +1448,16 @@ function AuthGate() {
         const roleResult = await client.from("profiles").select("role").eq("id", userId).single();
         if (!roleResult.error && roleResult.data && roleResult.data.role) role = roleResult.data.role;
       } catch (e3) {}
+      let vipUntil = null;
+      try {
+        const vipResult = await client.from("profiles").select("vip_until").eq("id", userId).single();
+        if (!vipResult.error && vipResult.data) vipUntil = vipResult.data.vip_until || null;
+      } catch (e4) {}
       if (!result.error && result.data) {
-        setProfile({ ...result.data, role });
+        setProfile({ ...result.data, role, vipUntil });
         setCredits(Number(result.data.credits || 0));
       } else {
-        setProfile({ role });
+        setProfile({ role, vipUntil });
         setCredits(0);
       }
     } catch (e) {
@@ -1572,6 +1594,7 @@ function AuthGate() {
   // Admin = صاحب المنصة (role = 'admin' فـ profiles). كيسمح ليه بالتوليد بلا خصم نقاط.
   // هاد التحقق واجهي بحت (UX فقط) — الحماية الحقيقية خاصها تكون فالـ Backend (شوف الملاحظة تحت handleGenerate).
   const isAdmin = !!(profile && profile.role === "admin");
+  const isVip = isAdmin || !!(profile && profile.vipUntil && new Date(profile.vipUntil).getTime() > Date.now());
 
   if (!session) {
     if (view === "home") return <HomePage onLogin={() => switchView("login")} onSignup={() => switchView("signup")} />;
@@ -1597,6 +1620,7 @@ function AuthGate() {
         setCredits={setCredits}
         user={session.user}
         isAdmin={isAdmin}
+        isVip={isVip}
         onBuyCredits={() => setShowBuyModal(true)}
         onPreviewChange={setEditorPreview}
       />
@@ -2062,7 +2086,7 @@ async function pagesUpsert(k, entry) {
 }
 async function pagesDelete(k, id) { const list = await pagesLoad(k); await sessSave(k, list.filter((x) => x.id !== id)); }
 
-function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange }) {
+function App({ credits, setCredits, user, isAdmin, isVip, onBuyCredits, onPreviewChange }) {
   const [step, setStep] = useState("form");
   const [form, setForm] = useState({ name: "", price: "", priceOld: "", description: "", countryCode: "SA", dialect: "auto", whatsapp: "", showWa: false, showCall: false, showCod: false, showOrderForm: false });
   const [images, setImages] = useState([]);
@@ -2107,6 +2131,7 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
     return s;
   }
   async function publishEntry(entry) {
+    if (!isVip) { onBuyCredits(); return; }
     setPub({ busy: true });
     try {
       const client = await getSupabaseClient();
@@ -2417,7 +2442,7 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
       )}
       {false && (
         <div style={{ maxWidth: 560, margin: "0 auto", padding: "14px 16px 0" }}>
-          <button onClick={() => setShowOrders(true)} style={{ width: "100%", background: "#131A2A", border: "1px solid #202A42", color: "#E2E8F5", borderRadius: 14, padding: "12px 16px", fontFamily: "inherit", fontWeight: 800, fontSize: 14, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <button onClick={() => (isVip ? setShowOrders(true) : onBuyCredits())} style={{ width: "100%", background: "#131A2A", border: "1px solid #202A42", color: "#E2E8F5", borderRadius: 14, padding: "12px 16px", fontFamily: "inherit", fontWeight: 800, fontSize: 14, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span>📦 طلباتي والصفحات المنشورة</span>
             {newOrders > 0 ? <span style={{ background: "#22D3EE", color: "#04101C", borderRadius: 99, padding: "1px 10px", fontSize: 12.5 }}>{newOrders} جديد</span> : <span>◂</span>}
           </button>
@@ -2456,8 +2481,8 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
         </div>
       )}
       {step === "form" && tab === "create" && <FormScreen form={form} setForm={setForm} images={images} onUpload={handleImageUpload} onRemoveImage={removeImage} onEnhanceImage={handleEnhanceImage} enhancingIdx={enhancingIdx} error={error} onGenerate={handleGenerate} />}
-      {step === "form" && tab === "orders" && <OrdersPanel embedded onClose={() => { setTab("create"); refreshNewOrders(); }} />}
-      {step === "form" && tab === "link" && (
+      {step === "form" && tab === "orders" && isVip && <OrdersPanel embedded onClose={() => { setTab("create"); refreshNewOrders(); }} />}
+      {step === "form" && tab === "link" && isVip && (
         <div style={{ maxWidth: 560, margin: "0 auto", padding: "18px 16px 0" }}>
           <div style={{ background: "#131A2A", border: "1px solid #202A42", borderRadius: 16, padding: 16 }}>
             <div style={{ color: "#F1F5F9", fontWeight: 900, fontSize: 16, marginBottom: 12 }}>🔗 رابط الصفحة</div>
@@ -2480,8 +2505,8 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
       {step === "form" && (
         <nav dir="rtl" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 3500, display: "flex", background: "rgba(14,22,40,.98)", borderTop: "1px solid #202A42", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
           {[["create", "✨", "إنشاء صفحة"], ["orders", "📦", "طلباتي"], ["link", "🔗", "الرابط"], ["pages", "📂", "آخر صفحاتي"]].map(([k, ic, lb]) => (
-            <button key={k} onClick={() => setTab(k)} style={{ flex: 1, background: "none", border: "none", color: (k === "orders" || k === "link") ? "#F5C451" : (tab === k ? "#22D3EE" : "#8B96AC"), fontFamily: "inherit", fontWeight: 800, fontSize: 11.5, padding: "9px 2px 8px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, position: "relative" }}>
-              <span style={{ fontSize: 20 }}>{ic}</span>{lb}{(k === "orders" || k === "link") ? <span style={{ position: "absolute", top: -8, left: "50%", transform: "translateX(-50%)", background: "#1A1204", color: "#F5C451", border: "1px solid #F5C451", borderRadius: 99, fontSize: 10, fontWeight: 900, padding: "0 7px", lineHeight: "16px", whiteSpace: "nowrap" }}>👑 VIP</span> : null}
+            <button key={k} onClick={() => { if ((k === "orders" || k === "link") && !isVip) { onBuyCredits(); } else { setTab(k); } }} style={{ flex: 1, background: "none", border: "none", color: (k === "orders" || k === "link") ? "#F5C451" : (tab === k ? "#22D3EE" : "#8B96AC"), fontFamily: "inherit", fontWeight: 800, fontSize: 11.5, padding: "9px 2px 8px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, position: "relative" }}>
+              <span style={{ fontSize: 20 }}>{ic}</span>{lb}{((k === "orders" || k === "link") && !isVip) ? " 🔒" : ""}{(k === "orders" || k === "link") ? <span style={{ position: "absolute", top: -8, left: "50%", transform: "translateX(-50%)", background: "#1A1204", color: "#F5C451", border: "1px solid #F5C451", borderRadius: 99, fontSize: 10, fontWeight: 900, padding: "0 7px", lineHeight: "16px", whiteSpace: "nowrap" }}>👑 VIP</span> : null}
               {k === "orders" && newOrders > 0 ? <span style={{ position: "absolute", top: 4, right: "50%", marginRight: -26, background: "#22D3EE", color: "#04101C", borderRadius: 99, fontSize: 10.5, padding: "0 6px" }}>{newOrders}</span> : null}
             </button>
           ))}
