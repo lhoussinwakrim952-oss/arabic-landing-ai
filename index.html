@@ -557,7 +557,7 @@ async function callClaude(content) {
     // الرد ماشي JSON صحيح — غالباً خطأ من السيرفر نفسه (حجم الطلب كبير، انتهاء المهلة، أو المسار /api/generate غير موجود)
     const preview = (rawText || "").trim().slice(0, 120);
     if (response.status === 413 || /request entity too large/i.test(preview)) {
-      throw new Error("حجم الصور المرسلة كبير بزاف على السيرفر (خطأ 413: Request Entity Too Large). جرّب صور أقل أو بجودة أخف.");
+      throw new Error("حجم الصور المرسلة كبير جداً على الخادم (خطأ 413: Request Entity Too Large). جرّب صور أقل أو بجودة أخف.");
     }
     if (response.status === 404) {
       throw new Error("نقطة الاتصال /api/generate غير موجودة على السيرفر. تأكد من إعداد الـ backend.");
@@ -878,7 +878,7 @@ const VIP_PLAN = {
   features: ["50 نقطة توليد صفحات هبوط", "رابط مباشر جاهز للإعلان", "استقبال الطلبات في لوحة خاصة", "كل ميزات المنصة مفتوحة لمدة 30 يوماً"],
 };
 
-function CreditsModal({ open, onClose, onBuy, buying, buyError }) {
+function CreditsModal({ open, onClose, onBuy, buying, buyError, focus, onShowPlans }) {
   const [prices, setPrices] = useState(null);
   const [priceError, setPriceError] = useState("");
   useEffect(() => {
@@ -891,15 +891,29 @@ function CreditsModal({ open, onClose, onBuy, buying, buyError }) {
   }, [open, prices]);
   if (!open) return null;
   const err = buyError || priceError;
+  const vipCard = (
+        <div style={{ position: "relative", marginTop: focus === "vip" ? 8 : 26, borderRadius: 18, padding: "28px 18px 18px", background: "linear-gradient(160deg,#2A1E06,#171106)", border: "1.5px solid #F5C451", boxShadow: "0 0 28px rgba(245,196,81,.35)", textAlign: "center" }}>
+          <span style={{ position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg,#FDE68A,#F5C451,#D99A1E)", color: "#3A2600", borderRadius: 99, fontSize: 12, fontWeight: 900, padding: "3px 14px", whiteSpace: "nowrap" }}>👑 VIP</span>
+          <div style={{ color: "#FDE68A", fontWeight: 900, fontSize: 18 }}>باقة VIP</div>
+          <div style={{ fontSize: 40, fontWeight: 900, margin: "6px 0 2px", background: "linear-gradient(135deg,#FDE68A,#F5C451,#D99A1E)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{VIP_PLAN.price}</div>
+          <div style={{ color: "#B9A268", fontSize: 12, marginBottom: 14 }}>دفعة واحدة • {VIP_PLAN.days} يوماً بدون اشتراك</div>
+          <ul style={{ listStyle: "none", margin: "0 0 16px", padding: 0, display: "grid", gap: 8, textAlign: "right" }}>
+            {VIP_PLAN.features.map((f) => <li key={f} style={{ color: "#F3E7C2", fontSize: 13.5, fontWeight: 600 }}><span style={{ color: "#F5C451", marginLeft: 8 }}>✓</span>{f}</li>)}
+          </ul>
+          <button onClick={() => VIP_PRICE_ID && onBuy(VIP_PRICE_ID)} disabled={buying || !VIP_PRICE_ID} style={{ width: "100%", background: "linear-gradient(135deg,#FDE68A,#F5C451 45%,#D99A1E)", border: "none", borderRadius: 12, color: "#3A2600", fontWeight: 900, fontSize: 16, padding: "14px", cursor: VIP_PRICE_ID ? "pointer" : "not-allowed", opacity: VIP_PRICE_ID ? 1 : 0.6, fontFamily: "inherit", boxShadow: "0 0 16px rgba(245,196,81,.45)" }}>{buying ? "جاري الفتح..." : VIP_PRICE_ID ? "👑 اشترك في VIP" : "👑 سيتم التفعيل قريباً"}</button>
+        </div>
+  );
   return (
     <div className="credits-modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="credits-modal glass" dir="rtl">
         <button className="credits-modal-close" onClick={onClose} aria-label="إغلاق">✕</button>
         <div style={{ textAlign: "center", marginBottom: 20 }}>
-          <div style={{ fontSize: 30 }}>⚡</div>
-          <h2 style={{ margin: "6px 0", color: "#F1F5F9", fontSize: 21 }}>اشترِ نقاط التوليد</h2>
-          <p style={{ margin: 0, color: "#8B96AC", fontSize: 12.5 }}>كل صفحة هبوط يتم توليدها تستهلك نقطة واحدة.</p>
+          <div style={{ fontSize: 30 }}>{focus === "vip" ? "👑" : "⚡"}</div>
+          <h2 style={{ margin: "6px 0", color: "#F1F5F9", fontSize: 21 }}>{focus === "vip" ? "هذه الميزة لمشتركي VIP" : "اشترِ نقاط التوليد"}</h2>
+          <p style={{ margin: 0, color: "#8B96AC", fontSize: 12.5 }}>{focus === "vip" ? "اشترك في باقة VIP لفتح الرابط المباشر واستقبال الطلبات." : "كل صفحة هبوط يتم توليدها تستهلك نقطة واحدة."}</p>
         </div>
+        {focus === "vip" && vipCard}
+        {focus !== "vip" && (
         <div className="credit-plans">
           {CREDIT_PLANS.map((plan) => {
             const price = prices && prices[plan.priceId];
@@ -920,16 +934,9 @@ function CreditsModal({ open, onClose, onBuy, buying, buyError }) {
             );
           })}
         </div>
-        <div style={{ position: "relative", marginTop: 26, borderRadius: 18, padding: "28px 18px 18px", background: "linear-gradient(160deg,#2A1E06,#171106)", border: "1.5px solid #F5C451", boxShadow: "0 0 28px rgba(245,196,81,.35)", textAlign: "center" }}>
-          <span style={{ position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg,#FDE68A,#F5C451,#D99A1E)", color: "#3A2600", borderRadius: 99, fontSize: 12, fontWeight: 900, padding: "3px 14px", whiteSpace: "nowrap" }}>👑 VIP</span>
-          <div style={{ color: "#FDE68A", fontWeight: 900, fontSize: 18 }}>باقة VIP</div>
-          <div style={{ fontSize: 40, fontWeight: 900, margin: "6px 0 2px", background: "linear-gradient(135deg,#FDE68A,#F5C451,#D99A1E)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{VIP_PLAN.price}</div>
-          <div style={{ color: "#B9A268", fontSize: 12, marginBottom: 14 }}>دفعة واحدة • {VIP_PLAN.days} يوماً بدون اشتراك</div>
-          <ul style={{ listStyle: "none", margin: "0 0 16px", padding: 0, display: "grid", gap: 8, textAlign: "right" }}>
-            {VIP_PLAN.features.map((f) => <li key={f} style={{ color: "#F3E7C2", fontSize: 13.5, fontWeight: 600 }}><span style={{ color: "#F5C451", marginLeft: 8 }}>✓</span>{f}</li>)}
-          </ul>
-          <button onClick={() => VIP_PRICE_ID && onBuy(VIP_PRICE_ID)} disabled={buying || !VIP_PRICE_ID} style={{ width: "100%", background: "linear-gradient(135deg,#FDE68A,#F5C451 45%,#D99A1E)", border: "none", borderRadius: 12, color: "#3A2600", fontWeight: 900, fontSize: 16, padding: "14px", cursor: VIP_PRICE_ID ? "pointer" : "not-allowed", opacity: VIP_PRICE_ID ? 1 : 0.6, fontFamily: "inherit", boxShadow: "0 0 16px rgba(245,196,81,.45)" }}>{buying ? "جاري الفتح..." : VIP_PRICE_ID ? "👑 اشترك في VIP" : "👑 سيتم التفعيل قريباً"}</button>
-        </div>
+        )}
+        {focus !== "vip" && vipCard}
+        {focus === "vip" && <button onClick={onShowPlans} style={{ display: "block", margin: "16px auto 0", background: "none", border: "none", color: "#8B96AC", fontSize: 13, textDecoration: "underline", cursor: "pointer", fontFamily: "inherit" }}>عرض باقات النقاط فقط</button>}
         {err && <p className="credit-plans-error" dir="ltr">{err}</p>}
       </div>
     </div>
@@ -1421,6 +1428,7 @@ function AuthGate() {
   const [profileLoading, setProfileLoading] = useState(false);
   const [credits, setCredits] = useState(0);
   const [showBuyModal, setShowBuyModal] = useState(false);
+  const [buyFocus, setBuyFocus] = useState("");
   const [buying, setBuying] = useState(false);
   const [buyError, setBuyError] = useState("");
   const [editorPreview, setEditorPreview] = useState(false);
@@ -1612,7 +1620,7 @@ function AuthGate() {
           loading={profileLoading}
           isAdmin={isAdmin}
           onLogout={handleLogout}
-          onBuy={() => setShowBuyModal(true)}
+          onBuy={() => { setBuyFocus(""); setShowBuyModal(true); }}
         />
       )}
       <App
@@ -1621,13 +1629,15 @@ function AuthGate() {
         user={session.user}
         isAdmin={isAdmin}
         isVip={isVip}
-        onBuyCredits={() => setShowBuyModal(true)}
+        onBuyCredits={(f) => { setBuyFocus(f === "vip" ? "vip" : ""); setShowBuyModal(true); }}
         onPreviewChange={setEditorPreview}
       />
       {!editorPreview && <LegalFooter />}
       <CreditsModal
         open={showBuyModal}
         onClose={() => setShowBuyModal(false)}
+        focus={buyFocus}
+        onShowPlans={() => setBuyFocus("")}
         onBuy={handleBuyCredits}
         buying={buying}
         buyError={buyError}
@@ -2066,7 +2076,7 @@ function PublishModal({ pub, onClose }) {
               <a href={pub.url} target="_blank" rel="noopener noreferrer" style={{ background: "#1B2540", border: "1px solid #2A3654", borderRadius: 10, color: "#E2E8F5", fontWeight: 800, fontSize: 13, padding: "10px 4px", textDecoration: "none" }}>فتح</a>
               <a href={"https://wa.me/?text=" + encodeURIComponent(pub.url)} target="_blank" rel="noopener noreferrer" style={{ background: "#0F3D2A", border: "1px solid #1D6B47", borderRadius: 10, color: "#6EE7B7", fontWeight: 800, fontSize: 13, padding: "10px 4px", textDecoration: "none" }}>واتساب</a>
             </div>
-            <div style={{ color: "#8B96AC", fontSize: 11.5, marginTop: 12, lineHeight: 1.7 }}>استعمل هذا الرابط في الإعلان. الطلبات كتوصلك فـ"📦 طلباتي". إلا نشرت نفس الصفحة مرة أخرى كيتحدّث نفس الرابط.</div>
+            <div style={{ color: "#8B96AC", fontSize: 11.5, marginTop: 12, lineHeight: 1.7 }}>استخدم هذا الرابط في إعلانك. تصلك الطلبات في «📦 طلباتي». إذا نشرت الصفحة نفسها مرة أخرى يتحدّث الرابط نفسه.</div>
             <button onClick={onClose} style={{ marginTop: 12, background: "transparent", border: "1px solid #2A3654", borderRadius: 10, color: "#B7C0D4", padding: "8px 20px", fontFamily: "inherit", fontWeight: 700, cursor: "pointer" }}>إغلاق</button>
           </div>
         )}
@@ -2131,7 +2141,7 @@ function App({ credits, setCredits, user, isAdmin, isVip, onBuyCredits, onPrevie
     return s;
   }
   async function publishEntry(entry) {
-    if (!isVip) { onBuyCredits(); return; }
+    if (!isVip) { onBuyCredits("vip"); return; }
     setPub({ busy: true });
     try {
       const client = await getSupabaseClient();
@@ -2442,14 +2452,14 @@ function App({ credits, setCredits, user, isAdmin, isVip, onBuyCredits, onPrevie
       )}
       {false && (
         <div style={{ maxWidth: 560, margin: "0 auto", padding: "14px 16px 0" }}>
-          <button onClick={() => (isVip ? setShowOrders(true) : onBuyCredits())} style={{ width: "100%", background: "#131A2A", border: "1px solid #202A42", color: "#E2E8F5", borderRadius: 14, padding: "12px 16px", fontFamily: "inherit", fontWeight: 800, fontSize: 14, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <button onClick={() => (isVip ? setShowOrders(true) : onBuyCredits("vip"))} style={{ width: "100%", background: "#131A2A", border: "1px solid #202A42", color: "#E2E8F5", borderRadius: 14, padding: "12px 16px", fontFamily: "inherit", fontWeight: 800, fontSize: 14, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span>📦 طلباتي والصفحات المنشورة</span>
             {newOrders > 0 ? <span style={{ background: "#22D3EE", color: "#04101C", borderRadius: 99, padding: "1px 10px", fontSize: 12.5 }}>{newOrders} جديد</span> : <span>◂</span>}
           </button>
         </div>
       )}
       {step === "form" && tab === "pages" && savedPages.length === 0 && (
-        <div style={{ maxWidth: 560, margin: "0 auto", padding: "40px 16px", textAlign: "center", color: "#8B96AC", fontWeight: 700 }}>📂 ما كاين حتى صفحة محفوظة دابا. أنشئ أول صفحة ديالك.</div>
+        <div style={{ maxWidth: 560, margin: "0 auto", padding: "40px 16px", textAlign: "center", color: "#8B96AC", fontWeight: 700 }}>📂 لا توجد صفحات محفوظة حالياً. أنشئ صفحتك الأولى.</div>
       )}
       {step === "form" && tab === "pages" && savedPages.length > 0 && (
         <div style={{ maxWidth: 560, margin: "0 auto", padding: "14px 16px 0" }}>
@@ -2494,10 +2504,10 @@ function App({ credits, setCredits, user, isAdmin, isVip, onBuyCredits, onPrevie
                   <a href={lastUrl} target="_blank" rel="noopener noreferrer" style={{ background: "#1B2540", border: "1px solid #2A3654", borderRadius: 10, color: "#E2E8F5", fontWeight: 800, fontSize: 13, padding: "10px 4px", textDecoration: "none", textAlign: "center" }}>↗ فتح</a>
                   <a href={"https://wa.me/?text=" + encodeURIComponent(lastUrl)} target="_blank" rel="noopener noreferrer" style={{ background: "#0F3D2A", border: "1px solid #1D6B47", borderRadius: 10, color: "#6EE7B7", fontWeight: 800, fontSize: 13, padding: "10px 4px", textDecoration: "none", textAlign: "center" }}>واتساب</a>
                 </div>
-                <div style={{ color: "#8B96AC", fontSize: 11.5, marginTop: 12, lineHeight: 1.7 }}>استعمل هذا الرابط في الإعلان. الطلبات كتوصلك فـ "طلباتي".</div>
+                <div style={{ color: "#8B96AC", fontSize: 11.5, marginTop: 12, lineHeight: 1.7 }}>استخدم هذا الرابط في إعلانك. تصلك الطلبات في «طلباتي».</div>
               </div>
             ) : (
-              <div style={{ color: "#8B96AC", fontSize: 13.5, lineHeight: 1.8 }}>ما نشرتي حتى صفحة بعد. من "آخر صفحاتي" اختار صفحة واضغط على نشر باش يبان الرابط هنا.</div>
+              <div style={{ color: "#8B96AC", fontSize: 13.5, lineHeight: 1.8 }}>لم تنشر أي صفحة بعد. من «آخر صفحاتي» اختر صفحة واضغط على «نشر» ليظهر الرابط هنا.</div>
             )}
           </div>
         </div>
@@ -2505,7 +2515,7 @@ function App({ credits, setCredits, user, isAdmin, isVip, onBuyCredits, onPrevie
       {step === "form" && (
         <nav dir="rtl" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 3500, display: "flex", background: "rgba(14,22,40,.98)", borderTop: "1px solid #202A42", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
           {[["create", "✨", "إنشاء صفحة"], ["orders", "📦", "طلباتي"], ["link", "🔗", "الرابط"], ["pages", "📂", "آخر صفحاتي"]].map(([k, ic, lb]) => (
-            <button key={k} onClick={() => { if ((k === "orders" || k === "link") && !isVip) { onBuyCredits(); } else { setTab(k); } }} style={{ flex: 1, background: "none", border: "none", color: (k === "orders" || k === "link") ? "#F5C451" : (tab === k ? "#22D3EE" : "#8B96AC"), fontFamily: "inherit", fontWeight: 800, fontSize: 11.5, padding: "9px 2px 8px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, position: "relative" }}>
+            <button key={k} onClick={() => { if ((k === "orders" || k === "link") && !isVip) { onBuyCredits("vip"); } else { setTab(k); } }} style={{ flex: 1, background: "none", border: "none", color: (k === "orders" || k === "link") ? "#F5C451" : (tab === k ? "#22D3EE" : "#8B96AC"), fontFamily: "inherit", fontWeight: 800, fontSize: 11.5, padding: "9px 2px 8px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, position: "relative" }}>
               <span style={{ fontSize: 20 }}>{ic}</span>{lb}{((k === "orders" || k === "link") && !isVip) ? " 🔒" : ""}{(k === "orders" || k === "link") ? <span style={{ position: "absolute", top: -8, left: "50%", transform: "translateX(-50%)", background: "#1A1204", color: "#F5C451", border: "1px solid #F5C451", borderRadius: 99, fontSize: 10, fontWeight: 900, padding: "0 7px", lineHeight: "16px", whiteSpace: "nowrap" }}>👑 VIP</span> : null}
               {k === "orders" && newOrders > 0 ? <span style={{ position: "absolute", top: 4, right: "50%", marginRight: -26, background: "#22D3EE", color: "#04101C", borderRadius: 99, fontSize: 10.5, padding: "0 6px" }}>{newOrders}</span> : null}
             </button>
