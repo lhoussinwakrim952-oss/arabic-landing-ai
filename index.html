@@ -68,7 +68,7 @@
   .account-credit-row strong{color:#5eead4}
   .account-buy,.account-logout{width:100%;border:0;border-radius:9px;padding:9px 10px;text-align:right;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer}
   .account-buy{background:#19334a;color:#67e8f9;margin-bottom:6px}.account-logout{background:#21181e;color:#fda4af}
-  .credits-modal-backdrop{position:fixed;inset:0;z-index:1200;background:rgba(2,6,15,.76);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:14px;overflow-y:auto;overscroll-behavior:contain}
+  .credits-modal-backdrop{position:fixed;inset:0;z-index:5000;background:rgba(2,6,15,.76);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:14px;overflow-y:auto;overscroll-behavior:contain}
   .credits-modal{position:relative;width:min(760px,100%);max-height:calc(100dvh - 28px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:22px;border-radius:22px;box-shadow:0 30px 90px rgba(0,0,0,.55)}
   .credits-modal-close{position:absolute;top:12px;left:12px;width:34px;height:34px;border-radius:50%;border:1px solid #2b3954;background:#131c2d;color:#b8c4d8;cursor:pointer}
   .credit-plans{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
@@ -900,16 +900,6 @@ function CreditsModal({ open, onClose, onBuy, buying, buyError }) {
           <h2 style={{ margin: "6px 0", color: "#F1F5F9", fontSize: 21 }}>اشترِ نقاط التوليد</h2>
           <p style={{ margin: 0, color: "#8B96AC", fontSize: 12.5 }}>كل صفحة هبوط يتم توليدها تستهلك نقطة واحدة.</p>
         </div>
-        <div style={{ position: "relative", marginBottom: 22, borderRadius: 18, padding: "28px 18px 18px", background: "linear-gradient(160deg,#2A1E06,#171106)", border: "1.5px solid #F5C451", boxShadow: "0 0 28px rgba(245,196,81,.35)", textAlign: "center" }}>
-          <span style={{ position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg,#FDE68A,#F5C451,#D99A1E)", color: "#3A2600", borderRadius: 99, fontSize: 12, fontWeight: 900, padding: "3px 14px", whiteSpace: "nowrap" }}>👑 VIP</span>
-          <div style={{ color: "#FDE68A", fontWeight: 900, fontSize: 18 }}>باقة VIP</div>
-          <div style={{ fontSize: 40, fontWeight: 900, margin: "6px 0 2px", background: "linear-gradient(135deg,#FDE68A,#F5C451,#D99A1E)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{VIP_PLAN.price}</div>
-          <div style={{ color: "#B9A268", fontSize: 12, marginBottom: 14 }}>دفعة واحدة • {VIP_PLAN.days} يوماً بدون اشتراك</div>
-          <ul style={{ listStyle: "none", margin: "0 0 16px", padding: 0, display: "grid", gap: 8, textAlign: "right" }}>
-            {VIP_PLAN.features.map((f) => <li key={f} style={{ color: "#F3E7C2", fontSize: 13.5, fontWeight: 600 }}><span style={{ color: "#F5C451", marginLeft: 8 }}>✓</span>{f}</li>)}
-          </ul>
-          <button onClick={() => VIP_PRICE_ID && onBuy(VIP_PRICE_ID)} disabled={buying || !VIP_PRICE_ID} style={{ width: "100%", background: "linear-gradient(135deg,#FDE68A,#F5C451 45%,#D99A1E)", border: "none", borderRadius: 12, color: "#3A2600", fontWeight: 900, fontSize: 16, padding: "14px", cursor: VIP_PRICE_ID ? "pointer" : "not-allowed", opacity: VIP_PRICE_ID ? 1 : 0.6, fontFamily: "inherit", boxShadow: "0 0 16px rgba(245,196,81,.45)" }}>{buying ? "جاري الفتح..." : VIP_PRICE_ID ? "👑 اشترك في VIP" : "👑 سيتم التفعيل قريباً"}</button>
-        </div>
         <div className="credit-plans">
           {CREDIT_PLANS.map((plan) => {
             const price = prices && prices[plan.priceId];
@@ -929,6 +919,16 @@ function CreditsModal({ open, onClose, onBuy, buying, buyError }) {
               </div>
             );
           })}
+        </div>
+        <div style={{ position: "relative", marginTop: 26, borderRadius: 18, padding: "28px 18px 18px", background: "linear-gradient(160deg,#2A1E06,#171106)", border: "1.5px solid #F5C451", boxShadow: "0 0 28px rgba(245,196,81,.35)", textAlign: "center" }}>
+          <span style={{ position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg,#FDE68A,#F5C451,#D99A1E)", color: "#3A2600", borderRadius: 99, fontSize: 12, fontWeight: 900, padding: "3px 14px", whiteSpace: "nowrap" }}>👑 VIP</span>
+          <div style={{ color: "#FDE68A", fontWeight: 900, fontSize: 18 }}>باقة VIP</div>
+          <div style={{ fontSize: 40, fontWeight: 900, margin: "6px 0 2px", background: "linear-gradient(135deg,#FDE68A,#F5C451,#D99A1E)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{VIP_PLAN.price}</div>
+          <div style={{ color: "#B9A268", fontSize: 12, marginBottom: 14 }}>دفعة واحدة • {VIP_PLAN.days} يوماً بدون اشتراك</div>
+          <ul style={{ listStyle: "none", margin: "0 0 16px", padding: 0, display: "grid", gap: 8, textAlign: "right" }}>
+            {VIP_PLAN.features.map((f) => <li key={f} style={{ color: "#F3E7C2", fontSize: 13.5, fontWeight: 600 }}><span style={{ color: "#F5C451", marginLeft: 8 }}>✓</span>{f}</li>)}
+          </ul>
+          <button onClick={() => VIP_PRICE_ID && onBuy(VIP_PRICE_ID)} disabled={buying || !VIP_PRICE_ID} style={{ width: "100%", background: "linear-gradient(135deg,#FDE68A,#F5C451 45%,#D99A1E)", border: "none", borderRadius: 12, color: "#3A2600", fontWeight: 900, fontSize: 16, padding: "14px", cursor: VIP_PRICE_ID ? "pointer" : "not-allowed", opacity: VIP_PRICE_ID ? 1 : 0.6, fontFamily: "inherit", boxShadow: "0 0 16px rgba(245,196,81,.45)" }}>{buying ? "جاري الفتح..." : VIP_PRICE_ID ? "👑 اشترك في VIP" : "👑 سيتم التفعيل قريباً"}</button>
         </div>
         {err && <p className="credit-plans-error" dir="ltr">{err}</p>}
       </div>
