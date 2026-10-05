@@ -2508,22 +2508,25 @@ function App({ credits, setCredits, user, isAdmin, onBuyCredits, onPreviewChange
 function FormScreen({ form, setForm, images, onUpload, onRemoveImage, onEnhanceImage, enhancingIdx, error, onGenerate }) {
   const country = COUNTRIES.find((c) => c.code === form.countryCode) || COUNTRIES[0];
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto", padding: "48px 20px 80px", position: "relative", overflow: "hidden" }} className="fade-in">
+    <div style={{ maxWidth: 640, margin: "0 auto", padding: "22px 16px 40px", position: "relative", overflow: "hidden" }} className="fade-in">
       <div className="orb" style={{ width: 260, height: 260, top: -40, right: -40, background: "#2563eb55", animation: "drift 9s ease-in-out infinite" }} />
       <div className="orb" style={{ width: 200, height: 200, bottom: 60, left: -50, background: "#06b6d455", animation: "drift 11s ease-in-out infinite reverse" }} />
-      <div style={{ textAlign: "center", marginBottom: 40, position: "relative" }}>
-        <div className="glass" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 14px", borderRadius: 999, color: "#5eead4", fontSize: 13, fontWeight: 600, marginBottom: 18 }}>
+      <div style={{ textAlign: "center", marginBottom: 22, position: "relative" }}>
+        <div className="glass" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 14px", borderRadius: 999, color: "#5eead4", fontSize: 13, fontWeight: 600, marginBottom: 14 }}>
           <Ico size={14}>✨</Ico> Arabic Landing AI
         </div>
-        <h1 style={{ color: "#F1F5F9", fontSize: 30, fontWeight: 800, lineHeight: 1.4, margin: 0 }}>أنشئ صفحة هبوط احترافية لمنتجك بالذكاء الاصطناعي</h1>
-        <p style={{ color: "#8B96AC", fontSize: 15, marginTop: 10 }}>منتج + سعر + صور + دولة = صفحة هبوط جاهزة</p>
+        <h1 style={{ color: "#F1F5F9", fontSize: 25, fontWeight: 800, lineHeight: 1.5, margin: 0 }}>أنشئ صفحة هبوط احترافية لمنتجك</h1>
+        <p style={{ color: "#8B96AC", fontSize: 14, marginTop: 8 }}>املأ الأقسام التالية وسيجهّز الذكاء الاصطناعي الصفحة</p>
       </div>
-      <div className="glass" style={{ borderRadius: 20, padding: 22, display: "grid", gap: 16, position: "relative", boxShadow: "0 30px 70px rgba(0,0,0,.45)" }}>
+      <div style={{ display: "grid", gap: 14, position: "relative" }}>
+        <Sec n={1} icon="🏷️" title="المنتج والسعر">
         <Field label="اسم المنتج"><input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="مثال: سماعة بلوتوث لاسلكية" style={inputStyle} /></Field>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <Field label="سعر المنتج"><input type="number" value={form.price} onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))} placeholder="مثال: 149" style={inputStyle} /></Field>
           <Field label="السعر قبل التخفيض (اختياري)"><input type="number" value={form.priceOld} onChange={(e) => setForm((f) => ({ ...f, priceOld: e.target.value }))} placeholder="مثال: 249" style={inputStyle} /></Field>
         </div>
+        </Sec>
+        <Sec n={2} icon="🖼️" title="صور المنتج">
         <Field label="صور المنتج (حتى 8 صور)">
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
             {images.map((img, i) => (
@@ -2544,11 +2547,17 @@ function FormScreen({ form, setForm, images, onUpload, onRemoveImage, onEnhanceI
           </div>
           <span style={{ color: "#5B6478", fontSize: 11 }}>اضغط على ✨ فوق أي صورة لتقوية التباين والألوان الخاصة بها (تحسين تلقائي، وليس تعديلاً بالذكاء الاصطناعي).</span>
         </Field>
+        </Sec>
+        <Sec n={3} icon="📝" title="وصف المنتج">
         <Field label="وصف المنتج (اختياري)"><textarea value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder="اتركه فارغاً وسيقوم الذكاء الاصطناعي بكتابة وصف من الصور" rows={3} style={Object.assign({}, inputStyle, { resize: "vertical" })} /></Field>
+        </Sec>
+        <Sec n={4} icon="🌍" title="السوق واللهجة">
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <Field label="الدولة المستهدفة"><select value={form.countryCode} onChange={(e) => setForm((f) => ({ ...f, countryCode: e.target.value }))} style={inputStyle}>{COUNTRIES.map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}</select></Field>
           <Field label="اللهجة"><select value={form.dialect} onChange={(e) => setForm((f) => ({ ...f, dialect: e.target.value }))} style={inputStyle}><option value="auto">تلقائي حسب الدولة</option>{COUNTRIES.map((c) => <option key={c.code} value={c.dialect}>{c.dialect}</option>)}</select></Field>
         </div>
+        </Sec>
+        <Sec n={5} icon="💬" title="التواصل والطلبات">
         <Field label="رقم واتساب/هاتف للتواصل المباشر (اختياري)">
           <div style={{ display: "flex", gap: 8 }}>
             <span style={Object.assign({}, inputStyle, { width: "auto", display: "flex", alignItems: "center", color: "#8da0bd", fontWeight: 800 })}>{country.phoneCode}</span>
@@ -2569,12 +2578,26 @@ function FormScreen({ form, setForm, images, onUpload, onRemoveImage, onEnhanceI
           <span style={{ color: "#B7C0D4", fontSize: 13, fontWeight: 600 }}>تضمين نموذج طلب داخل الصفحة</span>
         </label>
         <span style={{ color: "#5B6478", fontSize: 11, marginTop: -10 }}>إذا عطّلت هذا الخيار، فستنقلك الأزرار مباشرة إلى الواتساب أو الاتصال إذا كان الرقم متوفراً.</span>
+        </Sec>
         {error && <div style={{ color: "#F87171", fontSize: 13, background: "#2A1519", padding: "8px 12px", borderRadius: 8 }}>{error}</div>}
-        <button onClick={onGenerate} style={{ marginTop: 6, background: "linear-gradient(90deg,#3B82F6,#22D3EE,#5eead4)", border: "none", borderRadius: 12, color: "#04101C", fontWeight: 800, fontSize: 16, padding: "15px 20px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: "0 16px 34px -10px #22D3EE88" }}>
-          أنشئ صفحة الهبوط <span style={{ fontSize: 18 }}>🚀</span>
+        <button onClick={onGenerate} style={{ background: "linear-gradient(135deg,#FDE68A,#F5C451 45%,#D99A1E)", border: "1px solid #FFE9A8", borderRadius: 14, color: "#3A2600", fontWeight: 900, fontSize: 17, padding: "17px 20px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, fontFamily: "inherit", position: "relative", boxShadow: "0 0 22px rgba(245,196,81,.5), 0 8px 24px rgba(0,0,0,.4)" }}>
+          <span style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", background: "#1A1204", color: "#F5C451", border: "1px solid #F5C451", borderRadius: 99, fontSize: 11, fontWeight: 900, padding: "0 10px", lineHeight: "18px", whiteSpace: "nowrap" }}>👑 VIP</span>
+          أنشئ صفحة الهبوط <span style={{ fontSize: 20 }}>🚀</span>
         </button>
-        <p style={{ textAlign: "center", color: "#5c6b85", fontSize: 11, margin: 0 }}>يستغرق التوليد عادة من 30 ثانية إلى دقيقة للحصول على صفحة احترافية كاملة</p>
+        <p style={{ textAlign: "center", color: "#5c6b85", fontSize: 11.5, margin: 0 }}>يستغرق التوليد عادة من 30 ثانية إلى دقيقة</p>
       </div>
+    </div>
+  );
+}
+function Sec({ n, icon, title, children }) {
+  return (
+    <div style={{ background: "#101828", border: "1px solid #202A42", borderRadius: 16, padding: 16, display: "grid", gap: 14 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <span style={{ width: 26, height: 26, borderRadius: 99, background: "linear-gradient(135deg,#3B82F6,#22D3EE)", color: "#04101C", fontWeight: 900, fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center" }}>{n}</span>
+        <span style={{ color: "#F1F5F9", fontWeight: 800, fontSize: 15 }}>{title}</span>
+        <span style={{ marginRight: "auto", fontSize: 18 }}>{icon}</span>
+      </div>
+      {children}
     </div>
   );
 }
