@@ -1,7 +1,5 @@
 // api/generate.js
-// خاص تزيد هاد الـ config باش ترفع حد حجم الـ body عند Next.js من 1mb الافتراضي إلى 10mb.
-// بدون هاد السطر، Next.js كيرفض أي طلب كبير قبل ما يوصل للكود تاعك تحت، ويرجع رد نصي
-// (Request Entity Too Large) بدل JSON — وهو بالضبط الخطأ لي كنت كتشوف فالواجهة.
+// نفس الكود القديم + تحقق من تسجيل الدخول (باش ماشي أي واحد يقدر يخسّر رصيد Anthropic).
 export const config = {
   api: {
     bodyParser: {
@@ -10,15 +8,47 @@ export const config = {
   },
 };
 
+const calls = new Map(); // rate limit بسيط لكل مستخدم (فالذاكرة)
+function tooMany(userId) {
+  const now = Date.now();
+  const arr = (calls.get(userId) || []).filter((t) => now - t < 10 * 60 * 1000);
+  if (arr.length >= 40) { calls.set(userId, arr); return true; }
+  arr.push(now);
+  calls.set(userId, arr);
+  if (calls.size > 5000) calls.clear();
+  return false;
+}
+
+async function getUser(req) {
+  const m = /^Bearer\s+(.+)$/i.exec(req.headers.authorization || "");
+  if (!m) return null;
+  const url = (process.env.SUPABASE_URL || "").replace(/\/+$/, "");
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+  if (!url || !key) return null;
+  try {
+    const r = await fetch(`${url}/auth/v1/user`, {
+      headers: { apikey: key, Authorization: `Bearer ${m[1]}` },
+    });
+    if (!r.ok) return null;
+    const u = await r.json();
+    return u && u.id ? u : null;
+  } catch (e) {
+    return null;
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
   try {
+    const user = await getUser(req);
+    if (!user) return res.status(401).json({ error: "سجّل الدخول أولاً ثم أعد المحاولة." });
+    if (tooMany(user.id)) return res.status(429).json({ error: "طلبات كثيرة في وقت قصير. انتظر قليلاً ثم أعد المحاولة." });
+
     const { content } = req.body || {};
 
-    // تحقق بسيط من صحة البيانات قبل الإرسال لـ Anthropic — كيفادي رسائل خطأ غامضة لاحقاً
     if (!content || !Array.isArray(content) || content.length === 0) {
       return res.status(400).json({ error: "لم يصل محتوى صالح إلى السيرفر (content فارغ أو غير موجود)." });
     }
@@ -27,20 +57,16 @@ export default async function handler(req, res) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY, // المفتاح مخبّأ هنا فالسيرفر فقط
+        "x-api-key": process.env.ANTHROPIC_API_KEY,
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
         model: "claude-sonnet-5",
-        // 4000 توكن ما كافيش لصفحة كاملة (hero+features+benefits+testimonials+faq+specs...)
-        // فكان كيتقطع الرد فالنص ويبقى JSON غير مكتمل = صفحة فارغة. 8000 كافية لصفحة غنية بالمحتوى.
         max_tokens: 8000,
         messages: [{ role: "user", content }],
       }),
     });
 
-    // نقرا الرد كنص أولاً، لأن Anthropic (أو أي بروكسي فالطريق) ممكن يرجع رد ماشي JSON
-    // فحالات نادرة (مثلاً خطأ 502/504 من الشبكة) — هادشي كيفادي كراش JSON.parse غامض.
     const rawText = await response.text();
     let data;
     try {
@@ -57,8 +83,6 @@ export default async function handler(req, res) {
       });
     }
 
-    // إذا توقف التوليد بسبب حد التوكنز (stop_reason === "max_tokens")، الرد ناقص أكيد.
-    // نرجع خطأ واضح بدل ما نرجع JSON مقطوع يفشل فالـ parsing على الواجهة.
     if (data.stop_reason === "max_tokens") {
       return res.status(422).json({
         error: "توقف التوليد لأن المحتوى طويل جداً. جرّب تبسيط وصف المنتج أو أعد المحاولة.",
@@ -68,7 +92,6 @@ export default async function handler(req, res) {
     const textBlock = (data.content || []).find((b) => b.type === "text");
     return res.status(200).json({ text: textBlock ? textBlock.text : "" });
   } catch (err) {
-    // أي خطأ غير متوقع (شبكة، انقطاع، إلخ) — نرجعو دايماً JSON صالح، أبداً نص خام
     return res.status(500).json({ error: err.message || "خطأ غير متوقع فالسيرفر." });
   }
 }
