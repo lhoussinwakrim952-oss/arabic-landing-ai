@@ -2128,15 +2128,120 @@ function PublishModal({ pub, onClose }) {
 }
 
 
-async function pagesLoad(k) { const v = await sessLoad(k); return Array.isArray(v) ? v : []; }
+/* ===== مزامنة "آخر صفحاتي" مع Supabase (جدول saved_pages). إن لم يوجد الجدول يبقى الحفظ محلياً كما كان. ===== */
+async function cloudClient() { try { return await getSupabaseClient(); } catch (e) { return null; } }
+async function cloudPagesList() {
+  try {
+    const c = await cloudClient();
+    if (!c) return null;
+    const r = await c.from("saved_pages").select("entry").order("ts", { ascending: false }).limit(5);
+    if (r.error) return null;
+    return (r.data || []).map((x) => x.entry).filter(Boolean);
+  } catch (e) { return null; }
+}
+async function cloudPageSave(entry) {
+  try {
+    const c = await cloudClient();
+    if (!c) return false;
+    if (JSON.stringify(entry).length > 8000000) return false;
+    const r = await c.from("saved_pages").upsert({ entry_id: String(entry.id), ts: entry.ts || 0, entry, updated_at: new Date().toISOString() }, { onConflict: "user_id,entry_id" });
+    if (r.error) return false;
+    const all = await c.from("saved_pages").select("entry_id").order("ts", { ascending: false });
+    const extra = ((all.data) || []).slice(5).map((x) => x.entry_id);
+    if (extra.length) await c.from("saved_pages").delete().in("entry_id", extra);
+    return true;
+  } catch (e) { return false; }
+}
+async function cloudPageDelete(id) {
+  try { const c = await cloudClient(); if (c) await c.from("saved_pages").delete().eq("entry_id", String(id)); } catch (e) {}
+}
+async function pagesLoad(k) {
+  const v = await sessLoad(k);
+  const local = Array.isArray(v) ? v : [];
+  const cloud = await cloudPagesList();
+  if (cloud === null) return local; // الجدول غير موجود أو لا اتصال: نكتفي بالمحلي
+  const flag = "alai_pages_migrated_" + k;
+  let migrated = false;
+  try { migrated = localStorage.getItem(flag) === "1"; } catch (e) {}
+  if (!migrated) {
+    // أول مرة: ارفع الصفحات المحلية إلى الحساب ثم ادمجها
+    const ids = new Set(cloud.map((x) => String(x.id)));
+    for (const en of local) { if (!ids.has(String(en.id))) await cloudPageSave(en); }
+    try { localStorage.setItem(flag, "1"); } catch (e) {}
+    const again = await cloudPagesList();
+    const final = (again || cloud).slice(0, 5);
+    await sessSave(k, final);
+    return final;
+  }
+  await sessSave(k, cloud);
+  return cloud;
+}
 async function pagesUpsert(k, entry) {
-  const list = await pagesLoad(k);
+  const v = await sessLoad(k);
+  const list = Array.isArray(v) ? v : [];
   const i = list.findIndex((x) => x.id === entry.id);
   if (i >= 0) list[i] = entry; else list.unshift(entry);
   list.sort((a, b) => b.ts - a.ts);
   await sessSave(k, list.slice(0, 5));
+  cloudPageSave(entry);
 }
-async function pagesDelete(k, id) { const list = await pagesLoad(k); await sessSave(k, list.filter((x) => x.id !== id)); }
+async function pagesDelete(k, id) {
+  const v = await sessLoad(k);
+  const list = Array.isArray(v) ? v : [];
+  await sessSave(k, list.filter((x) => x.id !== id));
+  cloudPageDelete(id);
+}
+
+function LinkPanel({ user }) {
+  const [pages, setPages] = useState(null);
+  const [err, setErr] = useState("");
+  const [copied, setCopied] = useState("");
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const client = await getSupabaseClient();
+        if (!client) throw new Error("تعذّر الاتصال.");
+        const r = await client.from("published_pages").select("id,slug,name,active,updated_at").eq("user_id", user.id).order("updated_at", { ascending: false });
+        if (r.error) throw new Error("تعذّر تحميل الروابط.");
+        if (alive) setPages(r.data || []);
+      } catch (e) { if (alive) { setErr(e.message || "خطأ"); setPages([]); } }
+    })();
+    return () => { alive = false; };
+  }, [user && user.id]);
+  function copy(url, id) {
+    try { navigator.clipboard.writeText(url); } catch (e) {}
+    setCopied(id);
+    setTimeout(() => setCopied(""), 1500);
+  }
+  const box = { background: "#131A2A", border: "1px solid #202A42", borderRadius: 16, padding: 16, marginBottom: 12 };
+  return (
+    <div style={{ maxWidth: 560, margin: "0 auto", padding: "18px 16px 0" }}>
+      <div style={{ color: "#F1F5F9", fontWeight: 900, fontSize: 16, marginBottom: 12 }}>🔗 روابط صفحاتك المنشورة</div>
+      {pages === null ? <div style={{ ...box, color: "#8B96AC", fontSize: 13.5 }}>جاري التحميل...</div> : null}
+      {err ? <div style={{ ...box, color: "#F87171", fontSize: 13 }}>{err}</div> : null}
+      {pages && pages.length === 0 && !err ? <div style={{ ...box, color: "#8B96AC", fontSize: 13.5, lineHeight: 1.8 }}>لم تنشر أي صفحة بعد. من «آخر صفحاتي» اختر صفحة واضغط على «نشر» ليظهر الرابط هنا.</div> : null}
+      {(pages || []).map((pg) => {
+        const url = window.location.origin + "/p/" + pg.slug;
+        return (
+          <div key={pg.id} style={box}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 10 }}>
+              <span style={{ color: "#F1F5F9", fontWeight: 800, fontSize: 14 }}>{pg.name || "صفحة بدون اسم"}</span>
+              <span style={{ fontSize: 11, fontWeight: 800, color: pg.active ? "#6EE7B7" : "#F87171" }}>{pg.active ? "منشورة" : "متوقفة"}</span>
+            </div>
+            <div dir="ltr" style={{ background: "#0B0F19", border: "1px solid #202A42", borderRadius: 10, color: "#22D3EE", padding: "9px 12px", fontSize: 12.5, wordBreak: "break-all", textAlign: "left", marginBottom: 10 }}>{url}</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+              <button onClick={() => copy(url, pg.id)} style={{ background: "linear-gradient(135deg,#FDE68A,#F5C451 45%,#D99A1E)", border: "1px solid #FFE9A8", borderRadius: 10, color: "#3A2600", fontWeight: 900, fontSize: 13, padding: "10px 4px", cursor: "pointer", fontFamily: "inherit" }}>{copied === pg.id ? "✓ تم النسخ" : "📋 نسخ"}</button>
+              <a href={url} target="_blank" rel="noopener noreferrer" style={{ background: "#1B2540", border: "1px solid #2A3654", borderRadius: 10, color: "#E2E8F5", fontWeight: 800, fontSize: 13, padding: "10px 4px", textDecoration: "none", textAlign: "center" }}>↗ فتح</a>
+              <a href={"https://wa.me/?text=" + encodeURIComponent(url)} target="_blank" rel="noopener noreferrer" style={{ background: "#0F3D2A", border: "1px solid #1D6B47", borderRadius: 10, color: "#6EE7B7", fontWeight: 800, fontSize: 13, padding: "10px 4px", textDecoration: "none", textAlign: "center" }}>واتساب</a>
+            </div>
+          </div>
+        );
+      })}
+      <div style={{ color: "#8B96AC", fontSize: 11.5, marginTop: 4, lineHeight: 1.7 }}>استخدم الرابط في إعلانك. تصلك الطلبات في «طلباتي». الروابط محفوظة في حسابك وتظهر في أي جهاز.</div>
+    </div>
+  );
+}
 
 function App({ credits, setCredits, user, isAdmin, isVip, onBuyCredits, onPreviewChange }) {
   const [step, setStep] = useState("form");
@@ -2163,9 +2268,7 @@ function App({ credits, setCredits, user, isAdmin, isVip, onBuyCredits, onPrevie
   const [showOrders, setShowOrders] = useState(false);
   const [newOrders, setNewOrders] = useState(0);
   const [tab, setTab] = useState("create");
-  const [lastUrl, setLastUrl] = useState(() => { try { return localStorage.getItem("alai_last_url") || ""; } catch (e) { return ""; } });
   const [pub, setPub] = useState(null);
-  useEffect(() => { if (pub && pub.url) { setLastUrl(pub.url); try { localStorage.setItem("alai_last_url", pub.url); } catch (e) {} } }, [pub]);
   const uploadCacheRef = useRef({});
   async function refreshNewOrders() {
     try {
@@ -2534,26 +2637,7 @@ function App({ credits, setCredits, user, isAdmin, isVip, onBuyCredits, onPrevie
       )}
       {step === "form" && tab === "create" && <FormScreen form={form} setForm={setForm} images={images} onUpload={handleImageUpload} onRemoveImage={removeImage} onEnhanceImage={handleEnhanceImage} enhancingIdx={enhancingIdx} error={error} onGenerate={handleGenerate} />}
       {step === "form" && tab === "orders" && isVip && <OrdersPanel embedded onClose={() => { setTab("create"); refreshNewOrders(); }} />}
-      {step === "form" && tab === "link" && isVip && (
-        <div style={{ maxWidth: 560, margin: "0 auto", padding: "18px 16px 0" }}>
-          <div style={{ background: "#131A2A", border: "1px solid #202A42", borderRadius: 16, padding: 16 }}>
-            <div style={{ color: "#F1F5F9", fontWeight: 900, fontSize: 16, marginBottom: 12 }}>🔗 رابط الصفحة</div>
-            {lastUrl ? (
-              <div>
-                <div dir="ltr" style={{ background: "#0B0F19", border: "1px solid #202A42", borderRadius: 10, color: "#22D3EE", padding: "10px 12px", fontSize: 13, wordBreak: "break-all", textAlign: "left", marginBottom: 12 }}>{lastUrl}</div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-                  <button onClick={() => { try { navigator.clipboard.writeText(lastUrl); } catch (e) {} }} style={{ background: "linear-gradient(135deg,#FDE68A,#F5C451 45%,#D99A1E)", border: "1px solid #FFE9A8", borderRadius: 10, color: "#3A2600", fontWeight: 900, fontSize: 13, padding: "12px 4px 10px", cursor: "pointer", fontFamily: "inherit", position: "relative", boxShadow: "0 0 14px rgba(245,196,81,.45)" }}><span style={{ position: "absolute", top: -9, left: "50%", transform: "translateX(-50%)", background: "#1A1204", color: "#F5C451", border: "1px solid #F5C451", borderRadius: 99, fontSize: 10, fontWeight: 900, padding: "0 7px", lineHeight: "16px", whiteSpace: "nowrap" }}>👑 VIP</span>📋 نسخ</button>
-                  <a href={lastUrl} target="_blank" rel="noopener noreferrer" style={{ background: "#1B2540", border: "1px solid #2A3654", borderRadius: 10, color: "#E2E8F5", fontWeight: 800, fontSize: 13, padding: "10px 4px", textDecoration: "none", textAlign: "center" }}>↗ فتح</a>
-                  <a href={"https://wa.me/?text=" + encodeURIComponent(lastUrl)} target="_blank" rel="noopener noreferrer" style={{ background: "#0F3D2A", border: "1px solid #1D6B47", borderRadius: 10, color: "#6EE7B7", fontWeight: 800, fontSize: 13, padding: "10px 4px", textDecoration: "none", textAlign: "center" }}>واتساب</a>
-                </div>
-                <div style={{ color: "#8B96AC", fontSize: 11.5, marginTop: 12, lineHeight: 1.7 }}>استخدم هذا الرابط في إعلانك. تصلك الطلبات في «طلباتي».</div>
-              </div>
-            ) : (
-              <div style={{ color: "#8B96AC", fontSize: 13.5, lineHeight: 1.8 }}>لم تنشر أي صفحة بعد. من «آخر صفحاتي» اختر صفحة واضغط على «نشر» ليظهر الرابط هنا.</div>
-            )}
-          </div>
-        </div>
-      )}
+      {step === "form" && tab === "link" && isVip && <LinkPanel user={user} />}
       {step === "form" && (
         <nav dir="rtl" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 3500, display: "flex", background: "rgba(14,22,40,.98)", borderTop: "1px solid #202A42", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
           {[["create", "✨", "إنشاء صفحة"], ["orders", "📦", "طلباتي"], ["link", "🔗", "الرابط"], ["pages", "📂", "آخر صفحاتي"]].map(([k, ic, lb]) => (
