@@ -210,6 +210,16 @@
     .editor-tool.tool-dl.tool-icon{width:32px;padding:0!important}.editor-tool.tool-dl.tool-icon span{display:none}
     .toolbar-main>.editor-tool:first-child{width:32px}
   }
+  @media (max-width:820px){
+    .editor-toolbar .toolbar-main{gap:3px!important;padding:5px 6px!important}
+    .editor-toolbar .toolbar-main .editor-tool{height:32px;width:30px;padding:0!important;gap:3px;border-radius:8px;font-size:0}
+    .editor-toolbar .toolbar-main .editor-tool svg{width:15px;height:15px}
+    .editor-toolbar .toolbar-main .editor-tool span{display:none}
+    .editor-toolbar .toolbar-main .editor-preview{width:34px}
+    .editor-toolbar .toolbar-main .editor-preview svg{width:17px;height:17px}
+    .editor-toolbar .toolbar-main .editor-design,.editor-toolbar .toolbar-main .tool-text{width:auto;padding:0 7px!important}
+    .editor-toolbar .toolbar-main .editor-design span,.editor-toolbar .toolbar-main .tool-text span{display:inline;font-size:10.5px;font-weight:800}
+  }
   @media (min-width:821px){.hp-hero{grid-template-columns:1fr 1fr}}
   @media (max-width:820px){.hp-hero{padding-top:14px;gap:6px}.hp-phonewrap{order:-1}.hp-stage{--off:112px;height:480px}}
   @media (max-width:380px){.hp-stage{--off:96px}}
@@ -2819,10 +2829,10 @@ function PreviewScreen(props) {
       <div className="editor-toolbar">
         <div className="toolbar-main">
           <button onClick={onBack} className="editor-tool"><SvgIcon name="back" size={14} /><span>رجوع</span></button>
-          <button onClick={() => setPreviewOnly(true)} className="editor-tool editor-preview" title="معاينة الصفحة"><SvgIcon name="eye" size={14} /><span>معاينة</span></button>
+          <button onClick={() => setPreviewOnly(true)} className="editor-tool editor-preview" title="معاينة الصفحة" aria-label="معاينة"><SvgIcon name="eye" size={16} /></button>
           <button onClick={onShuffleDesign} className="editor-tool editor-design"><SvgIcon name="sparkle" size={14} /><span>تصميم</span></button>
-          <button onClick={onPublish} className="editor-tool tool-dl" title="نشر برابط مباشر"><span>🔗 نشر</span></button>
-          <button onClick={onDownload} className="editor-tool tool-dl tool-icon" title="تنزيل كملف HTML"><SvgIcon name="download" size={14} /><span>HTML</span></button>
+          <button onClick={onPublish} className="editor-tool tool-dl tool-text" title="نشر برابط مباشر"><span>🔗 نشر</span></button>
+          <button onClick={onDownload} className="editor-tool tool-dl tool-text" title="تنزيل كملف HTML"><SvgIcon name="download" size={14} /><span>HTML</span></button>
           <button onClick={exportImage} disabled={imageLoading} className="editor-tool tool-dl tool-icon" title="تنزيل كصورة PNG"><SvgIcon name="image" size={14} /><span>{imageLoading ? "..." : "PNG"}</span></button>
 
           <div className="toolbar-more-wrap" ref={moreRef}>
