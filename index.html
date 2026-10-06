@@ -2098,7 +2098,7 @@ async function pagesDelete(k, id) { const list = await pagesLoad(k); await sessS
 
 function App({ credits, setCredits, user, isAdmin, isVip, onBuyCredits, onPreviewChange }) {
   const [step, setStep] = useState("form");
-  const [form, setForm] = useState({ name: "", price: "", priceOld: "", description: "", countryCode: "SA", dialect: "auto", whatsapp: "", showWa: false, showCall: false, showCod: false, showOrderForm: false });
+  const [form, setForm] = useState({ name: "", price: "", priceOld: "", description: "", countryCode: "SA", dialect: "auto", whatsapp: "", showWa: false, showCall: false, showCod: false, showOrderForm: false, fbPixel: "", ttPixel: "" });
   const [images, setImages] = useState([]);
   const [error, setError] = useState("");
   const [genStepIdx, setGenStepIdx] = useState(0);
@@ -2165,7 +2165,7 @@ function App({ credits, setCredits, user, isAdmin, isVip, onBuyCredits, onPrevie
       }
       const d = entry.data;
       const tk = d._paletteVariant || DESIGN_SYSTEMS.Tech[0];
-      const html = d._template ? buildStructureHTML(d, uploaded, entry.form, c) : buildStandaloneHTML(d, tk, uploaded, entry.form, c);
+      const html = injectPixels(d._template ? buildStructureHTML(d, uploaded, entry.form, c) : buildStandaloneHTML(d, tk, uploaded, entry.form, c), entry.form, c);
       if (html.length > 3500000) throw new Error("حجم الصفحة كبير جداً للنشر.");
       const ex = await client.from("published_pages").select("slug").eq("user_id", user.id).eq("local_id", entry.localId).maybeSingle();
       if (ex.error) throw new Error("تعذّر الوصول لجدول الصفحات. تأكد أنك شغّلت ملف SQL في Supabase.");
@@ -2613,6 +2613,17 @@ function FormScreen({ form, setForm, images, onUpload, onRemoveImage, onEnhanceI
           <span style={{ color: "#B7C0D4", fontSize: 13, fontWeight: 600 }}>تضمين نموذج طلب داخل الصفحة</span>
         </label>
         <span style={{ color: "#5B6478", fontSize: 11, marginTop: -10 }}>إذا عطّلت هذا الخيار، فستنقلك الأزرار مباشرة إلى الواتساب أو الاتصال إذا كان الرقم متوفراً.</span>
+        </Sec>
+        <Sec n={6} icon="🎯" title="تتبع الإعلانات (اختياري)">
+          <Field label="Facebook Pixel ID">
+            <input value={form.fbPixel || ""} onChange={(e) => setForm((f) => ({ ...f, fbPixel: cleanFbPixel(e.target.value) }))} placeholder="123456789012345" inputMode="numeric" dir="ltr" style={inputStyle} />
+            {form.fbPixel && !/^[0-9]{8,20}$/.test(form.fbPixel) ? <span style={{ color: "#F87171", fontSize: 11 }}>المعرّف قصير، تأكد من نسخه كاملاً.</span> : null}
+          </Field>
+          <Field label="TikTok Pixel ID">
+            <input value={form.ttPixel || ""} onChange={(e) => setForm((f) => ({ ...f, ttPixel: cleanTtPixel(e.target.value) }))} placeholder="CXXXXXXXXXXXXXXXXXXX" dir="ltr" style={inputStyle} />
+            {form.ttPixel && !/^[A-Z0-9]{10,30}$/.test(form.ttPixel) ? <span style={{ color: "#F87171", fontSize: 11 }}>المعرّف قصير، تأكد من نسخه كاملاً.</span> : null}
+          </Field>
+          <span style={{ color: "#5B6478", fontSize: 11 }}>انسخ المعرّف (ID) فقط من مدير الأحداث في حسابك الإعلاني. يُضاف تلقائياً إلى صفحتك المنشورة، وتصل الأحداث إلى حسابك أنت: مشاهدة الصفحة، بدء الطلب، إتمام الطلب، والنقر على واتساب أو الاتصال.</span>
         </Sec>
         {error && <div style={{ color: "#F87171", fontSize: 13, background: "#2A1519", padding: "8px 12px", borderRadius: 8 }}>{error}</div>}
         <button onClick={onGenerate} style={{ background: "linear-gradient(90deg,#3B82F6,#22D3EE,#5eead4)", border: "none", borderRadius: 14, color: "#04101C", fontWeight: 900, fontSize: 17, padding: "17px 20px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, fontFamily: "inherit", boxShadow: "0 8px 24px rgba(34,211,238,.25)" }}>
@@ -3240,6 +3251,35 @@ function FaqItem({ q, a, tokens }) {
       {open && <div style={{ padding: "0 14px 14px", fontSize: 12.5, color: tokens.muted, lineHeight: 1.7 }}>{a}</div>}
     </div>
   );
+}
+
+/* ============================== PIXELS ============================== */
+// يُحقن البكسل في الصفحة المنشورة فقط (وليس في المعاينة)، وبالمعرّف (ID) فقط للأمان.
+const CURRENCY_ISO = { SA: "SAR", AE: "AED", KW: "KWD", QA: "QAR", BH: "BHD", OM: "OMR", MA: "MAD", DZ: "DZD", TN: "TND", LY: "LYD" };
+function cleanFbPixel(v) { return String(v || "").replace(/[^0-9]/g, "").slice(0, 20); }
+function cleanTtPixel(v) { return String(v || "").replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 30); }
+function injectPixels(html, form, country) {
+  const fb = cleanFbPixel(form && form.fbPixel);
+  const tt = cleanTtPixel(form && form.ttPixel);
+  const fbOk = /^[0-9]{8,20}$/.test(fb);
+  const ttOk = /^[A-Z0-9]{10,30}$/.test(tt);
+  if (!fbOk && !ttOk) return html;
+  const S = "<scr" + "ipt>", E = "</scr" + "ipt>";
+  let head = "";
+  if (fbOk) {
+    head += S + '!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version="2.0";n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,"script","https://connect.facebook.net/en_US/fbevents.js");fbq("init","' + fb + '");fbq("track","PageView");' + E;
+  }
+  if (ttOk) {
+    head += S + '!function(w,d,t){w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie"];ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++){ttq.setAndDefer(ttq,ttq.methods[i])}ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++){ttq.setAndDefer(e,ttq.methods[n])}return e};ttq.load=function(e,n){var i="https://analytics.tiktok.com/i18n/pixel/events.js";ttq._i=ttq._i||{};ttq._i[e]=[];ttq._i[e]._u=i;ttq._t=ttq._t||{};ttq._t[e]=+new Date;ttq._o=ttq._o||{};ttq._o[e]=n||{};var o=document.createElement("script");o.type="text/javascript";o.async=!0;o.src=i+"?sdkid="+e+"&lib="+t;var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(o,a)};ttq.load("' + tt + '");ttq.page()}(window,document,"ttq");' + E;
+  }
+  const code = (form && form.countryCode) || (country && country.code) || "";
+  const value = Number(form && form.price) || 0;
+  const cur = CURRENCY_ISO[code] || "USD";
+  const events = S + '(function(){var V=' + JSON.stringify(value) + ',C=' + JSON.stringify(cur) + ';function ev(fb,tt,p){try{if(window.fbq)fbq("track",fb,p)}catch(e){}try{if(window.ttq)ttq.track(tt,p)}catch(e){}}var ic=false;["ofName","ofPhone","ofN","ofP"].forEach(function(id){var e=document.getElementById(id);if(e)e.addEventListener("focus",function(){if(ic)return;ic=true;ev("InitiateCheckout","InitiateCheckout",{value:V,currency:C})})});["orderSuccessWrap","ofS"].forEach(function(id){var e=document.getElementById(id);if(!e)return;var done=false;new MutationObserver(function(){if(!done&&getComputedStyle(e).display!=="none"){done=true;ev("Purchase","CompletePayment",{value:V,currency:C,content_type:"product"})}}).observe(e,{attributes:true,attributeFilter:["style"]})});document.addEventListener("click",function(e){var a=e.target&&e.target.closest?e.target.closest("a"):null;if(!a)return;var h=a.getAttribute("href")||"";if(h.indexOf("wa.me")>-1||h.indexOf("tel:")===0)ev("Contact","Contact",{})})})();' + E;
+  let out = html.replace("</head>", () => head + "</head>");
+  const bi = out.lastIndexOf("</body>");
+  out = bi >= 0 ? out.slice(0, bi) + events + out.slice(bi) : out + events;
+  return out;
 }
 
 function buildStandaloneHTML(data, tokens, images, form, country) {
