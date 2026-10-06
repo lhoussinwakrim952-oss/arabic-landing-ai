@@ -198,6 +198,18 @@
   .editor-tool.editor-design:hover{filter:brightness(1.12)}
   @keyframes designPulse{0%,100%{box-shadow:0 0 0 2px rgba(236,72,153,.25),0 4px 16px rgba(168,85,247,.5)}50%{box-shadow:0 0 0 5px rgba(236,72,153,.12),0 4px 24px rgba(236,72,153,.75)}}
   @media (max-width:820px){.editor-tool.editor-design{width:auto;padding:0 12px;gap:5px;font-size:11.5px}.editor-tool.editor-design span{display:inline;font-size:11.5px;font-weight:900}.editor-tool.editor-design svg{width:15px;height:15px}}
+  .editor-tool.editor-preview{background:linear-gradient(135deg,#ef4444,#b91c1c);border:1px solid #fca5a5;color:#fff;font-weight:900;box-shadow:0 0 0 2px rgba(239,68,68,.3),0 4px 16px rgba(239,68,68,.55);animation:previewPulse 1.8s ease-in-out infinite}
+  .editor-tool.editor-preview:hover{filter:brightness(1.1)}
+  @keyframes previewPulse{0%,100%{box-shadow:0 0 0 2px rgba(239,68,68,.3),0 4px 14px rgba(239,68,68,.5)}50%{box-shadow:0 0 0 5px rgba(239,68,68,.15),0 4px 22px rgba(239,68,68,.9)}}
+  .vip-mini{position:absolute;top:-9px;left:6px;display:inline-flex;align-items:center;gap:2px;height:17px;padding:0 6px;border-radius:99px;background:linear-gradient(135deg,#FDE68A,#F5C451,#D99A1E);color:#3A2600;font-size:9.5px;font-weight:900;line-height:1;box-shadow:0 0 8px rgba(245,196,81,.55);pointer-events:none}
+  @media (max-width:820px){
+    .toolbar-main{gap:4px!important;padding:6px!important}
+    .editor-tool.editor-preview{width:auto;padding:0 10px;gap:4px}.editor-tool.editor-preview span{display:inline;font-size:11.5px;font-weight:900}.editor-tool.editor-preview svg{width:15px;height:15px}
+    .editor-tool.editor-design{padding:0 9px;gap:4px;animation:none}.editor-tool.editor-design span{font-size:11px}
+    .editor-tool.tool-dl{padding:0 8px!important}.editor-tool.tool-dl span{font-size:11px}
+    .editor-tool.tool-dl.tool-icon{width:32px;padding:0!important}.editor-tool.tool-dl.tool-icon span{display:none}
+    .toolbar-main>.editor-tool:first-child{width:32px}
+  }
   @media (min-width:821px){.hp-hero{grid-template-columns:1fr 1fr}}
   @media (max-width:820px){.hp-hero{padding-top:14px;gap:6px}.hp-phonewrap{order:-1}.hp-stage{--off:112px;height:480px}}
   @media (max-width:380px){.hp-stage{--off:96px}}
@@ -878,6 +890,21 @@ const VIP_PLAN = {
   features: ["50 نقطة توليد صفحات هبوط", "رابط مباشر جاهز للإعلان", "استقبال الطلبات في لوحة خاصة", "كل ميزات المنصة مفتوحة لمدة 30 يوماً"],
 };
 
+function VipPricingCard({ onClick, disabled, label }) {
+  return (
+    <div style={{ position: "relative", margin: "34px auto 0", maxWidth: 560, borderRadius: 20, padding: "32px 20px 22px", background: "linear-gradient(160deg,#2A1E06,#171106)", border: "1.5px solid #F5C451", boxShadow: "0 0 30px rgba(245,196,81,.35)", textAlign: "center" }}>
+      <span style={{ position: "absolute", top: -13, left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg,#FDE68A,#F5C451,#D99A1E)", color: "#3A2600", borderRadius: 99, fontSize: 12.5, fontWeight: 900, padding: "3px 16px", whiteSpace: "nowrap" }}>👑 VIP</span>
+      <div style={{ color: "#FDE68A", fontWeight: 900, fontSize: 19 }}>باقة VIP</div>
+      <div style={{ fontSize: 44, fontWeight: 900, margin: "6px 0 2px", background: "linear-gradient(135deg,#FDE68A,#F5C451,#D99A1E)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{VIP_PLAN.price}</div>
+      <div style={{ color: "#B9A268", fontSize: 12.5, marginBottom: 16 }}>دفعة واحدة • {VIP_PLAN.days} يوماً بدون اشتراك</div>
+      <ul style={{ listStyle: "none", margin: "0 auto 18px", padding: 0, display: "grid", gap: 9, textAlign: "right", maxWidth: 360 }}>
+        {VIP_PLAN.features.map((f) => <li key={f} style={{ color: "#F3E7C2", fontSize: 14, fontWeight: 600 }}><span style={{ color: "#F5C451", marginLeft: 8 }}>✓</span>{f}</li>)}
+      </ul>
+      <button onClick={onClick} disabled={disabled} style={{ width: "100%", maxWidth: 360, background: "linear-gradient(135deg,#FDE68A,#F5C451 45%,#D99A1E)", border: "none", borderRadius: 12, color: "#3A2600", fontWeight: 900, fontSize: 16, padding: "14px", cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.6 : 1, fontFamily: "inherit", boxShadow: "0 0 16px rgba(245,196,81,.45)" }}>{label}</button>
+    </div>
+  );
+}
+
 function CreditsModal({ open, onClose, onBuy, buying, buyError, focus, onShowPlans }) {
   const [prices, setPrices] = useState(null);
   const [priceError, setPriceError] = useState("");
@@ -993,7 +1020,7 @@ function AccountMenu({ email, credits, loading, isAdmin, onLogout, onBuy }) {
   );
 }
 
-function TopBar({ email, credits, loading, isAdmin, onLogout, onBuy }) {
+function TopBar({ email, credits, loading, isAdmin, isVip, onLogout, onBuy }) {
   return (
     <div className="account-bar">
       <div className="account-bar-inner">
@@ -1009,7 +1036,10 @@ function TopBar({ email, credits, loading, isAdmin, onLogout, onBuy }) {
           {isAdmin ? (
             <span className="balance-pill" title="حساب Admin — توليد بلا خصم نقاط">👑 <strong>Admin</strong> وضع الاختبار</span>
           ) : (
-            <button type="button" className="balance-pill" onClick={onBuy} title="شراء نقاط">⚡ <strong>{loading ? "..." : Number(credits ?? 0)}</strong> نقطة <span className="balance-plus" aria-hidden="true">+</span></button>
+            <span style={{ position: "relative", display: "inline-flex" }}>
+              <button type="button" className="balance-pill" onClick={onBuy} title="شراء نقاط">⚡ <strong>{loading ? "..." : Number(credits ?? 0)}</strong> نقطة <span className="balance-plus" aria-hidden="true">+</span></button>
+              {isVip ? <span className="vip-mini" title="عضوية VIP فعّالة">👑 VIP</span> : null}
+            </span>
           )}
         </div>
       </div>
@@ -1176,6 +1206,7 @@ function PricingPage({ signedIn, onBuy, buying, buyError, onBack }) {
             );
           })}
         </div>
+        <VipPricingCard onClick={() => VIP_PRICE_ID && onBuy(VIP_PRICE_ID)} disabled={buying || !VIP_PRICE_ID} label={buying ? "جاري الفتح..." : (signedIn ? "👑 اشترك في VIP" : "👑 ابدأ مع VIP")} />
         {err && <p className="pp-err" dir="ltr">{err}</p>}
 
         <div className="pp-trust">
@@ -1358,6 +1389,7 @@ function HomePage({ onLogin, onSignup }) {
             );
           })}
         </div>
+        <VipPricingCard onClick={onSignup} disabled={false} label="👑 ابدأ مع VIP" />
         <div className="pp-trust">
           <div><b>🔒</b>دفع آمن عبر Paddle</div>
           <div><b>⚡</b>تُضاف النقاط تلقائياً</div>
@@ -1618,7 +1650,7 @@ function AuthGate() {
           email={(profile && profile.email) || session.user.email}
           credits={credits}
           loading={profileLoading}
-          isAdmin={isAdmin}
+          isAdmin={isAdmin} isVip={isVip}
           onLogout={handleLogout}
           onBuy={() => { setBuyFocus(""); setShowBuyModal(true); }}
         />
@@ -2787,11 +2819,11 @@ function PreviewScreen(props) {
       <div className="editor-toolbar">
         <div className="toolbar-main">
           <button onClick={onBack} className="editor-tool"><SvgIcon name="back" size={14} /><span>رجوع</span></button>
+          <button onClick={() => setPreviewOnly(true)} className="editor-tool editor-preview" title="معاينة الصفحة"><SvgIcon name="eye" size={14} /><span>معاينة</span></button>
           <button onClick={onShuffleDesign} className="editor-tool editor-design"><SvgIcon name="sparkle" size={14} /><span>تصميم</span></button>
           <button onClick={onPublish} className="editor-tool tool-dl" title="نشر برابط مباشر"><span>🔗 نشر</span></button>
-          <button onClick={onDownload} className="editor-tool tool-dl" title="تنزيل كملف HTML"><SvgIcon name="download" size={14} /><span>HTML</span></button>
-          <button onClick={exportImage} disabled={imageLoading} className="editor-tool tool-dl" title="تنزيل كصورة PNG"><SvgIcon name="image" size={14} /><span>{imageLoading ? "..." : "PNG"}</span></button>
-          <button onClick={() => setPreviewOnly(true)} className="editor-tool"><SvgIcon name="eye" size={14} /><span>معاينة</span></button>
+          <button onClick={onDownload} className="editor-tool tool-dl tool-icon" title="تنزيل كملف HTML"><SvgIcon name="download" size={14} /><span>HTML</span></button>
+          <button onClick={exportImage} disabled={imageLoading} className="editor-tool tool-dl tool-icon" title="تنزيل كصورة PNG"><SvgIcon name="image" size={14} /><span>{imageLoading ? "..." : "PNG"}</span></button>
 
           <div className="toolbar-more-wrap" ref={moreRef}>
             <button className="editor-tool toolbar-more" onClick={() => setMoreOpen((v) => !v)}><SvgIcon name="dotsv" size={18} /><span>المزيد</span></button>
