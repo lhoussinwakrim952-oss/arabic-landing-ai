@@ -1,6 +1,13 @@
 {
   "rewrites": [
     { "source": "/", "destination": "/index.html" },
-    { "source": "/p/:slug", "destination": "/api/p?slug=:slug" }
+    { "source": "/p/:slug", "destination": "/api/p?slug=:slug" },
+    { "source": "/login", "destination": "/index.html" },
+    { "source": "/signup", "destination": "/index.html" },
+    { "source": "/dashboard", "destination": "/index.html" },
+    { "source": "/forgot-password", "destination": "/index.html" },
+    { "source": "/pricing", "destination": "/index.html" },
+    { "source": "/reset-password", "destination": "/index.html" },
+    { "source": "/legal/:path*", "destination": "/index.html" }
   ]
 }
