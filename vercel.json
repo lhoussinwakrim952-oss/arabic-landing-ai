@@ -8,6 +8,7 @@
     { "source": "/forgot-password", "destination": "/index.html" },
     { "source": "/pricing", "destination": "/index.html" },
     { "source": "/reset-password", "destination": "/index.html" },
+    { "source": "/welcome", "destination": "/index.html" },
     { "source": "/legal/:path*", "destination": "/index.html" }
   ]
 }
