@@ -2649,7 +2649,7 @@ function App({ credits, setCredits, user, isAdmin, isVip, onBuyCredits, onPrevie
         </div>
       )}
       {false && (
-        <div style={{ maxWidth: 560, margin: "0 auto", padding: "14px 16px 0" }}>
+        <div style={{ width: "100%", maxWidth: 560, margin: "0 auto", padding: "14px 16px 0", boxSizing: "border-box", minWidth: 0, overflow: "hidden" }}>
           <button onClick={() => (isVip ? setShowOrders(true) : onBuyCredits("vip"))} style={{ width: "100%", background: "#131A2A", border: "1px solid #202A42", color: "#E2E8F5", borderRadius: 14, padding: "12px 16px", fontFamily: "inherit", fontWeight: 800, fontSize: 14, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span>📦 طلباتي والصفحات المنشورة</span>
             {newOrders > 0 ? <span style={{ background: "#22D3EE", color: "#04101C", borderRadius: 99, padding: "1px 10px", fontSize: 12.5 }}>{newOrders} جديد</span> : <span>◂</span>}
@@ -2665,9 +2665,9 @@ function App({ credits, setCredits, user, isAdmin, isVip, onBuyCredits, onPrevie
             <span>📂 آخر صفحاتي ({savedPages.length}/5)</span><span></span>
           </button>
           {true && (
-            <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
+            <div style={{ display: "grid", gap: 10, marginTop: 10, width: "100%", minWidth: 0 }}>
               {savedPages.map((p) => (
-                <div key={p.id} style={{ background: "#131A2A", border: "1px solid #202A42", borderRadius: 14, padding: 10, display: "grid", gap: 10 }}>
+                <div key={p.id} style={{ background: "#131A2A", border: "1px solid #202A42", borderRadius: 14, padding: 10, display: "grid", gap: 10, width: "100%", boxSizing: "border-box", minWidth: 0, overflow: "hidden" }}>
                   <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                     {p.thumb ? <img src={p.thumb} alt="" style={{ width: 52, height: 52, objectFit: "cover", borderRadius: 10, flex: "none" }} /> : null}
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -2676,14 +2676,14 @@ function App({ credits, setCredits, user, isAdmin, isVip, onBuyCredits, onPrevie
                     </div>
                     <button onClick={() => { if (window.confirm("حذف هذه الصفحة؟")) deleteSavedPage(p.id); }} aria-label="حذف" style={{ background: "transparent", border: "1px solid #2A3654", borderRadius: 10, color: "#F87171", fontSize: 14, padding: "6px 10px", cursor: "pointer" }}>🗑</button>
                   </div>
-                  <div style={{ display: "grid", gap: 8 }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-                    <button onClick={() => setViewPage(p)} style={{ background: "#1B2540", border: "1px solid #2A3654", borderRadius: 10, color: "#E2E8F5", fontWeight: 800, fontSize: 12.5, padding: "9px 6px", cursor: "pointer", fontFamily: "inherit" }}>👁 معاينة</button>
-                    <button onClick={() => downloadSaved(p)} style={{ background: "linear-gradient(90deg,#3B82F6,#22D3EE)", border: "none", borderRadius: 10, color: "#04101C", fontWeight: 800, fontSize: 12.5, padding: "9px 6px", cursor: "pointer", fontFamily: "inherit" }}>HTML ⬇</button>
-                    <button onClick={() => downloadSavedImage(p)} disabled={imgBusy === p.id} style={{ background: "linear-gradient(90deg,#8B5CF6,#EC4899)", border: "none", borderRadius: 10, color: "#fff", fontWeight: 800, fontSize: 12.5, padding: "9px 6px", cursor: "pointer", fontFamily: "inherit", opacity: imgBusy === p.id ? 0.6 : 1 }}>{imgBusy === p.id ? "⏳ ..." : "صورة 🖼 ⬇"}</button>
+                  <div style={{ display: "grid", gap: 8, width: "100%", minWidth: 0 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8, width: "100%", minWidth: 0 }}>
+                      <button onClick={() => setViewPage(p)} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", overflow: "hidden", whiteSpace: "nowrap", background: "#1B2540", border: "1px solid #2A3654", borderRadius: 10, color: "#E2E8F5", fontWeight: 800, fontSize: 12.5, padding: "9px 4px", cursor: "pointer", fontFamily: "inherit" }}>👁 معاينة</button>
+                      <button onClick={() => downloadSaved(p)} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", overflow: "hidden", whiteSpace: "nowrap", background: "linear-gradient(90deg,#3B82F6,#22D3EE)", border: "none", borderRadius: 10, color: "#04101C", fontWeight: 800, fontSize: 12.5, padding: "9px 4px", cursor: "pointer", fontFamily: "inherit" }}>HTML ⬇</button>
+                      <button onClick={() => downloadSavedImage(p)} disabled={imgBusy === p.id} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", overflow: "hidden", whiteSpace: "nowrap", background: "linear-gradient(90deg,#8B5CF6,#EC4899)", border: "none", borderRadius: 10, color: "#fff", fontWeight: 800, fontSize: 12.5, padding: "9px 4px", cursor: "pointer", fontFamily: "inherit", opacity: imgBusy === p.id ? 0.6 : 1 }}>{imgBusy === p.id ? "⏳ ..." : "صورة 🖼 ⬇"}</button>
+                    </div>
+                    <button onClick={() => publishEntry({ data: p.history[p.historyIdx], images: p.images || [], form: p.form, localId: p.id })} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", overflow: "hidden", whiteSpace: "nowrap", background: "linear-gradient(90deg,#10B981,#22D3EE)", border: "none", borderRadius: 10, color: "#04101C", fontWeight: 900, fontSize: 13, padding: "10px 6px", cursor: "pointer", fontFamily: "inherit" }}>🔗 نشر برابط مباشر</button>
                   </div>
-                    <button onClick={() => publishEntry({ data: p.history[p.historyIdx], images: p.images || [], form: p.form, localId: p.id })} style={{ background: "linear-gradient(90deg,#10B981,#22D3EE)", border: "none", borderRadius: 10, color: "#04101C", fontWeight: 900, fontSize: 13, padding: "10px 6px", cursor: "pointer", fontFamily: "inherit" }}>🔗 نشر برابط مباشر</button>
-                </div>
                 </div>
               ))}
             </div>
