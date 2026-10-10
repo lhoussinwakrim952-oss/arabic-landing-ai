@@ -1511,11 +1511,8 @@ function AuthGate() {
   async function fetchProfile(client, userId) {
     setProfileLoading(true);
     try {
-      // نظام النقاط يعتمد على users. profiles يبقى fallback للتوافق مع النسخة الحالية.
-      let result = await client.from("users").select("credits").eq("id", userId).single();
-      if (result.error) {
-        result = await client.from("profiles").select("email, credits").eq("id", userId).single();
-      }
+      // نظام النقاط كيعتمد على profiles مباشرة (جدول users ماكاينش، التجربة السابقة كانت كتدير طلب فاشل 404 فكل مرة).
+      let result = await client.from("profiles").select("email, credits").eq("id", userId).single();
       // role مزيدة فـ profiles فقط (عمود الصلاحيات لي زدناه بالـ SQL) — نجيبها بطلب منفصل،
       // "best effort": إذا فشلت (مثلاً العمود ماكاينش) ما كتأثرش على الرصيد أو باقي المنصة.
       let role = "user";
