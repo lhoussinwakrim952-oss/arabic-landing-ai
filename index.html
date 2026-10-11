@@ -852,7 +852,25 @@ function getPaddle() {
       window.Paddle.Initialize({
         token: cfg.token,
         eventCallback: (ev) => {
-          if (ev && ev.name === "checkout.completed") window.location.href = "/welcome";
+          if (!ev || ev.name !== "checkout.completed") return; // فقط الدفع الناجح
+
+          try {
+            if (typeof window.fbq === "function") {
+              const d = ev.data || {};
+              const total = d.totals ? Number(d.totals.total) : NaN;
+              const params = { currency: d.currency_code || "USD" };
+              if (isFinite(total)) params.value = total;
+              window.fbq(
+                "track",
+                "Purchase",
+                params,
+                d.transaction_id ? { eventID: d.transaction_id } : undefined
+              );
+            }
+          } catch (e) { /* ما نوقفوش الـ redirect إلا طاح البيكسل */ }
+
+          // تأخير صغير باش الحدث يوصل لـ Meta قبل الـ redirect
+          setTimeout(() => { window.location.href = "/welcome"; }, 400);
         },
       });
       return { country: cfg.country || null };
