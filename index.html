@@ -258,6 +258,101 @@ src="https://www.facebook.com/tr?id=936841412577323&ev=PageView&noscript=1"
   .hp-logo-sm .hp-logo-img{width:44px;height:44px;border:2px solid #2f4d86;box-shadow:0 0 0 3px rgba(139,92,246,.08),0 0 18px rgba(139,92,246,.35)}
   @media (max-width:380px){.hp-nav-in{padding:8px 10px;min-height:58px}.hp-nav-btns{gap:6px}.hp-nav-btns .hp-ghost,.hp-nav-btns .hp-cta{height:34px;padding:0 11px;font-size:12px}.hp-logo-sm .hp-logo-img{width:40px;height:40px}}
   .hp-nav-in{direction:rtl}
+
+  /* ===== Design system v2 — visual layer only ===== */
+  :root{--bg:#070B16;--s1:#0C1222;--s2:#111A30;--line:#1A2440;--line2:#26335A;--tx:#EAEFFA;--tx2:#97A3BE;--tx3:#66728F;--pri:#5B6BFF;--pri-h:#7080FF;--pri-soft:rgba(91,107,255,.14);--ok:#5FE0B0;--r1:8px;--r2:12px;--r3:16px;--ff:'IBM Plex Sans Arabic','Cairo',sans-serif}
+  html,body{background:var(--bg)}
+  .account-bar,.editor-toolbar,.toolbar-dropdown,.credits-modal-backdrop,.pp-page,.hp-nav,.hp-hero,.hp-sec,.ds-form,.ds-auth,.account-dropdown,.floating-editor-back{font-family:var(--ff)}
+  .ds-form input,.ds-form select,.ds-form textarea,.ds-auth input{font-family:var(--ff)}
+  .orb{display:none!important}
+  .glass{background:var(--s1);backdrop-filter:none;-webkit-backdrop-filter:none;border:1px solid var(--line)}
+  input:focus,select:focus,textarea:focus{box-shadow:0 0 0 3px var(--pri-soft);border-color:var(--pri)!important}
+  a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--pri-h);outline-offset:2px}
+  .ds-auth .glass{border-radius:var(--r3);box-shadow:0 24px 60px -20px rgba(0,0,0,.6)}
+  .ds-auth h1{font-weight:700!important;letter-spacing:0}
+
+  /* top bar */
+  .account-bar{background:rgba(7,11,22,.9);border-bottom:1px solid var(--line)}
+  .account-brand{width:40px;height:40px;background:var(--s2);border:1px solid var(--line2);box-shadow:none}
+  .balance-pill{background:var(--s1);border:1px solid var(--line2);color:var(--tx2);font-weight:600;height:36px}
+  .balance-pill strong{color:var(--ok)}
+  .balance-plus{background:var(--pri)}
+  .account-avatar{background:var(--s2);border:1px solid var(--line2);box-shadow:none;color:var(--tx);font-weight:700}
+  .account-avatar::after{border-color:var(--bg)}
+  .account-dropdown,.toolbar-dropdown{background:var(--s1);border:1px solid var(--line2);border-radius:var(--r2);box-shadow:0 24px 60px -16px rgba(0,0,0,.7)}
+  .account-buy{background:var(--pri-soft);color:#B9C1FF;font-weight:600}.account-logout{background:transparent;color:#F5A3AE}
+  .account-credit-row strong{color:var(--ok)}
+
+  /* modal + plans */
+  .credits-modal-backdrop{background:rgba(3,6,14,.78)}
+  .credits-modal{background:var(--s1);border:1px solid var(--line2);border-radius:var(--r3)}
+  .credits-modal-close{background:var(--s2);border-color:var(--line2)}
+  .credit-plan,.pp-plan{background:var(--s2);border:1px solid var(--line);border-radius:var(--r2)}
+  .credit-plan.popular,.pp-plan.popular{border-color:var(--pri);box-shadow:none}
+  .pp-plan{background:var(--s1);padding:26px 22px 22px}.pp-plan.popular{transform:none;background:var(--s2)}
+  .credit-popular,.pp-badge{background:var(--pri);font-weight:700}
+  .credit-plan-price,.pp-price,.credit-plan-features li:before,.pp-feat li:before{color:var(--ok)}
+  .credit-plan button,.pp-btn,.hp-cta{background:var(--pri);color:#fff;border-radius:var(--r1);font-weight:700;box-shadow:none;transition:background .15s}
+  .credit-plan button:hover,.pp-btn:hover,.hp-cta:hover{background:var(--pri-h)}
+  .pp-plan:not(.popular) .pp-btn{background:transparent;border:1px solid var(--line2);color:var(--tx)}
+  .pp-page{background:var(--bg)}
+  .pp-hero h1,.hp-hero h1,.hp-showtitle{font-weight:700;letter-spacing:0;color:var(--tx)}
+  .pp-hero h1 span,.hp-hero h1 span,.hp-showtitle span{background:none;color:#9AA6FF;-webkit-text-fill-color:currentColor}
+  .pp-chip{background:var(--pri-soft);border-color:transparent;color:#B9C1FF;font-weight:600}
+  .pp-back,.hp-ghost{border-color:var(--line2);color:var(--tx2);border-radius:var(--r1)}
+  .pp-trust div,.pp-step,.pp-faq details,.hp-feat{background:var(--s1);border:1px solid var(--line);border-radius:var(--r2)}
+  .pp-trust b{display:none}
+  .pp-step i{background:var(--pri-soft);color:#B9C1FF;border-radius:var(--r1)}
+
+  /* home */
+  .hp-nav{background:rgba(7,11,22,.88);border-bottom:1px solid var(--line);box-shadow:none}
+  .hp-nav-btns .hp-ghost,.hp-nav-btns .hp-cta{border-radius:var(--r1);box-shadow:none}
+  .hp-logo-name{background:none;color:var(--tx);-webkit-text-fill-color:currentColor;font-weight:700}
+  .hp-logo-sm .hp-logo-img{border:1px solid var(--line2);box-shadow:none}
+  .hp-hero p{color:var(--tx2)}.hp-stats b{color:var(--tx);font-weight:700}
+  .hp-phonewrap::before{background:radial-gradient(circle,rgba(91,107,255,.14),transparent 68%)}
+  .hp-ph,.hp-ph.c{border-color:#202C4D;box-shadow:0 30px 60px -24px rgba(0,0,0,.7)}
+  .hp-feat:hover{transform:none;border-color:var(--line2)}
+  .hp-feat b{font-size:0;width:28px;height:3px;border-radius:2px;background:var(--pri);margin-bottom:16px}
+  .hp-feat h3{font-weight:700}
+  .hp-final{background:var(--s2);border:1px solid var(--line2);border-radius:var(--r3)}
+  .hp-dots i.on{background:var(--pri)}
+  .hp-showtitle::after{background:var(--pri);width:36px}
+
+  /* editor toolbar */
+  .editor-toolbar{background:rgba(9,14,28,.94);border-bottom:1px solid var(--line);box-shadow:none}
+  .editor-command-row{border-top:1px solid var(--line)}
+  .editor-tool{background:var(--s1);border:1px solid var(--line2);color:var(--tx);border-radius:var(--r1);font-weight:600}
+  .editor-tool:hover{background:var(--s2);border-color:#35457A}
+  .editor-tool.editor-design,.editor-tool.editor-preview,.editor-tool.tool-dl{animation:none;box-shadow:none;filter:none}
+  .editor-tool.editor-design{background:var(--pri-soft);border-color:#33407F;color:#C9CFFF}
+  .editor-tool.editor-preview{background:var(--pri);border-color:var(--pri);color:#fff}
+  .editor-tool.tool-dl{background:var(--s2);border-color:var(--line2);color:var(--tx)}
+  .device-switch{background:var(--s1);border:1px solid var(--line)}.device-switch button.active{background:var(--pri)}
+  .toolbar-dropdown button:hover{background:var(--s2)}
+  .floating-editor-back{background:var(--s1);border:1px solid var(--line2);color:var(--tx);box-shadow:0 10px 30px rgba(0,0,0,.5)}
+
+  /* create-page form */
+  .ds-head{text-align:center;margin:6px 0 24px}
+  .ds-head h1{color:var(--tx);font-size:26px;font-weight:700;line-height:1.45;margin:18px 0 8px;letter-spacing:0}
+  .ds-head p{color:var(--tx2);font-size:14px;margin:0}
+  .ds-steps{list-style:none;margin:0;padding:0;display:inline-flex;align-items:center;gap:6px;background:var(--s1);border:1px solid var(--line);border-radius:999px;padding:4px}
+  .ds-steps li{display:flex;align-items:center;gap:7px;padding:5px 12px 5px 14px;border-radius:999px;color:var(--tx3);font-size:12px;font-weight:600;white-space:nowrap}
+  .ds-steps li i{font-style:normal;width:18px;height:18px;border-radius:50%;border:1px solid var(--line2);display:inline-flex;align-items:center;justify-content:center;font-size:10.5px}
+  .ds-steps li.on{background:var(--pri-soft);color:#C9CFFF}.ds-steps li.on i{background:var(--pri);border-color:var(--pri);color:#fff}
+  .ds-sec{background:var(--s1);border:1px solid var(--line);border-radius:var(--r3);padding:18px 16px}
+  .ds-sec-h{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+  .ds-sec-n{width:24px;height:24px;border-radius:7px;background:var(--pri-soft);color:#B9C1FF;font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .ds-sec-t{color:var(--tx);font-weight:700;font-size:15px}
+  .ds-sec-i{margin-inline-start:auto;color:var(--tx3);display:flex}
+  .ds-sec-b{display:grid;gap:14px}
+  .ds-cta{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:54px;border:0;border-radius:var(--r2);background:var(--pri);color:#fff;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 10px 28px -10px rgba(91,107,255,.6);transition:background .15s}
+  .ds-cta:hover{background:var(--pri-h)}
+  @media (max-width:700px){
+    .ds-form{padding:14px 12px 32px!important}.ds-head{margin-bottom:16px}.ds-head h1{font-size:22px;margin-top:14px}
+    .ds-sec{padding:16px 14px;border-radius:var(--r2)}
+    .ds-steps li{padding:5px 9px;font-size:11.5px}.ds-steps li i{display:none}
+  }
 </style>
 </head>
 <body>
@@ -449,6 +544,11 @@ const SVG_PATHS = {
   dotsv: "M12 5h.01M12 12h.01M12 19h.01",
   bolt: "M13 2 4 14h6l-1 8 9-12h-6l1-8z",
   publish: "M4 12a8 8 0 1 0 16 0 8 8 0 0 0-16 0zM9 12l2 2 4-4",
+  tag: "M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8zM7.5 7.5h.01",
+  doc: "M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5zM14 3v5h5M9 13h6M9 17h6",
+  globe: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18",
+  chat: "M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z",
+  target: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM12 12h.01",
 };
 function SvgIcon({ name, size, color, strokeWidth, style }) {
   const d = SVG_PATHS[name];
@@ -724,13 +824,13 @@ function ConfigErrorScreen() {
 
 function AuthShell({ children }) {
   return (
-    <div dir="rtl" style={{ minHeight: "100vh", background: "#0B0F19", position: "relative", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 20px" }} className="fade-in">
+    <div dir="rtl" style={{ minHeight: "100vh", background: "#0B0F19", position: "relative", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 20px" }} className="fade-in ds-auth">
       <div className="orb" style={{ width: 260, height: 260, top: -40, right: -40, background: "#2563eb55", animation: "drift 9s ease-in-out infinite" }} />
       <div className="orb" style={{ width: 200, height: 200, bottom: 60, left: -50, background: "#06b6d455", animation: "drift 11s ease-in-out infinite reverse" }} />
       <div style={{ width: "100%", maxWidth: 380, position: "relative" }}>
         <div style={{ textAlign: "center", marginBottom: 26 }}>
           <a href="/" className="glass" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 14px", borderRadius: 999, color: "#5eead4", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
-            <Ico size={14}>✨</Ico> Arabic Landing AI ← الرئيسية
+            <SvgIcon name="sparkle" size={14} /> Arabic Landing AI ← الرئيسية
           </a>
         </div>
         <div className="glass" style={{ borderRadius: 20, padding: 24, boxShadow: "0 30px 70px rgba(0,0,0,.45)" }}>
@@ -742,8 +842,8 @@ function AuthShell({ children }) {
   );
 }
 
-const authBtnStyle = { marginTop: 4, background: "linear-gradient(90deg,#7C3AED,#3B82F6)", border: "none", borderRadius: 12, color: "#fff", fontWeight: 800, fontSize: 15, padding: "14px 20px", cursor: "pointer", width: "100%", fontFamily: "inherit" };
-const authLinkStyle = { background: "none", border: "none", color: "#8B5CF6", fontSize: 13, fontWeight: 700, cursor: "pointer", padding: 0, fontFamily: "inherit" };
+const authBtnStyle = { marginTop: 4, background: "#5B6BFF", border: "none", borderRadius: 10, color: "#fff", fontWeight: 700, fontSize: 15, padding: "13px 20px", minHeight: 48, cursor: "pointer", width: "100%", fontFamily: "inherit" };
+const authLinkStyle = { background: "none", border: "none", color: "#9AA6FF", fontSize: 13, fontWeight: 600, cursor: "pointer", padding: 0, fontFamily: "inherit" };
 
 function AuthMessages({ error, msg }) {
   return (
@@ -2750,15 +2850,13 @@ function App({ credits, setCredits, user, isAdmin, isVip, onBuyCredits, onPrevie
 function FormScreen({ form, setForm, images, onUpload, onRemoveImage, onEnhanceImage, enhancingIdx, error, onGenerate }) {
   const country = COUNTRIES.find((c) => c.code === form.countryCode) || COUNTRIES[0];
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto", padding: "22px 16px 40px", position: "relative", overflow: "hidden" }} className="fade-in">
+    <div style={{ maxWidth: 640, margin: "0 auto", padding: "22px 16px 40px", position: "relative", overflow: "hidden" }} className="fade-in ds-form">
       <div className="orb" style={{ width: 260, height: 260, top: -40, right: -40, background: "#2563eb55", animation: "drift 9s ease-in-out infinite" }} />
       <div className="orb" style={{ width: 200, height: 200, bottom: 60, left: -50, background: "#06b6d455", animation: "drift 11s ease-in-out infinite reverse" }} />
-      <div style={{ textAlign: "center", marginBottom: 22, position: "relative" }}>
-        <div className="glass" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 14px", borderRadius: 999, color: "#5eead4", fontSize: 13, fontWeight: 600, marginBottom: 14 }}>
-          <Ico size={14}>✨</Ico> Arabic Landing AI
-        </div>
-        <h1 style={{ color: "#F1F5F9", fontSize: 25, fontWeight: 800, lineHeight: 1.5, margin: 0 }}>أنشئ صفحة هبوط احترافية لمنتجك</h1>
-        <p style={{ color: "#8B96AC", fontSize: 14, marginTop: 8 }}>املأ الأقسام التالية وسيجهّز الذكاء الاصطناعي الصفحة</p>
+      <div className="ds-head">
+        <ol className="ds-steps"><li className="on"><i>1</i>بيانات المنتج</li><li><i>2</i>التوليد</li><li><i>3</i>المعاينة</li></ol>
+        <h1>أنشئ صفحة هبوط احترافية لمنتجك</h1>
+        <p>املأ الأقسام التالية وسيجهّز الذكاء الاصطناعي الصفحة</p>
       </div>
       <div style={{ display: "grid", gap: 14, position: "relative" }}>
         <Sec n={1} icon="🏷️" title="المنتج والسعر">
@@ -2833,8 +2931,8 @@ function FormScreen({ form, setForm, images, onUpload, onRemoveImage, onEnhanceI
           <span style={{ color: "#5B6478", fontSize: 11 }}>انسخ المعرّف (ID) فقط من مدير الأحداث في حسابك الإعلاني. يُضاف تلقائياً إلى صفحتك المنشورة، وتصل الأحداث إلى حسابك أنت: مشاهدة الصفحة، بدء الطلب، إتمام الطلب، والنقر على واتساب أو الاتصال.</span>
         </Sec>
         {error && <div style={{ color: "#F87171", fontSize: 13, background: "#2A1519", padding: "8px 12px", borderRadius: 8 }}>{error}</div>}
-        <button onClick={onGenerate} style={{ background: "linear-gradient(90deg,#7C3AED,#3B82F6)", border: "none", borderRadius: 14, color: "#fff", fontWeight: 900, fontSize: 17, padding: "17px 20px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, fontFamily: "inherit", boxShadow: "0 8px 24px rgba(139,92,246,.25)" }}>
-          أنشئ صفحة الهبوط <span style={{ fontSize: 20 }}>🚀</span>
+        <button onClick={onGenerate} className="ds-cta">
+          أنشئ صفحة الهبوط <SvgIcon name="sparkle" size={18} />
         </button>
         <p style={{ textAlign: "center", color: "#5c6b85", fontSize: 11.5, margin: 0 }}>يستغرق التوليد عادة من 30 ثانية إلى دقيقة</p>
       </div>
@@ -2842,19 +2940,16 @@ function FormScreen({ form, setForm, images, onUpload, onRemoveImage, onEnhanceI
   );
 }
 function Sec({ n, icon, title, children }) {
+  const ic = { "🏷️": "tag", "🖼️": "image", "📝": "doc", "🌍": "globe", "💬": "chat", "🎯": "target" }[icon];
   return (
-    <div style={{ background: "#101828", border: "1px solid #202A42", borderRadius: 16, padding: 16, display: "grid", gap: 14 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <span style={{ width: 26, height: 26, borderRadius: 99, background: "linear-gradient(135deg,#7C3AED,#3B82F6)", color: "#fff", fontWeight: 900, fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center" }}>{n}</span>
-        <span style={{ color: "#F1F5F9", fontWeight: 800, fontSize: 15 }}>{title}</span>
-        <span style={{ marginRight: "auto", fontSize: 18 }}>{icon}</span>
-      </div>
-      {children}
-    </div>
+    <section className="ds-sec">
+      <div className="ds-sec-h"><span className="ds-sec-n">{n}</span><span className="ds-sec-t">{title}</span><span className="ds-sec-i">{ic ? <SvgIcon name={ic} size={16} strokeWidth={1.8} /> : null}</span></div>
+      <div className="ds-sec-b">{children}</div>
+    </section>
   );
 }
-function Field({ label, children }) { return <label style={{ display: "grid", gap: 6 }}><span style={{ color: "#B7C0D4", fontSize: 13, fontWeight: 600 }}>{label}</span>{children}</label>; }
-const inputStyle = { background: "#0E1526", border: "1px solid #202A42", borderRadius: 10, color: "#F1F5F9", padding: "11px 13px", fontSize: 14.5, outline: "none", width: "100%" };
+function Field({ label, children }) { return <label style={{ display: "grid", gap: 6 }}><span style={{ color: "#C5CEE3", fontSize: 13, fontWeight: 600 }}>{label}</span>{children}</label>; }
+const inputStyle = { background: "#0B1120", border: "1px solid #232F4F", borderRadius: 10, color: "#EAEFFA", padding: "12px 14px", fontSize: 14.5, outline: "none", width: "100%", minHeight: 46, fontFamily: "inherit" };
 
 function LoadingScreen({ stepIdx }) {
   return (
