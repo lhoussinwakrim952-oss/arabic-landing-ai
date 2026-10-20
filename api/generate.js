@@ -6,6 +6,11 @@
 // تلقائياً إذا فشل التوليد. بهذا لا يمكن تخطي الخصم باستدعاء /api/generate مباشرة.
 import { getUser, rpc } from "./_lib/sb.js";
 
+// كل طلب توليد يحمل jobId من المتصفح. النتيجة تُحفظ في جدول generation_jobs،
+// فإذا انقطع الاتصال (طفي الشاشة) يجلبها المتصفح لاحقاً من /api/job بدل ضياعها.
+// إذا لم يكن الجدول موجوداً بعد أو لم يصل jobId، يعمل الكود كما كان بدون حفظ.
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export const config = {
   api: {
     bodyParser: {
@@ -32,6 +37,20 @@ export default async function handler(req, res) {
 
   let reserved = null; // { admin, trial, credits }
   let userId = null;
+  let jobId = null; // null = بدون حفظ النتيجة
+
+  async function finishJob(status, result, error, http, code) {
+    if (!jobId) return;
+    try {
+      await rpc("job_finish", { p_id: jobId, p_status: status, p_result: result || null, p_error: error || null, p_http: http || null, p_code: code || null });
+    } catch (e) {}
+  }
+  // يرجع النقطة (إن وُجدت) ويسجل فشل المهمة ثم يرسل الخطأ.
+  async function failWith(status, body) {
+    await refund();
+    await finishJob("failed", null, body.error, status, body.code);
+    return res.status(status).json(body);
+  }
 
   async function refund() {
     if (reserved && !reserved.admin && userId) {
@@ -52,19 +71,39 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "لم يصل محتوى صالح إلى السيرفر (content فارغ أو غير موجود)." });
     }
 
+    // تسجيل المهمة. إذا وصل نفس jobId مرة ثانية (إعادة إرسال) نرجع حالتها بدون خصم جديد.
+    const wantedId = req.body && req.body.jobId;
+    if (typeof wantedId === "string" && UUID.test(wantedId)) {
+      const b = await rpc("job_begin", { p_id: wantedId, p_user: user.id });
+      if (!b.error && b.result) {
+        if (b.result.state === "forbidden") return res.status(403).json({ error: "طلب غير مسموح." });
+        if (b.result.state === "exists") {
+          if (b.result.status === "done") return res.status(200).json(b.result.result);
+          if (b.result.status === "failed") return res.status(b.result.http_status || 500).json({ error: b.result.error, code: b.result.code });
+          return res.status(202).json({ pending: true });
+        }
+        jobId = wantedId; // state === "new"
+      } else if (b.error) {
+        console.error("job_begin failed (continuing without job tracking):", b.error);
+      }
+    }
+
     // حجز نقطة (ذرّي) قبل أي استدعاء للذكاء الاصطناعي. الأدمن مستثنى.
     const c = await rpc("consume_generation_credit", { p_user_id: user.id });
     if (c.error) {
       console.error("consume_generation_credit failed:", c.error);
-      return res.status(500).json({ error: "تعذّر التحقق من رصيدك. أعد المحاولة بعد قليل." });
+      return failWith(500, { error: "تعذّر التحقق من رصيدك. أعد المحاولة بعد قليل." });
     }
     if (!c.result || !c.result.ok) {
-      return res.status(402).json({
+      return failWith(402, {
         code: "no_credits",
         error: "انتهى رصيدك. اختر الباقة المناسبة لمتابعة توليد صفحات الهبوط.",
       });
     }
     reserved = { admin: !!c.result.admin, trial: !!c.result.trial_consumed, credits: c.result.credits };
+    if (jobId && !reserved.admin) {
+      try { await rpc("job_mark_reserved", { p_id: jobId, p_trial: reserved.trial }); } catch (e) {}
+    }
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -85,30 +124,26 @@ export default async function handler(req, res) {
     try {
       data = JSON.parse(rawText);
     } catch (parseErr) {
-      await refund();
-      return res.status(502).json({
+      return failWith(502, {
         error: "رد غير صالح من Anthropic API (كود " + response.status + "): " + rawText.slice(0, 200),
       });
     }
 
     if (!response.ok) {
-      await refund();
-      return res.status(response.status).json({
+      return failWith(response.status, {
         error: (data.error && data.error.message) || "خطأ من Anthropic API",
       });
     }
 
     if (data.stop_reason === "max_tokens") {
-      await refund();
-      return res.status(422).json({
+      return failWith(422, {
         error: "توقف التوليد لأن المحتوى طويل جداً. جرّب تبسيط وصف المنتج أو أعد المحاولة.",
       });
     }
 
     const textBlock = (data.content || []).find((b) => b.type === "text");
     if (!textBlock || !textBlock.text) {
-      await refund();
-      return res.status(502).json({ error: "لم يصل رد نصي من المحرك. لم يتم خصم أي نقطة." });
+      return failWith(502, { error: "لم يصل رد نصي من المحرك. لم يتم خصم أي نقطة." });
     }
 
     const out = {
@@ -118,9 +153,9 @@ export default async function handler(req, res) {
       trialConsumed: reserved.trial,
     };
     reserved = null; // نجح التوليد: الخصم نهائي
+    await finishJob("done", out); // نحفظ النتيجة قبل الرد، فتبقى متاحة حتى لو انقطع الاتصال
     return res.status(200).json(out);
   } catch (err) {
-    await refund();
-    return res.status(500).json({ error: err.message || "خطأ غير متوقع فالسيرفر." });
+    return failWith(500, { error: err.message || "خطأ غير متوقع فالسيرفر." });
   }
 }
