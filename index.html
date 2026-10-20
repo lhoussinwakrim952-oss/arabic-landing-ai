@@ -609,8 +609,10 @@ async function callClaude(content) {
     }
     throw new Error("رد غير متوقع من السيرفر (كود " + response.status + "): " + (preview || "لا يوجد محتوى") + (preview.length >= 120 ? "…" : ""));
   }
+  if (response.status === 402 || data.code === "no_credits") { const ne = new Error(data.error || "انتهى رصيدك."); ne.code = "no_credits"; throw ne; }
   if (!response.ok) throw new Error(data.error || "تعذّر الاتصال بمحرك الذكاء الاصطناعي (كود " + response.status + ").");
   if (!data.text) throw new Error("لم يصل رد نصي من المحرك");
+  window.__genMeta = { credits: typeof data.credits === "number" ? data.credits : null, admin: !!data.admin, trialConsumed: !!data.trialConsumed };
   return validateGeneratedData(stripToJSON(data.text));
 }
 
@@ -689,6 +691,66 @@ function getSupabaseClient() {
     })
     .catch(() => null);
   return __sbClientPromise;
+}
+
+/* ===== FREE TRIAL: معرّف الجهاز + طلب المنح (التحقق الحقيقي يتم على الخادم) ===== */
+async function __sha256Hex(str) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+function __canvasSig() {
+  try {
+    const c = document.createElement("canvas"); c.width = 200; c.height = 50;
+    const x = c.getContext("2d");
+    x.textBaseline = "top"; x.font = "14px Arial"; x.fillStyle = "#f60"; x.fillRect(10, 5, 60, 25);
+    x.fillStyle = "#069"; x.fillText("rg-fingerprint-v1 Cwm fjordbank", 4, 15);
+    return c.toDataURL().slice(-64);
+  } catch (e) { return ""; }
+}
+function __glSig() {
+  try {
+    const gl = document.createElement("canvas").getContext("webgl");
+    if (!gl) return "";
+    const ext = gl.getExtension("WEBGL_debug_renderer_info");
+    return ext ? gl.getParameter(ext.UNMASKED_VENDOR_WEBGL) + "~" + gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : "";
+  } catch (e) { return ""; }
+}
+let __devIdsPromise = null;
+function getDeviceIds() {
+  if (__devIdsPromise) return __devIdsPromise;
+  __devIdsPromise = (async () => {
+    let did = null;
+    try { did = localStorage.getItem("rg_did"); } catch (e) {}
+    if (!did) { const m = document.cookie.match(/(?:^|; )rg_did=([A-Za-z0-9_-]{16,128})/); if (m) did = m[1]; }
+    if (!did) { const a = new Uint8Array(16); crypto.getRandomValues(a); did = Array.from(a, (b) => b.toString(16).padStart(2, "0")).join(""); }
+    try { localStorage.setItem("rg_did", did); } catch (e) {}
+    try { document.cookie = "rg_did=" + did + "; max-age=63072000; path=/; SameSite=Lax" + (location.protocol === "https:" ? "; Secure" : ""); } catch (e) {}
+    let fp = null;
+    try {
+      const n = navigator, sc = window.screen || {};
+      const sig = [n.platform, n.hardwareConcurrency, n.deviceMemory, sc.width, sc.height, sc.colorDepth, window.devicePixelRatio,
+        Intl.DateTimeFormat().resolvedOptions().timeZone, (n.languages || [n.language]).join(","), n.maxTouchPoints, __canvasSig(), __glSig()].join("|");
+      fp = await __sha256Hex(sig);
+    } catch (e) {}
+    return { did, fp };
+  })();
+  return __devIdsPromise;
+}
+async function claimFreeTrial(turnstileToken) {
+  try {
+    const sb = await getSupabaseClient();
+    const ss = sb ? await sb.auth.getSession() : null;
+    const jwt = ss && ss.data && ss.data.session ? ss.data.session.access_token : "";
+    if (!jwt) return null;
+    const ids = await getDeviceIds();
+    const r = await fetch("/api/free-trial", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + jwt },
+      body: JSON.stringify({ did: ids.did, fp: ids.fp, turnstileToken: turnstileToken || undefined }),
+    });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch (e) { return null; }
 }
 
 function mapAuthError(err) {
@@ -1512,6 +1574,43 @@ function useBackLayer(open, onClose) {
   }, [open]);
 }
 
+function TrialBanner({ trial, credits, isAdmin, onDismiss, onBuy, onVerified }) {
+  const boxRef = useRef(null);
+  useEffect(() => {
+    if (trial.kind !== "verify" || !trial.siteKey) return;
+    let cancelled = false;
+    function mount() {
+      if (cancelled || !boxRef.current || !window.turnstile) return;
+      window.turnstile.render(boxRef.current, { sitekey: trial.siteKey, callback: (tok) => onVerified(tok) });
+    }
+    if (window.turnstile) mount();
+    else {
+      const sc = document.createElement("script");
+      sc.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+      sc.async = true; sc.onload = mount;
+      document.head.appendChild(sc);
+    }
+    return () => { cancelled = true; };
+  }, [trial.kind, trial.siteKey]);
+
+  if ((trial.kind === "dup" || trial.kind === "pending") && (isAdmin || credits > 0)) return null;
+  const good = trial.kind === "granted";
+  const box = { maxWidth: 760, margin: "12px auto 0", padding: "12px 16px", borderRadius: 12, fontSize: 13.5, lineHeight: 1.8, direction: "rtl",
+    background: good ? "rgba(34,197,94,.12)" : "rgba(139,92,246,.12)", border: "1px solid " + (good ? "rgba(34,197,94,.4)" : "rgba(139,92,246,.4)"), color: "#F1F5F9" };
+  const btn = { marginTop: 8, background: "#8B5CF6", color: "#fff", border: "none", fontWeight: 800, fontSize: 13, padding: "8px 18px", borderRadius: 9, cursor: "pointer", fontFamily: "inherit" };
+  return (
+    <div style={{ position: "fixed", top: 66, left: 0, right: 0, zIndex: 290, padding: "0 12px" }}>
+      <div style={{ ...box, margin: "0 auto", boxShadow: "0 10px 30px rgba(0,0,0,.45)", backdropFilter: "blur(10px)", background: good ? "rgba(20,60,40,.96)" : "rgba(30,24,60,.96)" }}>
+        {trial.kind === "granted" && <div>🎁 تم تفعيل <b>توليد مجاني واحد</b> لحسابك. جرّب إنشاء صفحة هبوط كاملة الآن.</div>}
+        {trial.kind === "dup" && (<div>{trial.message}<div><button style={btn} onClick={onBuy}>اختر الباقة / اشترِ النقاط</button></div></div>)}
+        {trial.kind === "pending" && <div>{trial.message}</div>}
+        {trial.kind === "verify" && (<div>لتفعيل توليدك المجاني أكمل التحقق السريع التالي:<div ref={boxRef} style={{ marginTop: 8 }} /></div>)}
+        {trial.kind !== "verify" && <button style={{ ...btn, background: "transparent", border: "1px solid #3b4660", color: "#B8C4D8" }} onClick={onDismiss}>إغلاق</button>}
+      </div>
+    </div>
+  );
+}
+
 function AuthGate() {
   const [ready, setReady] = useState(false);
   const [configError, setConfigError] = useState(false);
@@ -1519,6 +1618,7 @@ function AuthGate() {
   const [profile, setProfile] = useState(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const [credits, setCredits] = useState(0);
+  const [trial, setTrial] = useState(null);
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [buyFocus, setBuyFocus] = useState("");
   const [buying, setBuying] = useState(false);
@@ -1699,6 +1799,26 @@ function AuthGate() {
     return <LegalPage type={legalPage} onBack={() => goTo("/")} />;
   }
 
+  function applyTrial(r) {
+    if (!r || !r.status) return;
+    if (r.status === "granted") {
+      setTrial({ kind: "granted" });
+      if (clientRef.current && session) fetchProfile(clientRef.current, session.user.id);
+      try { if (window.fbq) window.fbq("trackCustom", "FreeTrialGranted"); } catch (e) {}
+    } else if (r.status === "denied_duplicate") setTrial({ kind: "dup", message: r.message });
+    else if (r.status === "needs_verification") setTrial({ kind: "verify", siteKey: r.turnstileSiteKey });
+    else if (r.status === "pending_review") setTrial({ kind: "pending", message: r.message });
+    else setTrial(null);
+  }
+  const trialUid = session && session.user ? session.user.id : null;
+  const trialConfirmed = session && session.user ? session.user.email_confirmed_at : null;
+  useEffect(() => {
+    if (!trialUid || !trialConfirmed) return;
+    let off = false;
+    (async () => { const r = await claimFreeTrial(null); if (!off) applyTrial(r); })();
+    return () => { off = true; };
+  }, [trialUid, trialConfirmed]);
+
   if (!ready) return <SplashLoader />;
   if (configError) return <ConfigErrorScreen />;
   if (recoveryMode) return <ResetPasswordScreen onReset={handleReset} busy={busy} error={error} msg={msg} />;
@@ -1742,6 +1862,16 @@ function AuthGate() {
           isAdmin={isAdmin} isVip={isVip}
           onLogout={handleLogout}
           onBuy={() => { setBuyFocus(""); setShowBuyModal(true); }}
+        />
+      )}
+      {!editorPreview && trial && (
+        <TrialBanner
+          trial={trial}
+          credits={credits}
+          isAdmin={isAdmin}
+          onDismiss={() => setTrial(null)}
+          onBuy={() => { setBuyFocus(""); setShowBuyModal(true); }}
+          onVerified={async (tok) => applyTrial(await claimFreeTrial(tok))}
         />
       )}
       <App
@@ -2518,20 +2648,16 @@ function App({ credits, setCredits, user, isAdmin, isVip, onBuyCredits, onPrevie
       result._template = pickedStruct === "original" ? undefined : pickedStruct;
       result._variant = sxVariant();
 
-      // خصم نقطة واحدة بعد نجاح التوليد فقط. شرط credits يمنع خصماً سالباً.
-      // Admin مستثنى تماماً من الخصم — التوليد عندو مجاني ومايبانش عليه أي تغيير فالرصيد.
-      const previousCredits = Number(credits || 0);
-      const nextCredits = Math.max(0, previousCredits - 1);
-      const client = await getSupabaseClient();
-      if (!isAdmin && client && user && previousCredits > 0) {
-        const rpc = await client.rpc("use_credit");
-        if (rpc.error) throw new Error("تعذّر خصم النقطة. تأكد من رصيدك ثم أعد المحاولة.");
-        setCredits(Number(rpc.data));
-      }
+      // الخصم صار من الخادم (api/generate) قبل التوليد وبشكل ذرّي، والرصيد الجديد يصل في الرد.
+      const meta = window.__genMeta || {};
+      if (!isAdmin && typeof meta.credits === "number") setCredits(meta.credits);
 
       pageIdRef.current = "p" + Date.now() + Math.floor(Math.random() * 1000);
       setHistory([result]); setHistoryIdx(0); setStep("preview");
+      // انتهى الرصيد (مثلاً التوليد المجاني استُهلك): اعرض الباقات وزر شراء النقاط بوضوح.
+      if (!isAdmin && typeof meta.credits === "number" && meta.credits <= 0) setTimeout(() => onBuyCredits(), 1500);
     } catch (err) {
+      if (err && err.code === "no_credits") { setCredits(0); setStep("form"); onBuyCredits(); return; }
       setError(err.message || "حدث خطأ أثناء التوليد، حاول مرة أخرى.");
       setStep("form");
     }
