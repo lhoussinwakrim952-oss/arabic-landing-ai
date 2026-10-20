@@ -572,45 +572,90 @@ async function runQualityControl(data) {
     return data;
   }
 }
+async function getAccessToken() {
+  try {
+    const sb = await getSupabaseClient();
+    const ss = sb ? await sb.auth.getSession() : null;
+    return ss && ss.data && ss.data.session ? ss.data.session.access_token : "";
+  } catch (e) { return ""; }
+}
+function newJobId() {
+  try { if (window.crypto && crypto.randomUUID) return crypto.randomUUID(); } catch (e) {}
+  const h = (n) => Array.from({ length: n }, () => Math.floor(Math.random() * 16).toString(16)).join("");
+  return h(8) + "-" + h(4) + "-4" + h(3) + "-a" + h(3) + "-" + h(12);
+}
+async function postGenerate(jobId, content) {
+  const token = await getAccessToken();
+  return fetch("/api/generate", {
+    method: "POST",
+    headers: Object.assign({ "Content-Type": "application/json" }, token ? { Authorization: "Bearer " + token } : {}),
+    body: JSON.stringify({ content, jobId }),
+  });
+}
+// إذا انقطع الاتصال (مثلاً طفات الشاشة) السيرفر يكمل التوليد ويحفظ النتيجة، ونجلبها من هنا.
+async function waitForJob(jobId, content) {
+  const deadline = Date.now() + 6 * 60 * 1000;
+  let resent = false;
+  while (Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, 2500));
+    let j = null;
+    try {
+      const token = await getAccessToken();
+      const r = await fetch("/api/job?id=" + encodeURIComponent(jobId), { headers: token ? { Authorization: "Bearer " + token } : {} });
+      if (r.ok) j = await r.json();
+    } catch (e) { continue; }
+    if (!j) continue;
+    if (j.status === "done" && j.result) return { status: 200, ok: true, data: j.result };
+    if (j.status === "failed") return { status: j.http_status || 500, ok: false, data: { error: j.error, code: j.code } };
+    if (j.status === "not_found" && !resent) {
+      // الطلب لم يصل للسيرفر أصلاً: نعيد إرساله مرة واحدة بنفس المعرّف (بدون خصم مزدوج).
+      resent = true;
+      postGenerate(jobId, content).catch(() => {});
+    }
+  }
+  throw new Error("استغرق التوليد وقتاً أطول من المعتاد. أعد المحاولة، ولن تُخصم نقطة إذا لم تظهر الصفحة.");
+}
 async function callClaude(content) {
   // يتصل بالـ Backend الخاص بنا (api/generate.js) بدل الاتصال المباشر بـ Anthropic.
   // مفتاح الـ API مخبّأ فالسيرفر (Environment Variable) وما ظاهرش هنا فالفرونت-إند.
-  let response;
+  const jobId = newJobId();
+  let res; // { status, ok, data }
   try {
-    let token = "";
-    try {
-      const sb = await getSupabaseClient();
-      const ss = sb ? await sb.auth.getSession() : null;
-      token = ss && ss.data && ss.data.session ? ss.data.session.access_token : "";
-    } catch (e) {}
-    response = await fetch("/api/generate", {
-      method: "POST",
-      headers: Object.assign({ "Content-Type": "application/json" }, token ? { Authorization: "Bearer " + token } : {}),
-      body: JSON.stringify({ content }),
-    });
-  } catch (netErr) {
-    throw new Error("تعذّر الوصول للسيرفر. تأكد من اتصالك بالإنترنت أو أن نقطة /api/generate تعمل بشكل صحيح.");
+    const response = await postGenerate(jobId, content);
+    const rawText = await response.text();
+    let data = null;
+    try { data = JSON.parse(rawText); } catch (parseErr) {}
+    if (data && !data.pending) {
+      res = { status: response.status, ok: response.ok, data };
+    } else if (data && data.pending) {
+      res = await waitForJob(jobId, content);
+    } else {
+      // الرد ماشي JSON صحيح
+      const preview = (rawText || "").trim().slice(0, 120);
+      if (response.status === 413 || /request entity too large/i.test(preview)) {
+        throw new Error("حجم الصور المرسلة كبير جداً على الخادم (خطأ 413: Request Entity Too Large). جرّب صور أقل أو بجودة أخف.");
+      }
+      if (response.status === 404) {
+        throw new Error("نقطة الاتصال /api/generate غير موجودة على السيرفر. تأكد من إعداد الـ backend.");
+      }
+      if (response.status >= 500 || response.status === 408) {
+        // مهلة أو انقطاع: السيرفر قد يكون أكمل التوليد، نحاول جلب النتيجة.
+        res = await waitForJob(jobId, content);
+      } else {
+        throw new Error("رد غير متوقع من السيرفر (كود " + response.status + "): " + (preview || "لا يوجد محتوى") + (preview.length >= 120 ? "…" : ""));
+      }
+    }
+  } catch (e) {
+    if (e instanceof TypeError || (e && /fetch|network|load failed/i.test(String(e.message || "")) && !e.code)) {
+      // انقطاع الشبكة (شاشة طفات، تغيير تبويب...): ننتظر النتيجة بدل إظهار خطأ.
+      res = await waitForJob(jobId, content);
+    } else {
+      throw e;
+    }
   }
-  const rawText = await response.text();
-  let data;
-  try {
-    data = JSON.parse(rawText);
-  } catch (parseErr) {
-    // الرد ماشي JSON صحيح — غالباً خطأ من السيرفر نفسه (حجم الطلب كبير، انتهاء المهلة، أو المسار /api/generate غير موجود)
-    const preview = (rawText || "").trim().slice(0, 120);
-    if (response.status === 413 || /request entity too large/i.test(preview)) {
-      throw new Error("حجم الصور المرسلة كبير جداً على الخادم (خطأ 413: Request Entity Too Large). جرّب صور أقل أو بجودة أخف.");
-    }
-    if (response.status === 404) {
-      throw new Error("نقطة الاتصال /api/generate غير موجودة على السيرفر. تأكد من إعداد الـ backend.");
-    }
-    if (response.status === 504 || response.status === 408) {
-      throw new Error("انتهت مهلة الاتصال بالسيرفر (Timeout). حاول مرة أخرى.");
-    }
-    throw new Error("رد غير متوقع من السيرفر (كود " + response.status + "): " + (preview || "لا يوجد محتوى") + (preview.length >= 120 ? "…" : ""));
-  }
-  if (response.status === 402 || data.code === "no_credits") { const ne = new Error(data.error || "انتهى رصيدك."); ne.code = "no_credits"; throw ne; }
-  if (!response.ok) throw new Error(data.error || "تعذّر الاتصال بمحرك الذكاء الاصطناعي (كود " + response.status + ").");
+  const data = res.data || {};
+  if (res.status === 402 || data.code === "no_credits") { const ne = new Error(data.error || "انتهى رصيدك."); ne.code = "no_credits"; throw ne; }
+  if (!res.ok) throw new Error(data.error || "تعذّر الاتصال بمحرك الذكاء الاصطناعي (كود " + res.status + ").");
   if (!data.text) throw new Error("لم يصل رد نصي من المحرك");
   window.__genMeta = { credits: typeof data.credits === "number" ? data.credits : null, admin: !!data.admin, trialConsumed: !!data.trialConsumed };
   return validateGeneratedData(stripToJSON(data.text));
