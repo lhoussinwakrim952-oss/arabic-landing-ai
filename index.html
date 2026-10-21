@@ -262,10 +262,8 @@ src="https://www.facebook.com/tr?id=936841412577323&ev=PageView&noscript=1"
   @media (max-width:380px){.hp-nav-in{padding:8px 10px;min-height:58px}.hp-nav-btns{gap:6px}.hp-nav-btns .hp-ghost,.hp-nav-btns .hp-cta{height:34px;padding:0 11px;font-size:12px}.hp-logo-sm .hp-logo-img{width:40px;height:40px}}
   .hp-nav-in{direction:rtl}
 
-/* ===== Modern 2026 theme ===== */
 /* =====================================================================
-   MODERN THEME 2026 — الصقه في آخر وسم <style> الرئيسي (بعد آخر سطر CSS)
-   لا يغيّر أي منطق، فقط يحدّث الشكل. احذفه لو أردت الرجوع للقديم.
+   MODERN THEME 2026 — الصقه في آخر وسم <style> الرئيسي
    ===================================================================== */
 
 :root{
@@ -446,13 +444,13 @@ input:focus,select:focus,textarea:focus{
   box-shadow:0 0 0 1.5px rgba(255,255,255,.12) inset,0 50px 100px -30px rgba(0,0,0,.8),
              0 0 80px -20px rgba(99,102,241,.35);
 }
-.m-phone::before{ /* الجزيرة */
+.m-phone::before{
   content:"";position:absolute;top:18px;left:50%;transform:translateX(-50%);
   width:96px;height:26px;border-radius:99px;background:#05070C;z-index:5;
 }
 .m-phone>div{border-radius:36px;overflow:hidden}
 
-/* ---------- Reveal عند التمرير (أنيميشن مرتبط بالسكرول) ---------- */
+/* ---------- Reveal عند التمرير ---------- */
 @supports (animation-timeline:view()){
   .hp-feat,.pp-step,.pp-plan,.pp-faq details{
     animation:m-rise both var(--m-ease);animation-timeline:view();animation-range:entry 0% entry 35%;
@@ -460,12 +458,12 @@ input:focus,select:focus,textarea:focus{
   @keyframes m-rise{from{opacity:0;transform:translateY(28px) scale(.98)}to{opacity:1;transform:none}}
 }
 
-/* ---------- انتقال سلس بين الشاشات (View Transitions) ---------- */
+/* ---------- انتقال سلس بين الشاشات ---------- */
 @view-transition{navigation:auto}
 ::view-transition-old(root),::view-transition-new(root){animation-duration:.35s}
 
 /* =====================================================================
-   شاشة التحميل الجديدة (Skeleton تدريجي)
+   شاشة التحميل (Skeleton تدريجي)
    ===================================================================== */
 .ld-wrap{
   min-height:100vh;display:flex;align-items:center;justify-content:center;
@@ -474,11 +472,13 @@ input:focus,select:focus,textarea:focus{
 .ld-grid{
   display:grid;grid-template-columns:300px minmax(0,360px);gap:44px;align-items:center;
   max-width:760px;width:100%;
+}
+
 /* ===== Loading screen: mobile compact (no scroll) ===== */
 @media(max-width:760px){
   .ld-wrap{
     min-height:100dvh;height:100dvh;
-    padding:70px 16px 14px;           /* مساحة للـ account-bar */
+    padding:70px 16px 14px;
     align-items:flex-start;
     overflow:hidden;
   }
@@ -489,8 +489,6 @@ input:focus,select:focus,textarea:focus{
     align-content:start;
     max-width:420px;
   }
-
-  /* الهاتف يولي أيقونة صغيرة */
   .ld-phone{
     width:84px;height:150px;
     border-radius:18px;padding:4px;
@@ -503,7 +501,6 @@ input:focus,select:focus,textarea:focus{
   }
   .ld-screen::after{height:36px;top:-36px}
   .ld-sk{border-radius:5px;transform:translateY(6px) scale(.97)}
-  /* نصغّر ارتفاعات الكتل داخل الأيقونة */
   .ld-sk[style*="height:120px"]{height:34px!important}
   .ld-sk[style*="height:54px"]{height:16px!important}
   .ld-sk[style*="height:46px"]{height:14px!important}
@@ -518,7 +515,6 @@ input:focus,select:focus,textarea:focus{
   .ld-bar{height:5px;margin-bottom:4px}
   .ld-meta{font-size:11.5px;margin-bottom:10px}
 
-  /* الخطوات كاملة، مضغوطة */
   .ld-steps{gap:4px}
   .ld-step{
     padding:6px 10px;gap:9px;
@@ -537,6 +533,7 @@ input:focus,select:focus,textarea:focus{
   .ld-sub{display:none}
   .ld-step{padding:4px 9px;font-size:11.5px}
 }
+
 .ld-phone{
   width:270px;height:520px;border-radius:42px;padding:9px;position:relative;
   background:linear-gradient(160deg,#2A3146,#0C0F1A);
@@ -545,12 +542,13 @@ input:focus,select:focus,textarea:focus{
   animation:m-float 6s ease-in-out infinite;
 }
 @keyframes m-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+
 .ld-screen{
   width:100%;height:100%;border-radius:34px;overflow:hidden;
   background:#0B1020;padding:30px 14px 14px;display:flex;flex-direction:column;gap:10px;
   position:relative;
 }
-.ld-screen::after{ /* شعاع مسح */
+.ld-screen::after{
   content:"";position:absolute;left:0;right:0;height:90px;top:-90px;pointer-events:none;
   background:linear-gradient(180deg,transparent,rgba(139,92,246,.22),transparent);
   animation:m-scan 3.2s linear infinite;
@@ -601,7 +599,6 @@ input:focus,select:focus,textarea:focus{
 @media(prefers-reduced-motion:reduce){
   .ld-phone,.ld-screen::after,.ld-sk::before,.hp-hero h1 span,.pp-hero h1 span{animation:none!important}
 }
-
 </style>
 </head>
 <body>
