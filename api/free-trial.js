@@ -6,12 +6,18 @@
 //   1) يتحقق من JWT وتأكيد البريد
 //   2) يجمّع إشارات الجهاز/الشبكة ويجزّئها (HMAC مُملّح)
 //   3) يتحقق من Turnstile عند الاشتباه
+import { randomUUID } from "node:crypto";
 import { getUser, rpc, hmac, clientIp } from "./_lib/sb.js";
 
 const DUP_MESSAGE =
   "لقد استفدت من التجربة المجانية من قبل على هذا الجهاز. للحصول على صفحات هبوط إضافية، اختر الباقة المناسبة لك.";
 
 const ID_RE = /^[A-Za-z0-9_-]{16,128}$/;
+
+const BYPASS = new Set(
+  (process.env.TRIAL_BYPASS_DIDS || "")
+    .split(",").map((s) => s.trim()).filter((s) => ID_RE.test(s))
+);
 
 async function verifyTurnstile(token, ip) {
   const secret = process.env.TURNSTILE_SECRET_KEY;
@@ -61,13 +67,17 @@ export default async function handler(req, res) {
     const canVerify = !!(process.env.TURNSTILE_SECRET_KEY && process.env.TURNSTILE_SITE_KEY);
     const verified = body.turnstileToken ? await verifyTurnstile(body.turnstileToken, ip) : false;
 
+    const isBypass = !!did && BYPASS.has(did);
+    const rnd = () => randomUUID().replace(/-/g, "");
+    if (isBypass) console.log("free-trial bypass used by user", user.id);
+
     const { result, error } = await rpc("claim_free_trial", {
       p_user_id: user.id,
-      p_fp: hmac("fp", fp),
-      p_did: hmac("did", did),
-      p_ip: hmac("ip", ip),
-      p_ua: hmac("ua", ua),
-      p_verified: verified,
+      p_fp: hmac("fp", isBypass ? rnd() : fp),
+      p_did: hmac("did", isBypass ? rnd() : did),
+      p_ip: hmac("ip", isBypass ? rnd() : ip),
+      p_ua: hmac("ua", isBypass ? rnd() : ua),
+      p_verified: isBypass ? true : verified,
       p_can_verify: canVerify,
     });
     if (error) {
