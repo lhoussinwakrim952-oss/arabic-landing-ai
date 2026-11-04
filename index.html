@@ -884,6 +884,21 @@ button{-webkit-tap-highlight-color:transparent}
 .fx-hero-main{grid-template-columns:1fr!important}
 @media(max-width:360px){.account-bar .fx-hdr-right{gap:6px!important}.account-bar .account-bar-inner{padding:0 5px 0 8px!important}}
 @media(max-width:330px){.account-bar .brand-name{display:none!important}}
+/* v3: no outer rectangle; each item has its own frame; centered hero title */
+.account-bar{background:linear-gradient(180deg,rgba(11,15,25,.92) 0%,rgba(11,15,25,.7) 65%,rgba(11,15,25,0) 100%)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.account-bar .account-bar-inner{background:none!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;border-radius:0!important;padding:0 8px!important;margin-top:6px!important}
+.account-bar .account-bar-inner::before{display:none!important}
+.account-bar .account-brand{padding:3px!important;border:1px solid rgba(129,140,248,.5)!important;border-radius:14px!important;background:linear-gradient(135deg,rgba(24,32,78,.8),rgba(9,13,36,.85))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 18px -6px rgba(99,102,241,.75)!important}
+.account-bar .account-brand img{box-shadow:none!important;border-radius:11px!important}
+.account-bar .account-avatar{box-shadow:0 0 0 3px rgba(99,102,241,.18),0 0 18px -4px rgba(99,102,241,.75)!important}
+.account-bar .hdr-credit{height:40px}
+.fx-hero-text,.fx-h1,.fx-sub{text-align:center!important}
+/* v4: home-page nav — no outer strip, framed items */
+.hp-nav{background:linear-gradient(180deg,rgba(11,15,25,.92) 0%,rgba(11,15,25,.65) 65%,rgba(11,15,25,0) 100%)!important;border-bottom:0!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.hp-nav .hp-logo-sm{padding:3px!important;border:1px solid rgba(129,140,248,.5);border-radius:14px;background:linear-gradient(135deg,rgba(24,32,78,.8),rgba(9,13,36,.85));box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 18px -6px rgba(99,102,241,.75)}
+.hp-nav .hp-logo-sm .hp-logo-img{border:0!important;box-shadow:none!important;border-radius:11px!important;width:40px!important;height:40px!important}
+.hp-nav .hp-logo-name{display:none!important}
+.hp-nav-btns .hp-ghost{border:1px solid rgba(129,140,248,.45)!important;background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.03))!important;box-shadow:0 0 18px -8px rgba(99,102,241,.7)}
 </style>
 
 
