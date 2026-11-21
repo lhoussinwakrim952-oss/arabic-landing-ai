@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>AirTab A16 Pro Max 5G | تابلت احترافي بديل اللابتوب</title>
+<meta name="description" content="تابلت AirTab A16 Pro Max 5G بشاشة 10.1 إنش، رام 16GB، تخزين 1TB، شبكة 5G، مع كيبورد وماوس وقلم مجاني. اطلبه الآن بسعر 125,000 د.ع مع الدفع عند الاستلام.">
+
+
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ===================== TOKENS ===================== */
+:root{
+  --navy:#0B1220;
+  --navy-deep:#060912;
+  --blue:#2563EB;
+  --blue-light:#3B82F6;
+  --cyan:#38BDF8;
+  --white:#FFFFFF;
+  --mist:#F4F7FB;
+  --slate:#94A3B8;
+  --slate-dark:#475569;
+  --gold:#FBBF24;
+  --green:#22C55E;
+  --glass-bg:rgba(255,255,255,0.06);
+  --glass-border:rgba(255,255,255,0.14);
+  --glass-bg-light:rgba(255,255,255,0.65);
+  --glass-border-light:rgba(255,255,255,0.5);
+  --shadow-soft:0 20px 60px -15px rgba(11,18,32,0.25);
+  --shadow-deep:0 30px 80px -20px rgba(11,18,32,0.55);
+  --radius-lg:28px;
+  --radius-md:20px;
+  --radius-sm:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:'Cairo',sans-serif;
+  background:var(--mist);
+  color:var(--navy);
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+img{max-width:100%;display:block;}
+.display{font-family:'Tajawal',sans-serif;}
+.container{max-width:1180px;margin:0 auto;padding:0 24px;}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:'Tajawal',sans-serif;font-weight:700;font-size:13px;
+  letter-spacing:.5px;color:var(--cyan);
+  background:rgba(56,189,248,0.1);
+  border:1px solid rgba(56,189,248,0.25);
+  padding:7px 16px;border-radius:999px;margin-bottom:18px;
+}
+.eyebrow.dark{color:var(--blue);background:rgba(37,99,235,0.08);border-color:rgba(37,99,235,0.2);}
+section{position:relative;}
+.section-pad{padding:90px 0;}
+@media(max-width:768px){.section-pad{padding:60px 0;}}
+h2.headline{font-family:'Tajawal',sans-serif;font-weight:900;font-size:38px;line-height:1.3;letter-spacing:-.5px;}
+@media(max-width:768px){h2.headline{font-size:27px;}}
+p.lede{font-size:17px;color:var(--slate-dark);line-height:1.9;max-width:640px;}
+.center{text-align:center;margin-left:auto;margin-right:auto;}
+.btn{
+  font-family:'Tajawal',sans-serif;font-weight:800;font-size:17px;
+  border:none;cursor:pointer;border-radius:16px;
+  padding:18px 38px;display:inline-flex;align-items:center;gap:10px;
+  transition:transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s ease;
+}
+.btn-primary{
+  background:linear-gradient(135deg,var(--blue) 0%, var(--cyan) 130%);
+  color:#fff;box-shadow:0 14px 34px -8px rgba(37,99,235,0.55);
+}
+.btn-primary:hover{transform:translateY(-3px);box-shadow:0 20px 44px -8px rgba(37,99,235,0.65);}
+.btn-primary:active{transform:translateY(0);}
+.btn-ghost{
+  background:rgba(255,255,255,0.08);color:#fff;
+  border:1px solid rgba(255,255,255,0.25);
+  backdrop-filter:blur(10px);
+}
+.btn-ghost:hover{background:rgba(255,255,255,0.14);}
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s ease, transform .7s cubic-bezier(.2,.7,.2,1);}
+.reveal.in{opacity:1;transform:translateY(0);}
+@media(prefers-reduced-motion:reduce){
+  .reveal{opacity:1!important;transform:none!important;transition:none!important;}
+  *{animation-duration:.001s!important;}
+}
+
+/* ===================== TOP SCARCITY BAR ===================== */
+.scarcity-bar{
+  background:var(--navy-deep);color:#fff;text-align:center;
+  font-family:'Tajawal',sans-serif;font-weight:700;font-size:13.5px;
+  padding:10px 14px;display:flex;align-items:center;justify-content:center;gap:10px;
+  border-bottom:1px solid rgba(56,189,248,0.25);
+}
+.scarcity-bar span.dot{width:7px;height:7px;border-radius:50%;background:#F87171;animation:pulse 1.6s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+#countdown{font-family:'Tajawal',sans-serif;font-weight:900;color:var(--cyan);direction:ltr;display:inline-block;}
+
+/* ===================== NAV ===================== */
+.nav{
+  position:sticky;top:0;z-index:60;
+  background:rgba(11,18,32,0.85);backdrop-filter:blur(16px) saturate(140%);
+  -webkit-backdrop-filter:blur(16px) saturate(140%);
+  border-bottom:1px solid rgba(255,255,255,0.08);
+}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;max-width:1180px;margin:0 auto;}
+.logo{font-family:'Tajawal',sans-serif;font-weight:900;color:#fff;font-size:20px;letter-spacing:-.3px;display:flex;align-items:center;gap:8px;}
+.logo .chip{width:9px;height:22px;border-radius:4px;background:linear-gradient(180deg,var(--cyan),var(--blue));}
+.nav-cta{font-family:'Tajawal',sans-serif;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--blue),var(--cyan));padding:10px 22px;border-radius:12px;font-size:14.5px;box-shadow:0 8px 20px -6px rgba(37,99,235,.6);}
+
+/* ===================== HERO ===================== */
+.hero{
+  background:radial-gradient(120% 100% at 20% 0%, #131D33 0%, var(--navy) 45%, var(--navy-deep) 100%);
+  color:#fff;padding:64px 0 0;position:relative;overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;inset:0;
+  background:
+    radial-gradient(600px 300px at 85% 10%, rgba(56,189,248,0.18), transparent 60%),
+    radial-gradient(500px 280px at 10% 80%, rgba(37,99,235,0.18), transparent 60%);
+  pointer-events:none;
+}
+.hero-grid{display:grid;grid-template-columns:1.05fr 1fr;gap:50px;align-items:center;position:relative;z-index:2;}
+@media(max-width:980px){.hero-grid{grid-template-columns:1fr;text-align:center;gap:30px;}}
+.hero h1{font-family:'Tajawal',sans-serif;font-weight:900;font-size:46px;line-height:1.28;letter-spacing:-1px;}
+@media(max-width:980px){.hero h1{font-size:32px;}}
+.hero .sub{margin-top:20px;font-size:17.5px;color:#C7D2E1;line-height:1.95;max-width:540px;}
+@media(max-width:980px){.hero .sub{margin:20px auto 0;}}
+.price-box{
+  margin-top:30px;display:flex;align-items:center;gap:16px;
+  background:var(--glass-bg);border:1px solid var(--glass-border);backdrop-filter:blur(14px);
+  padding:16px 22px;border-radius:18px;width:fit-content;
+}
+@media(max-width:980px){.price-box{margin:30px auto 0;}}
+.price-box .now{font-family:'Tajawal',sans-serif;font-weight:900;font-size:30px;color:var(--cyan);}
+.price-box .old{font-family:'Tajawal',sans-serif;font-weight:700;font-size:16px;color:var(--slate);text-decoration:line-through;}
+.price-box .save{background:rgba(34,197,94,0.15);color:#4ADE80;font-weight:800;font-size:12.5px;padding:5px 10px;border-radius:8px;font-family:'Tajawal',sans-serif;}
+.hero-ctas{margin-top:32px;display:flex;gap:14px;flex-wrap:wrap;}
+@media(max-width:980px){.hero-ctas{justify-content:center;}}
+.trust-row{margin-top:34px;display:flex;flex-wrap:wrap;gap:22px;}
+@media(max-width:980px){.trust-row{justify-content:center;}}
+.trust-row .item{display:flex;align-items:center;gap:8px;font-size:13.5px;color:#C7D2E1;font-weight:600;}
+.trust-row svg{flex-shrink:0;}
+
+.hero-visual{position:relative;}
+.device-stage{position:relative;border-radius:32px;overflow:visible;}
+.device-stage img{
+  width:100%;border-radius:28px;
+  box-shadow:0 50px 100px -30px rgba(0,0,0,0.6);
+  position:relative;z-index:2;
+}
+.glow-ring{position:absolute;inset:-40px;background:conic-gradient(from 90deg, rgba(56,189,248,0.0), rgba(56,189,248,0.25), rgba(37,99,235,0.0) 60%);filter:blur(50px);z-index:0;border-radius:50%;}
+.spec-chip{
+  position:absolute;display:flex;align-items:center;gap:9px;
+  background:var(--glass-bg);border:1px solid var(--glass-border);backdrop-filter:blur(14px);
+  padding:9px 14px;border-radius:14px;font-family:'Tajawal',sans-serif;font-weight:700;font-size:12.5px;
+  color:#fff;z-index:3;box-shadow:0 14px 30px -10px rgba(0,0,0,0.4);
+  animation:float 5s ease-in-out infinite;
+}
+.spec-chip b{color:var(--cyan);font-weight:900;}
+.spec-chip.c1{top:6%;right:-4%;animation-delay:0s;}
+.spec-chip.c2{top:38%;left:-8%;animation-delay:1.1s;}
+.spec-chip.c3{bottom:14%;right:-6%;animation-delay:2.2s;}
+.spec-chip.c4{bottom:-2%;left:6%;animation-delay:.6s;}
+@media(max-width:980px){.spec-chip{position:static;display:inline-flex;margin:6px;animation:none;}
+  .chip-wrap{display:flex;flex-wrap:wrap;justify-content:center;margin-top:18px;}}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+
+/* ===================== FEATURE ICON GRID ===================== */
+.feat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:18px;margin-top:50px;}
+@media(max-width:980px){.feat-grid{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:600px){.feat-grid{grid-template-columns:repeat(2,1fr);gap:12px;}}
+.feat-card{
+  background:#fff;border-radius:var(--radius-md);padding:26px 16px;text-align:center;
+  box-shadow:var(--shadow-soft);border:1px solid #EEF2F7;
+  transition:transform .3s ease, box-shadow .3s ease;
+}
+.feat-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-deep);}
+.feat-card .ic{
+  width:52px;height:52px;border-radius:14px;margin:0 auto 14px;
+  background:linear-gradient(135deg,var(--blue),var(--cyan));
+  display:flex;align-items:center;justify-content:center;color:#fff;
+}
+.feat-card .t{font-family:'Tajawal',sans-serif;font-weight:800;font-size:14.5px;color:var(--navy);}
+
+/* ===================== GALLERY ===================== */
+.gallery-dark{background:var(--navy);color:#fff;}
+.gal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:46px;}
+@media(max-width:860px){.gal-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:520px){.gal-grid{grid-template-columns:1fr;}}
+.gal-card{position:relative;border-radius:22px;overflow:hidden;aspect-ratio:4/5;}
+.gal-card img{width:100%;height:100%;object-fit:cover;transition:transform .6s ease;}
+.gal-card:hover img{transform:scale(1.08);}
+.gal-card .cap{
+  position:absolute;bottom:0;left:0;right:0;padding:18px;
+  background:linear-gradient(0deg, rgba(0,0,0,0.75), transparent);
+  font-family:'Tajawal',sans-serif;font-weight:800;font-size:15.5px;
+}
+
+/* ===================== BENEFITS ===================== */
+.benefit-list{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:42px;}
+@media(max-width:768px){.benefit-list{grid-template-columns:1fr;}}
+.benefit-item{
+  display:flex;align-items:flex-start;gap:14px;background:#fff;
+  border-radius:var(--radius-sm);padding:20px;box-shadow:var(--shadow-soft);border:1px solid #EEF2F7;
+}
+.benefit-item .ck{
+  flex-shrink:0;width:34px;height:34px;border-radius:10px;background:rgba(37,99,235,0.1);
+  display:flex;align-items:center;justify-content:center;color:var(--blue);
+}
+.benefit-item p{font-family:'Tajawal',sans-serif;font-weight:600;font-size:15.5px;color:var(--navy);line-height:1.7;}
+
+/* ===================== ACCESSORIES ===================== */
+.acc-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-top:46px;}
+@media(max-width:860px){.acc-grid{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:520px){.acc-grid{grid-template-columns:repeat(2,1fr);}}
+.acc-card{
+  background:linear-gradient(160deg,#FFFFFF, #F1F5FB);
+  border:1px solid #E6ECF5;border-radius:var(--radius-md);
+  padding:26px 14px;text-align:center;box-shadow:var(--shadow-soft);
+}
+.acc-card .ic{font-size:34px;margin-bottom:10px;}
+.acc-card .t{font-family:'Tajawal',sans-serif;font-weight:800;font-size:14px;}
+.acc-card .badge{
+  display:inline-block;margin-top:8px;font-size:11px;font-weight:800;color:var(--green);
+  background:rgba(34,197,94,0.12);padding:4px 10px;border-radius:999px;font-family:'Tajawal',sans-serif;
+}
+
+/* ===================== COMPARISON ===================== */
+.compare-wrap{display:grid;grid-template-columns:1fr auto 1fr;gap:0;margin-top:50px;align-items:stretch;}
+@media(max-width:768px){.compare-wrap{grid-template-columns:1fr;gap:20px;}}
+.compare-card{border-radius:var(--radius-lg);padding:36px 28px;}
+.compare-card.win{
+  background:linear-gradient(160deg,#0B1220,#142036);color:#fff;
+  box-shadow:0 30px 70px -20px rgba(11,18,32,.5);position:relative;z-index:2;
+}
+.compare-card.lose{background:#fff;border:1px solid #EEF2F7;color:var(--slate-dark);}
+.compare-vs{
+  display:flex;align-items:center;justify-content:center;font-family:'Tajawal',sans-serif;
+  font-weight:900;color:var(--slate);font-size:14px;padding:0 22px;
+}
+@media(max-width:768px){.compare-vs{padding:0;}}
+.compare-card h3{font-family:'Tajawal',sans-serif;font-weight:900;font-size:21px;margin-bottom:18px;}
+.compare-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,0.08);font-size:14.5px;font-weight:600;}
+.compare-card.lose .compare-row{border-color:#EEF2F7;}
+.compare-row:last-child{border:none;}
+
+/* ===================== USE-CASE TABS (students/employees/entertainment) ===================== */
+.usecase-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;margin-top:20px;}
+@media(max-width:860px){.usecase-grid{grid-template-columns:1fr;gap:28px;}}
+.usecase-grid.rev .img-col{order:2;}
+@media(max-width:860px){.usecase-grid.rev .img-col{order:0;}}
+.usecase-tags{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px;}
+.tag{
+  background:rgba(37,99,235,0.08);color:var(--blue);font-family:'Tajawal',sans-serif;font-weight:700;
+  font-size:13.5px;padding:9px 16px;border-radius:999px;border:1px solid rgba(37,99,235,0.18);
+}
+.uc-img{border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-deep);aspect-ratio:1/1;}
+.uc-img img{width:100%;height:100%;object-fit:cover;}
+
+/* ===================== CAMERA / BATTERY / STORAGE STAT BLOCKS ===================== */
+.stat-block{
+  background:linear-gradient(135deg,#0B1220,#16233D);color:#fff;border-radius:var(--radius-lg);
+  padding:50px 40px;display:grid;grid-template-columns:auto 1fr;gap:40px;align-items:center;
+  box-shadow:var(--shadow-deep);
+}
+@media(max-width:768px){.stat-block{grid-template-columns:1fr;text-align:center;padding:40px 24px;gap:20px;}}
+.stat-num{font-family:'Tajawal',sans-serif;font-weight:900;font-size:58px;color:var(--cyan);line-height:1;white-space:nowrap;}
+.stat-unit{font-size:16px;color:var(--slate);}
+.stat-tags{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px;}
+@media(max-width:768px){.stat-tags{justify-content:center;}}
+.stat-tags span{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.16);padding:7px 14px;border-radius:999px;font-size:13px;font-weight:700;font-family:'Tajawal',sans-serif;}
+.stack{display:flex;flex-direction:column;gap:28px;}
+
+/* ===================== REVIEWS ===================== */
+.review-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:46px;}
+@media(max-width:980px){.review-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:560px){.review-grid{grid-template-columns:1fr;}}
+.review-card{background:#fff;border-radius:var(--radius-md);padding:24px;box-shadow:var(--shadow-soft);border:1px solid #EEF2F7;}
+.review-card .stars{color:var(--gold);font-size:15px;letter-spacing:2px;margin-bottom:10px;}
+.review-card p{font-size:14.5px;color:var(--slate-dark);line-height:1.85;min-height:90px;}
+.review-card .who{display:flex;align-items:center;gap:10px;margin-top:16px;}
+.review-card .av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--cyan));display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Tajawal',sans-serif;font-weight:800;font-size:14px;}
+.review-card .name{font-family:'Tajawal',sans-serif;font-weight:800;font-size:13.5px;}
+.review-card .loc{font-size:11.5px;color:var(--slate);}
+.rating-summary{display:flex;align-items:center;gap:18px;justify-content:center;margin-top:36px;flex-wrap:wrap;}
+.rating-summary .big{font-family:'Tajawal',sans-serif;font-weight:900;font-size:42px;}
+.rating-summary .stars-lg{color:var(--gold);font-size:22px;letter-spacing:3px;}
+
+/* ===================== FAQ ===================== */
+.faq-list{max-width:780px;margin:46px auto 0;}
+.faq-item{background:#fff;border:1px solid #EEF2F7;border-radius:16px;margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow-soft);}
+.faq-q{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:20px 22px;cursor:pointer;font-family:'Tajawal',sans-serif;font-weight:800;font-size:15.5px;
+}
+.faq-q .plus{flex-shrink:0;width:26px;height:26px;border-radius:8px;background:rgba(37,99,235,0.1);color:var(--blue);display:flex;align-items:center;justify-content:center;transition:transform .3s ease;font-weight:900;}
+.faq-item.open .plus{transform:rotate(45deg);}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .35s ease;}
+.faq-a-inner{padding:0 22px 20px;font-size:14.5px;color:var(--slate-dark);line-height:1.85;}
+.faq-item.open .faq-a{max-height:300px;}
+
+/* ===================== FINAL CTA ===================== */
+.final-cta{
+  background:radial-gradient(120% 140% at 50% 0%, #16233D 0%, var(--navy) 50%, var(--navy-deep) 100%);
+  color:#fff;text-align:center;padding:100px 0;position:relative;overflow:hidden;
+}
+.final-cta::before{content:'';position:absolute;inset:0;background:radial-gradient(500px 260px at 50% 0%, rgba(56,189,248,0.2), transparent 60%);}
+.final-cta h2{font-size:42px;}
+@media(max-width:768px){.final-cta h2{font-size:28px;}}
+.final-price{font-family:'Tajawal',sans-serif;font-weight:900;font-size:40px;color:var(--cyan);margin:24px 0;}
+
+/* ===================== ORDER FORM ===================== */
+.order-section{background:var(--mist);}
+.order-card{
+  max-width:640px;margin:46px auto 0;background:#fff;border-radius:var(--radius-lg);
+  padding:40px;box-shadow:var(--shadow-deep);border:1px solid #EEF2F7;
+}
+@media(max-width:600px){.order-card{padding:26px 20px;}}
+.f-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+@media(max-width:560px){.f-row{grid-template-columns:1fr;}}
+.f-group{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+.f-group label{font-family:'Tajawal',sans-serif;font-weight:700;font-size:13.5px;color:var(--navy);}
+.f-group input, .f-group select, .f-group textarea{
+  border:1.5px solid #E2E8F0;border-radius:12px;padding:13px 15px;font-family:'Cairo',sans-serif;
+  font-size:14.5px;background:#F8FAFC;transition:border-color .2s ease, background .2s ease;
+}
+.f-group input:focus, .f-group select:focus, .f-group textarea:focus{
+  outline:none;border-color:var(--blue);background:#fff;box-shadow:0 0 0 4px rgba(37,99,235,0.1);
+}
+.color-pick{display:flex;gap:10px;margin-top:4px;}
+.color-opt{width:38px;height:38px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:border-color .2s ease, transform .2s ease;}
+.color-opt.selected{border-color:var(--blue);transform:scale(1.1);}
+.order-submit{width:100%;justify-content:center;margin-top:8px;font-size:18px;}
+.order-trust{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-top:20px;}
+.order-trust .item{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--slate-dark);font-weight:700;}
+
+/* ===================== STICKY CTA ===================== */
+.sticky-cta{
+  position:fixed;bottom:0;left:0;right:0;z-index:70;
+  background:rgba(11,18,32,0.92);backdrop-filter:blur(16px);
+  border-top:1px solid rgba(255,255,255,0.1);
+  padding:12px 18px;display:flex;align-items:center;justify-content:space-between;gap:14px;
+  transform:translateY(110%);transition:transform .4s cubic-bezier(.2,.8,.2,1);
+}
+.sticky-cta.show{transform:translateY(0);}
+.sticky-cta .info{color:#fff;}
+.sticky-cta .info .p{font-family:'Tajawal',sans-serif;font-weight:900;color:var(--cyan);font-size:18px;}
+.sticky-cta .info .l{font-size:11.5px;color:var(--slate);}
+.sticky-cta .btn{padding:13px 26px;font-size:14.5px;white-space:nowrap;}
+
+/* ===================== FLOATING WHATSAPP ===================== */
+.wa-float{
+  position:fixed;bottom:88px;left:18px;z-index:65;
+  width:58px;height:58px;border-radius:50%;background:#25D366;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 14px 30px -8px rgba(37,211,102,0.6);
+  animation:wa-pulse 2.4s infinite;
+}
+@keyframes wa-pulse{0%{box-shadow:0 0 0 0 rgba(37,211,102,0.45);}70%{box-shadow:0 0 0 16px rgba(37,211,102,0);}100%{box-shadow:0 0 0 0 rgba(37,211,102,0);}}
+
+/* ===================== RECENT ORDERS TOAST ===================== */
+.order-toast{
+  position:fixed;bottom:90px;right:18px;z-index:65;
+  background:#fff;border-radius:16px;box-shadow:var(--shadow-deep);
+  padding:14px 18px;display:flex;align-items:center;gap:12px;max-width:300px;
+  transform:translateY(140%);opacity:0;transition:transform .5s cubic-bezier(.2,.8,.2,1), opacity .5s ease;
+  border:1px solid #EEF2F7;
+}
+.order-toast.show{transform:translateY(0);opacity:1;}
+.order-toast .dot-live{width:9px;height:9px;border-radius:50%;background:var(--green);flex-shrink:0;}
+.order-toast .tt{font-family:'Tajawal',sans-serif;font-weight:800;font-size:12.5px;}
+.order-toast .ts{font-size:11px;color:var(--slate);margin-top:2px;}
+
+/* ===================== EXIT POPUP ===================== */
+.exit-overlay{
+  position:fixed;inset:0;background:rgba(6,9,18,0.7);backdrop-filter:blur(4px);
+  z-index:90;display:flex;align-items:center;justify-content:center;padding:20px;
+  opacity:0;pointer-events:none;transition:opacity .3s ease;
+}
+.exit-overlay.show{opacity:1;pointer-events:auto;}
+.exit-modal{
+  background:#fff;border-radius:24px;padding:40px;max-width:420px;width:100%;text-align:center;
+  position:relative;box-shadow:var(--shadow-deep);transform:scale(.92);transition:transform .3s ease;
+}
+.exit-overlay.show .exit-modal{transform:scale(1);}
+.exit-close{position:absolute;top:14px;left:14px;width:32px;height:32px;border-radius:50%;background:#F1F5F9;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:900;color:var(--slate-dark);}
+.exit-modal h3{font-family:'Tajawal',sans-serif;font-weight:900;font-size:22px;margin-top:10px;}
+.exit-modal p{color:var(--slate-dark);margin-top:10px;font-size:14.5px;line-height:1.8;}
+.exit-modal .price{font-family:'Tajawal',sans-serif;font-weight:900;font-size:30px;color:var(--blue);margin:16px 0;}
+
+/* ===================== FOOTER ===================== */
+footer{background:var(--navy-deep);color:var(--slate);padding:50px 0 100px;text-align:center;font-size:13px;}
+footer .logo{justify-content:center;margin-bottom:14px;}
+footer .links{display:flex;gap:18px;justify-content:center;margin:16px 0;flex-wrap:wrap;font-weight:700;}
+footer .links a{color:#C7D2E1;text-decoration:none;font-size:13px;}
+
+.skip-link{position:absolute;right:-9999px;}
+.skip-link:focus{right:14px;top:14px;background:#fff;padding:10px 16px;border-radius:10px;z-index:200;}
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible{outline:3px solid var(--cyan);outline-offset:2px;}
+</style>
+</head>
+<body>
+
+<a href="#order" class="skip-link">انتقل إلى نموذج الطلب</a>
+
+<!-- SCARCITY BAR -->
+<div class="scarcity-bar">
+  <span class="dot"></span>
+  العرض ينتهي خلال: <span id="countdown">00:00:00</span> — الكمية محدودة
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-inner">
+    <div class="logo"><span class="chip"></span>AirTab <span style="color:var(--cyan);font-weight:500;font-size:14px;">A16 Pro Max</span></div>
+    <a href="#order" class="nav-cta">اطلب الآن</a>
+  </div>
+</nav>
+
+<!-- ===================== HERO ===================== -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-grid">
+      <div class="reveal in">
+        <div class="eyebrow">⚡ بديلك العملي عن اللابتوب</div>
+        <h1>حوّل أي مكان إلى مكتب متكامل مع AirTab A16 Pro Max 5G</h1>
+        <p class="sub">تابلت احترافي يجمع بين قوة الأداء، الشاشة الكبيرة، التخزين الضخم، والملحقات الكاملة، ليغنيك عن اللابتوب في أغلب استخداماتك اليومية.</p>
+
+        <div class="price-box">
+          <div class="now">125,000 د.ع</div>
+          <div class="old">180,000</div>
+          <div class="save">وفّر 31%</div>
+        </div>
+
+        <div class="hero-ctas">
+          <a href="#order" class="btn btn-primary">
+            اطلبه الآن
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M14 6l-6 6 6 6" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+          <a href="#why" class="btn btn-ghost">شاهد المواصفات</a>
+        </div>
+
+        <div class="trust-row">
+          <div class="item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4" stroke="#38BDF8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="#38BDF8" stroke-width="1.6"/></svg> ضمان الجودة</div>
+          <div class="item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="2" y="7" width="15" height="11" rx="2" stroke="#38BDF8" stroke-width="1.6"/><path d="M17 10h3l2 3v5h-5" stroke="#38BDF8" stroke-width="1.6"/></svg> دفع عند الاستلام</div>
+          <div class="item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 12h13M13 6l6 6-6 6" stroke="#38BDF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> شحن سريع</div>
+          <div class="item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4.5 8-11V5l-8-3-8 3v6c0 6.5 8 11 8 11z" stroke="#38BDF8" stroke-width="1.6"/></svg> فحص قبل الدفع</div>
+        </div>
+      </div>
+
+      <div class="hero-visual reveal in">
+        <div class="device-stage">
+          <div class="glow-ring"></div>
+          <img src="https://i.ibb.co/jZBzkZHv/image-1-1.jpg" alt="AirTab A16 Pro Max 5G">
+          <div class="spec-chip c1">⚙️ رام <b>16GB</b></div>
+          <div class="spec-chip c2">💾 تخزين <b>1TB</b></div>
+          <div class="spec-chip c3">🔋 بطارية <b>10000mAh</b></div>
+          <div class="spec-chip c4">📶 شبكة <b>5G</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== WHY CHOOSE ===================== -->
+<section class="section-pad" id="why">
+  <div class="container">
+    <div class="center" style="max-width:620px;">
+      <div class="eyebrow dark">المواصفات</div>
+      <h2 class="headline">كل شيء تحتاجه... بجهاز واحد</h2>
+      <p class="lede center" style="margin-top:14px;">مواصفات بمستوى الفئة الأولى، مصممة لتغطي دراستك، شغلك، وترفيهك بدون أي تنازلات.</p>
+    </div>
+
+    <div class="feat-grid">
+      <div class="feat-card reveal"><div class="ic">🤖</div><div class="t">Android 15</div></div>
+      <div class="feat-card reveal"><div class="ic">📱</div><div class="t">شاشة 10.1 FHD</div></div>
+      <div class="feat-card reveal"><div class="ic">⚙️</div><div class="t">رام 16GB</div></div>
+      <div class="feat-card reveal"><div class="ic">💾</div><div class="t">تخزين 1TB</div></div>
+      <div class="feat-card reveal"><div class="ic">🔋</div><div class="t">بطارية 10000mAh</div></div>
+      <div class="feat-card reveal"><div class="ic">📶</div><div class="t">شبكة 5G</div></div>
+      <div class="feat-card reveal"><div class="ic">📷</div><div class="t">كاميرا 30MP</div></div>
+      <div class="feat-card reveal"><div class="ic">⌨️</div><div class="t">كيبورد مجاني</div></div>
+      <div class="feat-card reveal"><div class="ic">🖱️</div><div class="t">ماوس مجاني</div></div>
+      <div class="feat-card reveal"><div class="ic">✏️</div><div class="t">قلم مجاني</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== GALLERY ===================== -->
+<section class="section-pad gallery-dark">
+  <div class="container">
+    <div class="center" style="max-width:620px;">
+      <div class="eyebrow">معرض الصور</div>
+      <h2 class="headline">جاهز لكل لحظة من يومك</h2>
+    </div>
+    <div class="gal-grid">
+      <div class="gal-card reveal"><img loading="lazy" src="https://images.unsplash.com/photo-1531973576160-7125cd663d86?q=60&w=400&auto=format&fit=crop" alt="استخدام في العمل"><div class="cap">أعمال واجتماعات</div></div>
+      <div class="gal-card reveal"><img loading="lazy" src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=60&w=400&auto=format&fit=crop" alt="استخدام للدراسة"><div class="cap">دراسة ومحاضرات</div></div>
+      <div class="gal-card reveal"><img loading="lazy" src="https://images.unsplash.com/photo-1542751371-adc38448a05e?q=60&w=400&auto=format&fit=crop" alt="ألعاب"><div class="cap">ألعاب بسلاسة</div></div>
+      <div class="gal-card reveal"><img loading="lazy" src="https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?q=60&w=400&auto=format&fit=crop" alt="مشاهدة أفلام"><div class="cap">أفلام ومسلسلات</div></div>
+      <div class="gal-card reveal"><img loading="lazy" src="https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?q=60&w=400&auto=format&fit=crop" alt="اجتماعات أونلاين"><div class="cap">اجتماعات عن بعد</div></div>
+      <div class="gal-card reveal"><img loading="lazy" src="https://images.unsplash.com/photo-1626785774573-4b799315345d?q=60&w=400&auto=format&fit=crop" alt="رسم"><div class="cap">رسم وتدوين</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== BENEFITS ===================== -->
+<section class="section-pad">
+  <div class="container">
+    <div class="center" style="max-width:620px;">
+      <div class="eyebrow dark">ليش يستاهل؟</div>
+      <h2 class="headline">مو بس مواصفات... فايدة حقيقية بحياتك</h2>
+    </div>
+    <div class="benefit-list">
+      <div class="benefit-item reveal"><div class="ck">✔</div><p>افتح عشرات التطبيقات بنفس الوقت بدون أي بطء.</p></div>
+      <div class="benefit-item reveal"><div class="ck">✔</div><p>خزّن آلاف الصور والفيديوهات بدون التفكير بالمساحة.</p></div>
+      <div class="benefit-item reveal"><div class="ck">✔</div><p>احضر محاضراتك واجتماعاتك بجودة عالية وبدون تقطيع.</p></div>
+      <div class="benefit-item reveal"><div class="ck">✔</div><p>استمتع بألعابك المفضلة بسلاسة وراحة تامة.</p></div>
+      <div class="benefit-item reveal"><div class="ck">✔</div><p>اشتغل مثل اللابتوب باستخدام الكيبورد والماوس المرفقين.</p></div>
+      <div class="benefit-item reveal"><div class="ck">✔</div><p>ارسم ودوّن ملاحظاتك بسهولة باستخدام القلم الذكي.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ACCESSORIES ===================== -->
+<section class="section-pad" style="background:var(--mist);">
+  <div class="container">
+    <div class="center" style="max-width:620px;">
+      <div class="eyebrow dark">محتويات العلبة</div>
+      <h2 class="headline">داخل العلبة تحصل على كل شي</h2>
+      <p class="lede center" style="margin-top:14px;">باقة متكاملة بدون أي تكاليف إضافية.</p>
+    </div>
+    <div class="acc-grid">
+      <div class="acc-card reveal"><div class="ic">📱</div><div class="t">AirTab Tablet</div></div>
+      <div class="acc-card reveal"><div class="ic">⌨️</div><div class="t">Keyboard</div><span class="badge">مجاني</span></div>
+      <div class="acc-card reveal"><div class="ic">🖱️</div><div class="t">Mouse</div><span class="badge">مجاني</span></div>
+      <div class="acc-card reveal"><div class="ic">✏️</div><div class="t">Stylus Pen</div><span class="badge">مجاني</span></div>
+      <div class="acc-card reveal"><div class="ic">🔌</div><div class="t">Charger</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== COMPARISON ===================== -->
+<section class="section-pad">
+  <div class="container">
+    <div class="center" style="max-width:620px;">
+      <div class="eyebrow dark">المقارنة</div>
+      <h2 class="headline">شوف الفرق بنفسك</h2>
+    </div>
+    <div class="compare-wrap">
+      <div class="compare-card win reveal">
+        <h3>⚡ AirTab A16 Pro Max</h3>
+        <div class="compare-row">✅ معالج أسرع وأداء أقوى</div>
+        <div class="compare-row">✅ تخزين 1TB</div>
+        <div class="compare-row">✅ بطارية 10000mAh</div>
+        <div class="compare-row">✅ كيبورد + ماوس + قلم مجاني</div>
+        <div class="compare-row">✅ قيمة أعلى مقابل السعر</div>
+      </div>
+      <div class="compare-vs">VS</div>
+      <div class="compare-card lose reveal">
+        <h3>🐢 تابلت تقليدي</h3>
+        <div class="compare-row">❌ أداء بطيء مع الاستخدام الكثيف</div>
+        <div class="compare-row">❌ تخزين محدود</div>
+        <div class="compare-row">❌ بطارية تفرغ بسرعة</div>
+        <div class="compare-row">❌ ملحقات تشترى بشكل منفصل</div>
+        <div class="compare-row">❌ تكلفة إضافية خفية</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== STUDENTS ===================== -->
+<section class="section-pad" style="background:var(--mist);">
+  <div class="container">
+    <div class="usecase-grid">
+      <div class="img-col reveal">
+        <div class="uc-img"><img loading="lazy" src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=60&w=400&auto=format&fit=crop" alt="طالب يدرس بالتابلت"></div>
+      </div>
+      <div class="reveal">
+        <div class="eyebrow dark">للطلاب</div>
+        <h2 class="headline">رفيقك من أول محاضرة لآخر امتحان</h2>
+        <p class="lede" style="margin-top:14px;">احضر صفوفك الأونلاين، اقرأ ملفات PDF، اشتغل على تقاريرك بـ Office، وسوي بحوثك وواجباتك بسهولة وراحة.</p>
+        <div class="usecase-tags">
+          <span class="tag">📚 صفوف أونلاين</span>
+          <span class="tag">📄 PDF</span>
+          <span class="tag">📊 Office</span>
+          <span class="tag">🎥 Zoom</span>
+          <span class="tag">🔍 بحوث</span>
+          <span class="tag">📝 واجبات</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== EMPLOYEES ===================== -->
+<section class="section-pad">
+  <div class="container">
+    <div class="usecase-grid rev">
+      <div class="reveal">
+        <div class="eyebrow dark">للموظفين وأصحاب الأعمال</div>
+        <h2 class="headline">مكتبك المتنقل أينما كنت</h2>
+        <p class="lede" style="margin-top:14px;">رد على إيميلاتك، احضر اجتماعاتك، اشتغل على Excel و Word و PowerPoint، وتصفح بسرعة وثبات طوال يومك.</p>
+        <div class="usecase-tags">
+          <span class="tag">📧 إيميلات</span>
+          <span class="tag">👥 اجتماعات</span>
+          <span class="tag">📈 Excel</span>
+          <span class="tag">📝 Word</span>
+          <span class="tag">🖥️ PowerPoint</span>
+          <span class="tag">📞 مكالمات فيديو</span>
+        </div>
+      </div>
+      <div class="img-col reveal">
+        <div class="uc-img"><img loading="lazy" src="https://images.unsplash.com/photo-1551836022-d5d88e9218df?q=60&w=400&auto=format&fit=crop" alt="موظف يشتغل بالتابلت"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ENTERTAINMENT ===================== -->
+<section class="section-pad" style="background:var(--mist);">
+  <div class="container">
+    <div class="usecase-grid">
+      <div class="img-col reveal">
+        <div class="uc-img"><img loading="lazy" src="https://images.unsplash.com/photo-1593784991095-a205069470b6?q=60&w=400&auto=format&fit=crop" alt="ترفيه بالتابلت"></div>
+      </div>
+      <div class="reveal">
+        <div class="eyebrow dark">للترفيه</div>
+        <h2 class="headline">شاشة كبيرة... متعة أكبر</h2>
+        <p class="lede" style="margin-top:14px;">من Netflix و YouTube إلى TikTok والألعاب والموسيقى ومواقع التواصل، كل شي بجودة عالية وسلاسة تامة.</p>
+        <div class="usecase-tags">
+          <span class="tag">🎬 Netflix</span>
+          <span class="tag">▶️ YouTube</span>
+          <span class="tag">🎵 TikTok</span>
+          <span class="tag">🎮 ألعاب</span>
+          <span class="tag">🎧 موسيقى</span>
+          <span class="tag">💬 تواصل اجتماعي</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CAMERA / BATTERY / STORAGE ===================== -->
+<section class="section-pad">
+  <div class="container">
+    <div class="center" style="max-width:620px;margin-bottom:46px;">
+      <div class="eyebrow dark">الأداء بالأرقام</div>
+      <h2 class="headline">قوة تلاحظها من أول استخدام</h2>
+    </div>
+
+    <div class="stack">
+      <div class="stat-block reveal">
+        <div><div class="stat-num">30MP</div><div class="stat-unit">كاميرا خلفية</div></div>
+        <div>
+          <p style="color:#C7D2E1;font-size:15px;line-height:1.85;">كاميرا خلفية 30MP وأمامية 13MP تعطيك وضوح عالي لكل شي.</p>
+          <div class="stat-tags"><span>👥 اجتماعات</span><span>📞 مكالمات فيديو</span><span>📸 صور</span></div>
+        </div>
+      </div>
+      <div class="stat-block reveal">
+        <div><div class="stat-num">10000<span style="font-size:24px;">mAh</span></div><div class="stat-unit">بطارية ضخمة</div></div>
+        <div>
+          <p style="color:#C7D2E1;font-size:15px;line-height:1.85;">بطارية تدوم طول يومك، من الصبح للمسا، بدون قلق على الشاحن.</p>
+          <div class="stat-tags"><span>📖 دراسة</span><span>💼 شغل</span><span>✈️ سفر</span><span>🎮 ترفيه</span></div>
+        </div>
+      </div>
+      <div class="stat-block reveal">
+        <div><div class="stat-num">1TB</div><div class="stat-unit">مساحة تخزين</div></div>
+        <div>
+          <p style="color:#C7D2E1;font-size:15px;line-height:1.85;">خزّن كل شي بدون أي قلق على المساحة، من أفلامك لأهم ملفاتك.</p>
+          <div class="stat-tags"><span>🎬 أفلام</span><span>📷 صور</span><span>📱 تطبيقات</span><span>🎮 ألعاب</span><span>📄 ملفات</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== REVIEWS ===================== -->
+<section class="section-pad" style="background:var(--mist);">
+  <div class="container">
+    <div class="center" style="max-width:620px;">
+      <div class="eyebrow dark">آراء الزبائن</div>
+      <h2 class="headline">تجربة آلاف الزبائن الراضين</h2>
+    </div>
+    <div class="rating-summary">
+      <div class="big">4.9</div>
+      <div>
+        <div class="stars-lg">★★★★★</div>
+        <div style="font-size:13px;color:var(--slate-dark);font-weight:700;margin-top:4px;">بناءً على +1,240 تقييم</div>
+      </div>
+    </div>
+
+    <div class="review-grid">
+      <div class="review-card reveal"><div class="stars">★★★★★</div><p>الجهاز فخم جداً واسرع مما توقعت، والكيبورد والماوس زادوا الفايدة بشكل كبير. اشتغل عليه طول اليوم بدون مشاكل.</p><div class="who"><div class="av">ح.ع</div><div><div class="name">حيدر العبيدي</div><div class="loc">بغداد</div></div></div></div>
+
+      <div class="review-card reveal"><div class="stars">★★★★★</div><p>كطالبة جامعية، التابلت هذا غيرلي الدراسة كلها. الشاشة واضحة والبطارية تكفيني يوم كامل بالكلية.</p><div class="who"><div class="av">م.ك</div><div><div class="name">مريم كاظم</div><div class="loc">البصرة</div></div></div></div>
+
+      <div class="review-card reveal"><div class="stars">★★★★★</div><p>التوصيل كان سريع والفحص قبل الدفع زاد ثقتي. الجهاز يستاهل أكثر من سعره بكثير.</p><div class="who"><div class="av">ع.ج</div><div><div class="name">علي جاسم</div><div class="loc">أربيل</div></div></div></div>
+
+      <div class="review-card reveal"><div class="stars">★★★★★</div><p>أستخدمه بشغلي اليومي بدل اللابتوب القديم، وفعلاً وفرلي وقت وجهد كبير. القلم نفع كثير بالاجتماعات.</p><div class="who"><div class="av">ز.ح</div><div><div class="name">زينب حسن</div><div class="loc">النجف</div></div></div></div>
+
+      <div class="review-card reveal"><div class="stars">★★★★★</div><p>مساحة التخزين رهيبة، حملت عليه كل أفلامي وصوري وما حسيت بأي بطء بالاستخدام.</p><div class="who"><div class="av">ي.ط</div><div><div class="name">يوسف طارق</div><div class="loc">الموصل</div></div></div></div>
+
+      <div class="review-card reveal"><div class="stars">★★★★★</div><p>أنصح فيه لكل واحد يدور بديل عملي عن اللابتوب. خفيف، قوي، وسعره مناسب جداً مقارنة بالمواصفات.</p><div class="who"><div class="av">س.ن</div><div><div class="name">سارة نوري</div><div class="loc">كربلاء</div></div></div></div>
+
+      <div class="review-card reveal"><div class="stars">★★★★★</div><p>الكاميرا ممتازة بالاجتماعات أونلاين، والشبكة 5G سرعتها واضحة مقارنة بأجهزتي السابقة.</p><div class="who"><div class="av">م.ص</div><div><div class="name">مصطفى صالح</div><div class="loc">بغداد</div></div></div></div>
+
+      <div class="review-card reveal"><div class="stars">★★★★★</div><p>اشتريته لابني الطالب وصار يستخدمه بكل شي، من الدراسة للألعاب. تجربة شراء ممتازة من البداية للنهاية.</p><div class="who"><div class="av">أ.ف</div><div><div class="name">أحمد فاضل</div><div class="loc">ديالى</div></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== FAQ ===================== -->
+<section class="section-pad">
+  <div class="container">
+    <div class="center" style="max-width:620px;">
+      <div class="eyebrow dark">الأسئلة الشائعة</div>
+      <h2 class="headline">عندك سؤال؟ عندنا الجواب</h2>
+    </div>
+
+    <div class="faq-list" id="faq-list">
+      <div class="faq-item"><div class="faq-q">هل يدعم شريحة اتصال (SIM)؟<span class="plus">+</span></div><div class="faq-a"><div class="faq-a-inner">نعم، الجهاز يدعم شريحة اتصال بالإضافة إلى شبكة 5G للاتصال بالإنترنت أينما كنت.</div></div></div>
+      <div class="faq-item"><div class="faq-q">هل يدعم تقنية 5G؟<span class="plus">+</span></div><div class="faq-a"><div class="faq-a-inner">أكيد، الجهاز مزود بدعم كامل لشبكات 5G لسرعة إنترنت عالية وثابتة.</div></div></div>
+      <div class="faq-item"><div class="faq-q">هل يوجد ضمان على الجهاز؟<span class="plus">+</span></div><div class="faq-a"><div class="faq-a-inner">نعم، الجهاز يأتي مع ضمان جودة يغطي العيوب الصناعية.</div></div></div>
+      <div class="faq-item"><div class="faq-q">هل الكيبورد مجاني ضمن الطلب؟<span class="plus">+</span></div><div class="faq-a"><div class="faq-a-inner">نعم، الكيبورد اللاسلكي مرفق مجاناً مع كل طلب بدون أي تكلفة إضافية.</div></div></div>
+      <div class="faq-item"><div class="faq-q">هل القلم الذكي ضمن العلبة؟<span class="plus">+</span></div><div class="faq-a"><div class="faq-a-inner">نعم، القلم الذكي مرفق ضمن محتويات العلبة مجاناً.</div></div></div>
+      <div class="faq-item"><div class="faq-q">هل يصلح الجهاز للدراسة؟<span class="plus">+</span></div><div class="faq-a"><div class="faq-a-inner">بالتأكيد، مثالي للمحاضرات الأونلاين، قراءة PDF، وكتابة التقارير والواجبات.</div></div></div>
+      <div class="faq-item"><div class="faq-q">هل يصلح للعمل المكتبي؟<span class="plus">+</span></div><div class="faq-a"><div class="faq-a-inner">نعم، مع الكيبورد والماوس المرفقين يصير بديل عملي جداً عن اللابتوب لأغلب مهام العمل.</div></div></div>
+      <div class="faq-item"><div class="faq-q">شكد مدة الشحن واستلام الطلب؟<span class="plus">+</span></div><div class="faq-a"><div class="faq-a-inner">عادة يوصل الطلب خلال 1 إلى 3 أيام عمل حسب المحافظة.</div></div></div>
+      <div class="faq-item"><div class="faq-q">هل الدفع يصير عند الاستلام؟<span class="plus">+</span></div><div class="faq-a"><div class="faq-a-inner">نعم، تكدر تدفع نقداً عند استلام الجهاز من المندوب بعد فحصه.</div></div></div>
+      <div class="faq-item"><div class="faq-q">شنو سعة البطارية وتدوم كم ساعة؟<span class="plus">+</span></div><div class="faq-a"><div class="faq-a-inner">البطارية 10000mAh وتكفي يوم كامل من الاستخدام المتوسط إلى المكثف.</div></div></div>
+      <div class="faq-item"><div class="faq-q">هل أقدر أغير لون الجهاز بعد الطلب؟<span class="plus">+</span></div><div class="faq-a"><div class="faq-a-inner">نعم، تكدر تتواصل وياتنا قبل الشحن لتغيير اللون إذا متوفر بالمخزون.</div></div></div>
+      <div class="faq-item"><div class="faq-q">هل يدعم تطبيقات أوفيس ومايكروسوفت؟<span class="plus">+</span></div><div class="faq-a"><div class="faq-a-inner">نعم، يدعم تثبيت Word و Excel و PowerPoint وكل التطبيقات المكتبية المعروفة.</div></div></div>
+      <div class="faq-item"><div class="faq-q">شنو نوع الشاشة المستخدمة؟<span class="plus">+</span></div><div class="faq-a"><div class="faq-a-inner">شاشة FHD Incell مقاس 10.1 إنش بدقة عالية ووضوح ممتاز.</div></div></div>
+      <div class="faq-item"><div class="faq-q">هل أقدر أرجع الجهاز إذا ما عجبني؟<span class="plus">+</span></div><div class="faq-a"><div class="faq-a-inner">نعم، تكدر تفحص الجهاز عند الاستلام وترفضه إذا ما طابق المواصفات بدون أي التزام.</div></div></div>
+      <div class="faq-item"><div class="faq-q">شلون أقدر أطلب الجهاز؟<span class="plus">+</span></div><div class="faq-a"><div class="faq-a-inner">عبي نموذج الطلب بالأسفل بمعلوماتك، وراح يتواصل وياك فريقنا لتأكيد الطلب.</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== FINAL CTA ===================== -->
+<section class="final-cta">
+  <div class="container" style="position:relative;z-index:2;">
+    <h2 class="display" style="font-weight:900;">لا تضيّع الفرصة...</h2>
+    <p style="color:#C7D2E1;font-size:17px;margin-top:14px;max-width:520px;margin-left:auto;margin-right:auto;">احصل على جهاز متكامل يغنيك عن اللابتوب بسعر مميز، والكمية محدودة.</p>
+    <div class="final-price">125,000 دينار فقط</div>
+    <a href="#order" class="btn btn-primary" style="font-size:18px;">اطلب الآن قبل نفاد الكمية</a>
+  </div>
+</section>
+
+<!-- ===================== ORDER FORM ===================== -->
+<section class="section-pad order-section" id="order">
+  <div class="container">
+    <div class="center" style="max-width:620px;">
+      <div class="eyebrow dark">أكمل طلبك</div>
+      <h2 class="headline">عبّي بياناتك وراح نتواصل وياك</h2>
+      <p class="lede center" style="margin-top:14px;">الدفع عند الاستلام، وما عليك أي التزام قبل ما توصلك السلعة.</p>
+    </div>
+
+    <form class="order-card" id="orderForm">
+      <div class="f-group">
+        <label>الاسم الكامل</label>
+        <input type="text" name="name" placeholder="مثال: محمد علي" required>
+      </div>
+      <div class="f-row">
+        <div class="f-group" style="margin-bottom:0;">
+          <label>رقم الهاتف</label>
+          <input type="tel" name="phone" placeholder="07xx xxx xxxx" required>
+        </div>
+        <div class="f-group" style="margin-bottom:0;">
+          <label>المحافظة</label>
+          <select name="province" required>
+            <option value="">اختر المحافظة</option>
+            <option>بغداد</option><option>البصرة</option><option>نينوى</option><option>أربيل</option>
+            <option>النجف</option><option>كربلاء</option><option>ذي قار</option><option>الأنبار</option>
+            <option>ديالى</option><option>كركوك</option><option>بابل</option><option>واسط</option>
+            <option>صلاح الدين</option><option>ميسان</option><option>القادسية</option><option>المثنى</option>
+            <option>دهوك</option><option>السليمانية</option>
+          </select>
+        </div>
+      </div>
+      <div class="f-group">
+        <label>العنوان بالتفصيل</label>
+        <textarea name="address" rows="2" placeholder="المنطقة، أقرب نقطة دالة..." required></textarea>
+      </div>
+      <div class="f-row">
+        <div class="f-group" style="margin-bottom:0;">
+          <label>لون الجهاز</label>
+          <div class="color-pick">
+            <div class="color-opt selected" data-color="أسود" style="background:#0B1220;"></div>
+            <div class="color-opt" data-color="أزرق" style="background:#2563EB;"></div>
+            <div class="color-opt" data-color="ذهبي" style="background:#D4AF37;"></div>
+          </div>
+          <input type="hidden" name="color" id="colorInput" value="أسود">
+        </div>
+        <div class="f-group" style="margin-bottom:0;">
+          <label>الكمية</label>
+          <select name="qty">
+            <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
+          </select>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary order-submit">تأكيد الطلب</button>
+
+      <div class="order-trust">
+        <div class="item">🔒 بياناتك محمية</div>
+        <div class="item">💵 دفع عند الاستلام</div>
+        <div class="item">↩️ إمكانية الإرجاع</div>
+        <div class="item">✅ فحص قبل الدفع</div>
+      </div>
+    </form>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="logo"><span class="chip"></span>AirTab A16 Pro Max 5G</div>
+    <div class="links">
+      <a href="#why">المواصفات</a>
+      <a href="#order">الطلب</a>
+      <a href="#" id="waLink2">واتساب</a>
+    </div>
+    <div>© 2026 AirTab. جميع الحقوق محفوظة — للسوق العراقي.</div>
+  </div>
+</footer>
+
+<!-- STICKY CTA -->
+<div class="sticky-cta" id="stickyCta">
+  <div class="info"><div class="p">125,000 د.ع</div><div class="l">شامل الكيبورد والماوس والقلم</div></div>
+  <a href="#order" class="btn btn-primary">اطلب الآن</a>
+</div>
+
+<!-- FLOATING WHATSAPP -->
+<a href="https://wa.me/9647700000000" target="_blank" rel="noopener" class="wa-float" id="waFloat" aria-label="تواصل عبر واتساب">
+  <svg width="30" height="30" viewBox="0 0 24 24" fill="white"><path d="M17.6 6.32A8.86 8.86 0 0 0 11.9 4C7.1 4 3.2 7.9 3.2 12.7c0 1.5.4 2.96 1.14 4.24L3 21l4.18-1.3a8.83 8.83 0 0 0 4.7 1.34h.01c4.8 0 8.7-3.9 8.7-8.7 0-2.3-.9-4.5-2.6-6.02zM11.9 19.4c-1.4 0-2.77-.38-3.96-1.1l-.28-.17-2.95.92.94-2.87-.18-.3a7.27 7.27 0 0 1-1.13-3.9c0-4 3.27-7.27 7.3-7.27a7.23 7.23 0 0 1 7.27 7.27c0 4-3.27 7.27-7.3 7.27zm4-5.45c-.22-.11-1.3-.64-1.5-.72-.2-.07-.35-.11-.5.11-.14.22-.57.72-.7.86-.13.15-.26.16-.48.05-.22-.11-.93-.34-1.77-1.1-.65-.58-1.1-1.3-1.22-1.52-.13-.22-.01-.34.1-.45.1-.1.22-.26.33-.39.11-.13.15-.22.22-.37.07-.15.04-.28-.02-.39-.07-.11-.5-1.2-.68-1.64-.18-.43-.36-.37-.5-.38h-.43c-.15 0-.39.06-.59.28-.2.22-.78.76-.78 1.85s.8 2.15.91 2.3c.11.15 1.57 2.4 3.8 3.36.53.23.95.37 1.27.47.53.17 1.02.15 1.4.09.43-.06 1.3-.53 1.48-1.04.18-.5.18-.94.13-1.03-.05-.1-.2-.15-.42-.26z"/></svg>
+</a>
+
+<!-- RECENT ORDER TOAST -->
+<div class="order-toast" id="orderToast">
+  <div class="dot-live"></div>
+  <div>
+    <div class="tt" id="toastText">حيدر من بغداد طلب الجهاز للتو</div>
+    <div class="ts">قبل دقيقتين</div>
+  </div>
+</div>
+
+<!-- EXIT INTENT POPUP -->
+<div class="exit-overlay" id="exitOverlay">
+  <div class="exit-modal">
+    <div class="exit-close" id="exitClose">✕</div>
+    <div style="font-size:38px;">🎁</div>
+    <h3 class="display">وقف! لا تروح بعد...</h3>
+    <p>خلّي AirTab A16 Pro Max يصيرلك بسعره الخاص قبل لا ينتهي العرض.</p>
+    <div class="price">125,000 د.ع فقط</div>
+    <a href="#order" class="btn btn-primary" id="exitCta" style="width:100%;justify-content:center;">احجز جهازك الآن</a>
+  </div>
+</div>
+
+<script>
+// ---------- Countdown Timer ----------
+(function(){
+  const KEY='airtab_deadline';
+  let deadline = localStorage.getItem(KEY);
+  if(!deadline || new Date(deadline) < new Date()){
+    deadline = new Date(Date.now() + 1000*60*60*24*1).toISOString(); // resets to 24h window
+    localStorage.setItem(KEY, deadline);
+  }
+  const el = document.getElementById('countdown');
+  function tick(){
+    const diff = new Date(deadline) - new Date();
+    if(diff <= 0){ el.textContent = '00:00:00'; return; }
+    const h = Math.floor(diff/3600000);
+    const m = Math.floor((diff%3600000)/60000);
+    const s = Math.floor((diff%60000)/1000);
+    el.textContent = String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  }
+  tick(); setInterval(tick, 1000);
+})();
+
+// ---------- Scroll reveal ----------
+const revealEls = document.querySelectorAll('.reveal');
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+},{threshold:0.12});
+revealEls.forEach(el=>io.observe(el));
+
+// ---------- FAQ accordion ----------
+document.querySelectorAll('.faq-item').forEach(item=>{
+  item.querySelector('.faq-q').addEventListener('click', ()=>{
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(o=>o.classList.remove('open'));
+    if(!isOpen) item.classList.add('open');
+  });
+});
+
+// ---------- Sticky CTA on scroll ----------
+const stickyCta = document.getElementById('stickyCta');
+const orderSection = document.getElementById('order');
+window.addEventListener('scroll', ()=>{
+  const showAfter = window.innerHeight * 0.9;
+  const orderTop = orderSection.getBoundingClientRect().top + window.scrollY;
+  const nearOrder = window.scrollY + window.innerHeight > orderTop;
+  if(window.scrollY > showAfter && !nearOrder){
+    stickyCta.classList.add('show');
+  } else {
+    stickyCta.classList.remove('show');
+  }
+});
+
+// ---------- Color picker ----------
+document.querySelectorAll('.color-opt').forEach(opt=>{
+  opt.addEventListener('click', ()=>{
+    document.querySelectorAll('.color-opt').forEach(o=>o.classList.remove('selected'));
+    opt.classList.add('selected');
+    document.getElementById('colorInput').value = opt.dataset.color;
+  });
+});
+
+// ---------- Order form submit ----------
+document.getElementById('orderForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  const name = this.name.value.trim();
+  const phone = this.phone.value.trim();
+  if(name.length < 3){ alert('الرجاء إدخال الاسم الكامل بشكل صحيح'); return; }
+  if(phone.replace(/\D/g,'').length < 10){ alert('الرجاء إدخال رقم هاتف صحيح'); return; }
+  alert('تم استلام طلبك بنجاح ✅\nراح يتواصل وياك فريقنا خلال وقت قصير لتأكيد الطلب.');
+  this.reset();
+  document.querySelectorAll('.color-opt').forEach(o=>o.classList.remove('selected'));
+  document.querySelector('.color-opt[data-color="أسود"]').classList.add('selected');
+  document.getElementById('colorInput').value = 'أسود';
+});
+
+// ---------- Recent orders toast ----------
+const names = [
+  {n:'حيدر', c:'بغداد'}, {n:'مريم', c:'البصرة'}, {n:'علي', c:'أربيل'},
+  {n:'زينب', c:'النجف'}, {n:'يوسف', c:'الموصل'}, {n:'سارة', c:'كربلاء'},
+  {n:'مصطفى', c:'كركوك'}, {n:'نور', c:'بابل'}
+];
+const toast = document.getElementById('orderToast');
+const toastText = document.getElementById('toastText');
+function showToast(){
+  const r = names[Math.floor(Math.random()*names.length)];
+  toastText.textContent = r.n + ' من ' + r.c + ' طلب الجهاز للتو';
+  toast.classList.add('show');
+  setTimeout(()=> toast.classList.remove('show'), 4500);
+}
+setTimeout(showToast, 4000);
+setInterval(showToast, 14000);
+
+// ---------- Exit intent popup ----------
+const exitOverlay = document.getElementById('exitOverlay');
+let exitShown = sessionStorage.getItem('exitShown');
+document.addEventListener('mouseleave', (e)=>{
+  if(e.clientY < 10 && !exitShown){
+    exitOverlay.classList.add('show');
+    exitShown = true;
+    sessionStorage.setItem('exitShown','1');
+  }
+});
+document.getElementById('exitClose').addEventListener('click', ()=> exitOverlay.classList.remove('show'));
+document.getElementById('exitCta').addEventListener('click', ()=> exitOverlay.classList.remove('show'));
+exitOverlay.addEventListener('click', (e)=>{ if(e.target === exitOverlay) exitOverlay.classList.remove('show'); });
+</script>
+</body>
+</html>
