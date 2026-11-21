@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REGENESIS – بودرة إخفاء فراغات الشعر</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
+
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #E8C96A;
+    --black: #0A0A0A;
+    --dark: #111111;
+    --dark2: #1A1A1A;
+    --white: #FFFFFF;
+    --off-white: #F5F0E8;
+    --red: #D42B2B;
+    --green: #1A7A3A;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Cairo', sans-serif;
+    background: var(--black);
+    color: var(--white);
+    overflow-x: hidden;
+  }
+
+  /* ===== SLIDER ===== */
+  .slider-wrap {
+    width: 100%;
+    background: var(--dark);
+    overflow: hidden;
+    padding: 10px 0;
+    border-bottom: 2px solid var(--gold);
+  }
+
+  .slider-track {
+    display: flex;
+    white-space: nowrap;
+    animation: slide 18s linear infinite;
+  }
+
+  .slider-track span {
+    display: inline-block;
+    padding: 0 32px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 1px;
+  }
+
+  .slider-track span em {
+    color: var(--white);
+    font-style: normal;
+  }
+
+  @keyframes slide {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* ===== HEADER ===== */
+  .site-header {
+    background: var(--dark);
+    text-align: center;
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid #222;
+  }
+
+  .site-header .brand {
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: 6px;
+    color: var(--gold);
+    text-shadow: 0 0 30px rgba(201,168,76,0.4);
+  }
+
+  .site-header .tagline {
+    font-size: 12px;
+    color: #888;
+    letter-spacing: 2px;
+    margin-top: 2px;
+    text-transform: uppercase;
+  }
+
+  /* ===== HERO ===== */
+  .hero {
+    background: linear-gradient(160deg, #111 0%, #1A1A1A 60%, #0D0D0D 100%);
+    padding: 36px 20px 30px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; left: 50%; transform: translateX(-50%);
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(201,168,76,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-badge {
+    display: inline-block;
+    background: var(--red);
+    color: var(--white);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 5px 18px;
+    border-radius: 30px;
+    margin-bottom: 14px;
+    letter-spacing: 1px;
+  }
+
+  .hero h1 {
+    font-size: 26px;
+    font-weight: 900;
+    line-height: 1.4;
+    margin-bottom: 8px;
+    color: var(--white);
+  }
+
+  .hero h1 span {
+    color: var(--gold);
+  }
+
+  .hero-sub {
+    font-size: 15px;
+    color: #AAAAAA;
+    line-height: 1.7;
+    margin-bottom: 24px;
+    max-width: 340px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* ===== PRODUCT IMAGE ===== */
+  .product-img-wrap {
+    margin: 0 auto 24px;
+    max-width: 340px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #2A2A2A;
+    box-shadow: 0 8px 40px rgba(201,168,76,0.15);
+  }
+
+  .product-img-wrap img {
+    width: 100%;
+    display: block;
+    object-fit: cover;
+  }
+
+  /* ===== BEFORE AFTER ===== */
+  .ba-section {
+    padding: 30px 20px;
+    background: var(--dark2);
+    border-top: 1px solid #222;
+    border-bottom: 1px solid #222;
+    text-align: center;
+  }
+
+  .ba-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--gold);
+    margin-bottom: 16px;
+  }
+
+  .ba-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    max-width: 380px;
+    margin: 0 auto;
+  }
+
+  .ba-card {
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid #2A2A2A;
+  }
+
+  .ba-card img {
+    width: 100%;
+    display: block;
+    aspect-ratio: 3/4;
+    object-fit: cover;
+  }
+
+  .ba-label {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(0,0,0,0.75);
+    text-align: center;
+    font-size: 13px;
+    font-weight: 800;
+    padding: 7px 0;
+  }
+
+  .ba-label.before { color: #FF5555; }
+  .ba-label.after { color: #44DD77; }
+
+  /* ===== FEATURES ===== */
+  .features {
+    padding: 32px 20px;
+    background: var(--black);
+  }
+
+  .section-title {
+    text-align: center;
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--gold);
+    margin-bottom: 20px;
+    position: relative;
+  }
+
+  .section-title::after {
+    content: '';
+    display: block;
+    width: 48px;
+    height: 3px;
+    background: var(--gold);
+    border-radius: 2px;
+    margin: 8px auto 0;
+  }
+
+  .feat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  .feat-card {
+    background: var(--dark2);
+    border: 1px solid #2A2A2A;
+    border-radius: 14px;
+    padding: 18px 14px;
+    text-align: center;
+  }
+
+  .feat-icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .feat-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--gold);
+    margin-bottom: 4px;
+  }
+
+  .feat-desc {
+    font-size: 11px;
+    color: #888;
+    line-height: 1.6;
+  }
+
+  /* ===== HOW TO USE ===== */
+  .how-section {
+    padding: 32px 20px;
+    background: var(--dark2);
+  }
+
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  .step {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    background: var(--black);
+    border: 1px solid #222;
+    border-radius: 12px;
+    padding: 14px;
+  }
+
+  .step-num {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--gold);
+    color: var(--black);
+    font-size: 16px;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .step-text {
+    font-size: 13px;
+    color: #CCC;
+    line-height: 1.6;
+  }
+
+  .step-text strong {
+    display: block;
+    color: var(--white);
+    font-size: 14px;
+    margin-bottom: 2px;
+  }
+
+  /* ===== SOCIAL PROOF ===== */
+  .proof-section {
+    padding: 30px 20px;
+    background: var(--black);
+    text-align: center;
+  }
+
+  .proof-numbers {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    max-width: 380px;
+    margin: 0 auto 24px;
+  }
+
+  .proof-num {
+    background: var(--dark2);
+    border: 1px solid #2A2A2A;
+    border-radius: 12px;
+    padding: 16px 8px;
+  }
+
+  .proof-num .big {
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--gold);
+    display: block;
+  }
+
+  .proof-num .label {
+    font-size: 11px;
+    color: #888;
+    margin-top: 2px;
+  }
+
+  .reviews {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  .review-card {
+    background: var(--dark2);
+    border: 1px solid #2A2A2A;
+    border-radius: 12px;
+    padding: 14px 16px;
+    text-align: right;
+  }
+
+  .stars {
+    color: var(--gold);
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+
+  .review-text {
+    font-size: 13px;
+    color: #CCC;
+    line-height: 1.6;
+    margin-bottom: 8px;
+  }
+
+  .reviewer {
+    font-size: 12px;
+    color: #666;
+    font-weight: 700;
+  }
+
+  /* ===== PRICING ===== */
+  .pricing-section {
+    padding: 36px 20px;
+    background: linear-gradient(180deg, var(--dark2) 0%, var(--black) 100%);
+    text-align: center;
+  }
+
+  .pricing-subtitle {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 20px;
+  }
+
+  .pkg-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-width: 400px;
+    margin: 0 auto 24px;
+  }
+
+  .pkg {
+    border-radius: 16px;
+    border: 1.5px solid #2A2A2A;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--dark2);
+    transition: border-color 0.2s, transform 0.2s;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .pkg:hover {
+    border-color: var(--gold);
+    transform: translateY(-2px);
+  }
+
+  .pkg.best {
+    border-color: var(--gold);
+    background: linear-gradient(135deg, #1A1500 0%, #1A1A1A 100%);
+    position: relative;
+  }
+
+  .best-badge {
+    position: absolute;
+    top: -12px;
+    right: 50%;
+    transform: translateX(50%);
+    background: var(--gold);
+    color: var(--black);
+    font-size: 11px;
+    font-weight: 900;
+    padding: 4px 16px;
+    border-radius: 20px;
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+  }
+
+  .pkg-left {
+    text-align: right;
+  }
+
+  .pkg-qty {
+    font-size: 16px;
+    font-weight: 900;
+    color: var(--white);
+    margin-bottom: 3px;
+  }
+
+  .pkg-save {
+    font-size: 12px;
+    color: #44DD77;
+    font-weight: 700;
+  }
+
+  .pkg-right {
+    text-align: left;
+  }
+
+  .pkg-price {
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--gold);
+  }
+
+  .pkg-price small {
+    font-size: 13px;
+    color: #888;
+    display: block;
+    font-weight: 400;
+  }
+
+  /* ===== ORDER BTN ===== */
+  .order-btn {
+    display: block;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 50%, var(--gold) 100%);
+    color: var(--black);
+    font-family: 'Cairo', sans-serif;
+    font-size: 18px;
+    font-weight: 900;
+    padding: 18px 20px;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+    box-shadow: 0 6px 30px rgba(201,168,76,0.4);
+    transition: transform 0.15s, box-shadow 0.15s;
+    letter-spacing: 0.5px;
+  }
+
+  .order-btn:active {
+    transform: scale(0.97);
+    box-shadow: 0 3px 15px rgba(201,168,76,0.3);
+  }
+
+  .order-btn-wrap {
+    padding: 0 20px 10px;
+    text-align: center;
+  }
+
+  /* ===== TRUST BADGES ===== */
+  .trust-bar {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 20px 20px;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  .trust-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #AAA;
+    background: var(--dark2);
+    border: 1px solid #222;
+    border-radius: 30px;
+    padding: 7px 14px;
+    font-weight: 700;
+  }
+
+  .trust-item .icon {
+    font-size: 16px;
+  }
+
+  /* ===== PRODUCT DETAILS ===== */
+  .details-section {
+    padding: 30px 20px;
+    background: var(--dark2);
+    border-top: 1px solid #222;
+  }
+
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 11px 0;
+    border-bottom: 1px solid #222;
+    font-size: 13px;
+  }
+
+  .detail-row:last-child {
+    border-bottom: none;
+  }
+
+  .detail-key {
+    color: #888;
+    font-weight: 600;
+  }
+
+  .detail-val {
+    color: var(--white);
+    font-weight: 700;
+    text-align: left;
+  }
+
+  /* ===== SHIPPING SECTION ===== */
+  .ship-section {
+    padding: 28px 20px;
+    background: var(--black);
+    text-align: center;
+  }
+
+  .ship-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    max-width: 380px;
+    margin: 0 auto;
+  }
+
+  .ship-card {
+    background: var(--dark2);
+    border: 1px solid #222;
+    border-radius: 14px;
+    padding: 18px 12px;
+    text-align: center;
+  }
+
+  .ship-card .ico {
+    font-size: 30px;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .ship-card .stitle {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--gold);
+    margin-bottom: 4px;
+  }
+
+  .ship-card .sdesc {
+    font-size: 11px;
+    color: #777;
+  }
+
+  /* ===== STICKY CTA ===== */
+  .sticky-cta {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--dark);
+    border-top: 1px solid #2A2A2A;
+    padding: 12px 20px;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
+  }
+
+  .sticky-price {
+    font-size: 18px;
+    font-weight: 900;
+    color: var(--gold);
+    white-space: nowrap;
+  }
+
+  .sticky-price small {
+    display: block;
+    font-size: 10px;
+    color: #888;
+    font-weight: 400;
+  }
+
+  .sticky-btn {
+    flex: 1;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+    color: var(--black);
+    font-family: 'Cairo', sans-serif;
+    font-size: 15px;
+    font-weight: 900;
+    padding: 14px 10px;
+    border-radius: 40px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+    display: block;
+  }
+
+  /* ===== FOOTER ===== */
+  footer {
+    padding: 20px;
+    text-align: center;
+    font-size: 11px;
+    color: #444;
+    background: var(--dark);
+    border-top: 1px solid #1A1A1A;
+    padding-bottom: 90px;
+  }
+
+  /* ===== UTILITIES ===== */
+  .green { color: #44DD77; }
+  .gold { color: var(--gold); }
+
+  .section-gap { height: 1px; background: #1A1A1A; }
+</style>
+</head>
+<body>
+
+<!-- TICKER SLIDER -->
+<div class="slider-wrap">
+  <div class="slider-track" id="slider">
+    <span>🚚 <em>توصيل مجاني</em> لجميع محافظات العراق</span>
+    <span>💰 <em>الدفع عند الاستلام</em></span>
+    <span>⚡ <em>مقاوم للماء والعرق</em></span>
+    <span>✅ <em>نتيجة فورية من أول استخدام</em></span>
+    <span>📦 يُزال بالشامبو العادي</span>
+    <span>🚚 <em>توصيل مجاني</em> لجميع محافظات العراق</span>
+    <span>💰 <em>الدفع عند الاستلام</em></span>
+    <span>⚡ <em>مقاوم للماء والعرق</em></span>
+    <span>✅ <em>نتيجة فورية من أول استخدام</em></span>
+    <span>📦 يُزال بالشامبو العادي</span>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header class="site-header">
+  <div class="brand">REGENESIS</div>
+  <div class="tagline">Hair Coverage Solution</div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">🔥 الأكثر مبيعاً في العراق</div>
+  <h1>اخفي الفراغات<br><span>بثواني.. طول اليوم</span></h1>
+  <p class="hero-sub">بودرة مضغوطة تخفي فراغات الشعر، مناطق الصلع الخفيف، والشيب الجذري — نتيجة فورية ومقاومة للماء والعرق طول اليوم</p>
+
+  <div class="product-img-wrap">
+    <img src="https://i.ibb.co/fdh1grhD/image-2.png" alt="REGENESIS بودرة إخفاء فراغات الشعر">
+  </div>
+
+  <div class="trust-bar">
+    <div class="trust-item"><span class="icon">🛡️</span> آمن للبشرة</div>
+    <div class="trust-item"><span class="icon">💧</span> مقاوم للماء</div>
+    <div class="trust-item"><span class="icon">⚡</span> نتيجة فورية</div>
+    <div class="trust-item"><span class="icon">🧴</span> يُزال بالشامبو</div>
+  </div>
+</section>
+
+<div class="section-gap"></div>
+
+<!-- BEFORE / AFTER -->
+<section class="ba-section">
+  <div class="ba-title">قبل وبعد الاستخدام</div>
+  <div class="ba-grid">
+    <div class="ba-card">
+      <img loading="lazy" decoding="async" src="https://i.ibb.co/0jS0vqyg/images-17.jpg" alt="قبل استخدام ريجينيسيس">
+      <div class="ba-label before">قبل ❌</div>
+    </div>
+    <div class="ba-card">
+      <img loading="lazy" decoding="async" src="https://i.ibb.co/C3LS7YZz/image-3.jpg" alt="بعد استخدام ريجينيسيس">
+      <div class="ba-label after">بعد ✅</div>
+    </div>
+  </div>
+</section>
+
+<div class="section-gap"></div>
+
+<!-- FEATURES -->
+<section class="features">
+  <div class="section-title">ليش REGENESIS؟</div>
+  <div class="feat-grid">
+    <div class="feat-card">
+      <span class="feat-icon">💧</span>
+      <div class="feat-title">مقاوم للماء</div>
+      <div class="feat-desc">ما يتأثر بالعرق أو المطر طول اليوم</div>
+    </div>
+    <div class="feat-card">
+      <span class="feat-icon">⚡</span>
+      <div class="feat-title">نتيجة فورية</div>
+      <div class="feat-desc">تغطية كاملة من أول طبطبة</div>
+    </div>
+    <div class="feat-card">
+      <span class="feat-icon">🪞</span>
+      <div class="feat-title">مرآة مدمجة</div>
+      <div class="feat-desc">تقدر تستخدمه بأي مكان بسهولة</div>
+    </div>
+    <div class="feat-card">
+      <span class="feat-icon">🧴</span>
+      <div class="feat-title">يُزال بالشامبو</div>
+      <div class="feat-desc">غسيل عادي وما ضل منه شي</div>
+    </div>
+    <div class="feat-card">
+      <span class="feat-icon">👨‍👩‍👦</span>
+      <div class="feat-title">للرجال والنساء</div>
+      <div class="feat-desc">مناسب لكل من عنده فراغات أو شيب</div>
+    </div>
+    <div class="feat-card">
+      <span class="feat-icon">✈️</span>
+      <div class="feat-title">عبوة مدمجة</div>
+      <div class="feat-desc">صغير وخفيف تاخذه معك بأي مكان</div>
+    </div>
+  </div>
+</section>
+
+<div class="section-gap"></div>
+
+<!-- HOW TO USE -->
+<section class="how-section">
+  <div class="section-title">طريقة الاستخدام</div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">١</div>
+      <div class="step-text">
+        <strong>افتح الغطاء</strong>
+        الغطاء العلوي في جوه مرآة — استخدمها تشوف منطقة الفراغ
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">٢</div>
+      <div class="step-text">
+        <strong>خذ الإسفنجة</strong>
+        اسحب الإسفنجة الناعمة من القاعدة السفلية للعلبة
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">٣</div>
+      <div class="step-text">
+        <strong>اغمس بالبودرة</strong>
+        اغمس الإسفنجة برفق بالبودرة المضغوطة
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">٤</div>
+      <div class="step-text">
+        <strong>طبطب على الفراغات</strong>
+        طبطب على المناطق اللي تريد تخفيها — نتيجة فورية وطبيعية
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-gap"></div>
+
+<!-- SOCIAL PROOF -->
+<section class="proof-section">
+  <div class="section-title">آراء العراقيين</div>
+  <div class="proof-numbers">
+    <div class="proof-num">
+      <span class="big">+5K</span>
+      <span class="label">وصلنالهم</span>
+    </div>
+    <div class="proof-num">
+      <span class="big">98%</span>
+      <span class="label">راضين</span>
+    </div>
+    <div class="proof-num">
+      <span class="big">4.9⭐</span>
+      <span class="label">تقييم</span>
+    </div>
+  </div>
+
+  <div class="reviews">
+    <div class="review-card">
+      <div class="stars">★★★★★</div>
+      <div class="review-text">والله منتج ممتاز، جربت أشياء كثيرة وما أنجحت، هذي من أول طبطبة غطت الفراغة تماماً وما بينت من قريب ولا من بعيد!</div>
+      <div class="reviewer">— أحمد م. | بغداد</div>
+    </div>
+    <div class="review-card">
+      <div class="stars">★★★★★</div>
+      <div class="review-text">اشتريته لزوجي وهو مبسوط جداً، استخدمه يومياً وحتى بالحر ما يطلع. التوصيل وصل بسرعة والدفع عند الاستلام راحة كبيرة.</div>
+      <div class="reviewer">— أم محمد | البصرة</div>
+    </div>
+    <div class="review-card">
+      <div class="stars">★★★★★</div>
+      <div class="review-text">كنت خجلان من الشيب الجذري بين الصبغات، هذا حل المشكلة. صغير وأحمله بشنطتي، أنصح فيه كل وحدة.</div>
+      <div class="reviewer">— سارة ع. | أربيل</div>
+    </div>
+  </div>
+</section>
+
+<div class="section-gap"></div>
+
+<!-- PRICING -->
+<section class="pricing-section">
+  <div class="section-title">اختار عرضك</div>
+  <div class="pricing-subtitle">كلما اشتريت أكثر — وفرت أكثر 💰</div>
+
+  <div class="pkg-cards">
+
+    <!-- 1 piece -->
+    <a href="#express-checkout-form" class="pkg">
+      <div class="pkg-left">
+        <div class="pkg-qty">قطعة وحدة</div>
+        <div class="pkg-save" style="color:#888">السعر الأصلي</div>
+      </div>
+      <div class="pkg-right">
+        <div class="pkg-price">39,000<small>دينار عراقي</small></div>
+      </div>
+    </a>
+
+    <!-- 2 pieces -->
+    <a href="#express-checkout-form" class="pkg best">
+      <div class="best-badge">⚡ الأكثر طلباً</div>
+      <div class="pkg-left">
+        <div class="pkg-qty">قطعتان</div>
+        <div class="pkg-save">وفرت 19,000 د.ع 🎉</div>
+      </div>
+      <div class="pkg-right">
+        <div class="pkg-price">59,000<small>دينار عراقي</small></div>
+      </div>
+    </a>
+
+    <!-- 3 pieces -->
+    <a href="#express-checkout-form" class="pkg">
+      <div class="pkg-left">
+        <div class="pkg-qty">٣ قطع</div>
+        <div class="pkg-save">وفرت 38,000 د.ع 🔥</div>
+      </div>
+      <div class="pkg-right">
+        <div class="pkg-price">79,000<small>دينار عراقي</small></div>
+      </div>
+    </a>
+
+  </div>
+
+  <div class="order-btn-wrap">
+    <a href="#express-checkout-form" class="order-btn">
+      🛒 اطلب الحين — توصيل مجاني
+    </a>
+  </div>
+</section>
+
+<div class="section-gap"></div>
+
+<!-- SHIPPING -->
+<section class="ship-section">
+  <div class="section-title">لماذا تطلب منا؟</div>
+  <div class="ship-cards">
+    <div class="ship-card">
+      <span class="ico">🚚</span>
+      <div class="stitle">توصيل مجاني</div>
+      <div class="sdesc">لجميع محافظات العراق بدون رسوم إضافية</div>
+    </div>
+    <div class="ship-card">
+      <span class="ico">💵</span>
+      <div class="stitle">الدفع عند الاستلام</div>
+      <div class="sdesc">ادفع بعد ما تستلم طلبك مباشرة</div>
+    </div>
+    <div class="ship-card">
+      <span class="ico">⚡</span>
+      <div class="stitle">تسليم سريع</div>
+      <div class="sdesc">يوصلك خلال ٢-٤ أيام عمل</div>
+    </div>
+    <div class="ship-card">
+      <span class="ico">🛡️</span>
+      <div class="stitle">ضمان الجودة</div>
+      <div class="sdesc">منتج أصلي ١٠٠٪ أو مالك مشكلة</div>
+    </div>
+  </div>
+</section>
+
+<div class="section-gap"></div>
+
+<!-- PRODUCT DETAILS -->
+<section class="details-section">
+  <div class="section-title">تفاصيل المنتج</div>
+  <div style="max-width:420px;margin:0 auto">
+    <div class="detail-row">
+      <span class="detail-key">الماركة</span>
+      <span class="detail-val">REGENESIS</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-key">النوع</span>
+      <span class="detail-val">بودرة مضغوطة (Hair Shadow Powder)</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-key">اللون</span>
+      <span class="detail-val">أسود داكن (Black)</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-key">الكمية</span>
+      <span class="detail-val">4-6 جرام</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-key">بلد الصنع</span>
+      <span class="detail-val">الصين</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-key">الشكل</span>
+      <span class="detail-val">عبوة دائرية مدمجة + مرآة + إسفنجة</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-key">مقاومة الماء</span>
+      <span class="detail-val green">✅ نعم</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-key">الإزالة</span>
+      <span class="detail-val">شامبو عادي</span>
+    </div>
+  </div>
+</section>
+
+<div class="section-gap"></div>
+
+<!-- FINAL CTA -->
+<section style="padding: 36px 20px 24px; background: var(--dark2); text-align:center;">
+  <div style="font-size:22px; font-weight:900; color:var(--gold); margin-bottom:8px;">لا تضيع وقتك — اطلب الحين</div>
+  <div style="font-size:14px; color:#888; margin-bottom:24px;">توصيل مجاني | دفع عند الاستلام | نتيجة فورية</div>
+  <a href="#express-checkout-form" class="order-btn" style="max-width:400px; display:block; margin:0 auto 16px;">
+    🛒 اطلب الحين
+  </a>
+  <div style="font-size:12px; color:#555; margin-top:12px;">
+    ⏳ الطلبات المستلمة اليوم تُشحن غداً
+  </div>
+</section>
+
+<!-- placeholder for form -->
+<div id="express-checkout-form" style="padding:30px 20px; background:var(--black); text-align:center; color:#444; font-size:13px;">
+  <!-- سيتم إضافة الفورم هنا لاحقاً -->
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div style="color:var(--gold); font-size:13px; font-weight:800; letter-spacing:4px; margin-bottom:8px;">REGENESIS</div>
+  <div>جميع الحقوق محفوظة © 2025</div>
+  <div style="margin-top:6px; color:#333">للتواصل والاستفسار — تفضل راسلنا</div>
+</footer>
+
+<!-- STICKY CTA -->
+<div class="sticky-cta">
+  <div class="sticky-price">
+    39,000 <span style="color:var(--gold-light)">د.ع</span>
+    <small>توصيل مجاني</small>
+  </div>
+  <a href="#express-checkout-form" class="sticky-btn">اطلب الحين 🛒</a>
+</div>
+
+</body>
+</html>
