@@ -2,7 +2,7 @@
 
 const hits = new Map(); // rate limit بسيط فالذاكرة (لكل instance)
 
-const SIZES = ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
+const SIZES = ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '37', '38', '39', '40', '41', '42', '43', '44'];
 
 function cors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
